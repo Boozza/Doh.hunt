@@ -661,6 +661,7 @@ async function initDb(){
     if(d.updated)$('src').textContent=DATA.source.replace(/to \d+ \w+ \d+/,'')+' · status checked '+d.updated;
     NEWS.changes=d.changes;renderNews();
     route=null;$('result').hidden=true;refresh()},()=>{});
+  db.doc('meta/fixes').onSnapshot(s=>{const v=s.exists?s.data():null;if(v&&v.fixes)applyFixes(v.fixes,true)},()=>{});
   db.doc('meta/trip').onSnapshot(s=>{setTrip(s.exists?s.data():null)},()=>{});
   db.doc('meta/news').onSnapshot(s=>{const v=s.exists?s.data():null;NEWS.items=(v&&v.items)||[];renderNews()},()=>{});
 }
@@ -939,6 +940,24 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+
+// ---- position fixes: applied at load, no new app version needed
+let FIXES={};const INV0=new Map();
+function applyFixes(f,fromServer){if(!f)return;let n=0;const idx=new Map();DATA.cities.forEach(c=>c.inv.forEach(i=>idx.set(i[0],i)));
+  Object.entries(f).forEach(([id,v])=>{const i=idx.get(id);if(!i||!Array.isArray(v)||v.length<2)return;if(!INV0.has(id))INV0.set(id,[i[1],i[2]]);i[1]=+v[0];i[2]=+v[1];FIXES[id]=v;n++});
+  if(n&&city){route=null;$('result').hidden=true;refresh()}}
+try{applyFixes(JSON.parse(localStorage.getItem('hp_fixes')||'{}'))}catch(e){}
+async function saveFix(id,lat,lon){const v=[+lat.toFixed(6),+lon.toFixed(6),TODAY()];let loc={};try{loc=JSON.parse(localStorage.getItem('hp_fixes')||'{}')}catch(e){}
+  loc[id]=v;try{localStorage.setItem('hp_fixes',JSON.stringify(loc))}catch(e){};applyFixes({[id]:v});
+  let synced=false;if(db&&canWrite){try{await db.doc('meta/fixes').set({fixes:{[id]:v},updated:TODAY()},{merge:true});synced=true}catch(e){try{const s=await db.doc('meta/fixes').get();const cur=(s.exists&&s.data().fixes)||{};cur[id]=v;await db.doc('meta/fixes').set({fixes:cur,updated:TODAY()});synced=true}catch(e2){}}}
+  toast(id+' moved'+(synced?' – saved for both versions (Netlify gets it after the morning update)':' – saved on this device'))}
+const _cardExtrasF=cardExtras;cardExtras=function(i){_cardExtrasF(i);const c=$('card');const d=document.createElement('div');d.className='row fixrow';
+  d.innerHTML=`<button class="btn" id="fx-open">📍 Fix position</button>${FIXES[i[0]]?'<span class="note">corrected '+(FIXES[i[0]][2]||'')+'</span>':''}`;c.appendChild(d);
+  $('fx-open').onclick=()=>{d.innerHTML=`<div class="inline" style="flex-wrap:wrap;gap:6px"><input id="fx-in" placeholder="48.147942, 11.575575" inputmode="decimal" style="flex:1;min-width:170px" aria-label="Exact coordinates"><button class="btn g" id="fx-save">Save</button>${typeof getFix==='function'?'<button class="btn y" id="fx-gps">◎ I\'m standing at it</button>':''}<button class="btn" id="fx-x">✕</button></div><span class="note">Paste from Google Maps (long-press the spot → copy the numbers).</span>`;
+    $('fx-x').onclick=()=>showCard(i);
+    $('fx-save').onclick=()=>{const m=String($('fx-in').value).match(/(-?\d{1,3}\.\d+)\s*[, ]\s*(-?\d{1,3}\.\d+)/);if(!m){toast('Use the format 48.147942, 11.575575');return}
+      const la=+m[1],lo=+m[2];if(Math.abs(la)>90||Math.abs(lo)>180){toast('Those numbers are not coordinates');return}saveFix(i[0],la,lo).then(()=>showCard(i))};
+    const g=$('fx-gps');if(g)g.onclick=async()=>{const f=await getFix();if(!f){toast('Location not available');return}saveFix(i[0],f[0],f[1]).then(()=>showCard(i))}}};
 // ================= v22 EXTRAS (shared by both versions) =================
 const TODAY=()=>new Date().toISOString().slice(0,10);
 // ---- generic file save: Claude downloads capability, else a normal browser download

@@ -205,6 +205,7 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}
  $('p-plan').prepend(d);$('a2hs-x').onclick=()=>{d.remove();try{localStorage.setItem('hp_a2hs',new Date().toISOString())}catch(e){}}})();
 // trip from the daily watch (public data repo)
 getData('trip.json').then(t=>{if(t)setTrip(t)}).catch(()=>{});
+getData('fixes.json').then(f=>{if(f&&f.fixes){const loc=(()=>{try{return JSON.parse(localStorage.getItem('hp_fixes')||'{}')}catch(e){return {}}})();const m=Object.assign({},f.fixes);Object.entries(loc).forEach(([k,v])=>{if(!m[k]||String(v[2]||'')>=String(m[k][2]||''))m[k]=v});applyFixes(m,true)}}).catch(()=>{});
 // live weather & daylight for the selected city (Open-Meteo)
 const WXC={};
 function liveWx(){if(!city||!city.bbox)return;if(TRIP&&tripCity()&&tripCity().code===city.code&&TRIP.days&&TRIP.days.length)return;const code=city.code;
