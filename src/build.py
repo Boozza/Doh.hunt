@@ -1,7 +1,9 @@
 import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import json,glob,os
-t=open('app_template.html').read()
+import datetime
+VER=open('VERSION').read().strip();VD=datetime.date.today().isoformat()
+t=open('app_template.html').read().replace('__VER__',VER).replace('__VERDATE__',VD)
 d=open('data.json').read().replace('</','<\\/')
 # Claude-version build: embed detailed streets when present (src/streets/<CODE>.json)
 D=json.load(open('data.json'));ns=0
@@ -10,7 +12,7 @@ for f in glob.glob('streets/*.json'):
     S=json.load(open(f));c=next((x for x in D['cities'] if x['code']==S.get('code')),None)
     if c:c['streets']={k:S.get(k,[]) for k in ('M','m','f','L')};ns+=1
 os.makedirs('../out',exist_ok=True)
-open('../out/hunt_planner.html','w').write(t.replace('__DATA__',json.dumps(D,ensure_ascii=False,separators=(',',':')).replace('</','<\\/')))
+open('../out/hunt_planner.html','w').write(t.replace('__FLAVOR__','Claude').replace('__DATA__',json.dumps(D,ensure_ascii=False,separators=(',',':')).replace('</','<\\/')))
 print('artifact build: streets for',ns,'cities')
 seed={}
 for f in glob.glob('seed/*.json'):
@@ -18,7 +20,7 @@ for f in glob.glob('seed/*.json'):
 seed['SPACE']=['SPACE_02']
 st=json.load(open('../site/data/status.json'));nw=json.load(open('../site/data/news.json'))
 ad=open('adapter.js').read().replace('__SEED__',json.dumps(seed)).replace('__CHANGES__',json.dumps(st['changes'])).replace('__ITEMS__',json.dumps(nw['items']))
-s=t.replace("loadCity(sel.value);\ninitDb().then(initField);",ad+"\nloadCity(sel.value);\ninitDb().then(initField);")
+s=t.replace('__FLAVOR__','Netlify').replace("loadCity(sel.value);\ninitDb().then(initField);",ad+"\nloadCity(sel.value);\ninitDb().then(initField);")
 s=s.replace("</style>",""".leaflet-container{background:#141c3e;font-family:var(--f-body)}
 .rnum{background:#0a0d1c;color:#fff;border:1px solid #ff5aa8;font-family:var(--f-mono);font-weight:600;padding:0 4px;box-shadow:none}
 .rnum:before{display:none}
