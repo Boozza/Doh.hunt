@@ -231,7 +231,7 @@ footer a{color:var(--cyan)}
         <div class="result" style="gap:8px">
           <span class="lbl">See them on a real Google map</span>
           <p class="note" style="margin:0">Export what's left in this city, then import it in <a href="https://www.google.com/maps/d/" target="_blank" rel="noopener" style="color:var(--cyan)">Google My Maps</a>: Create a new map → Import → pick the file → choose <b>latitude/longitude</b> for position and <b>name</b> for the title. Style by the <b>points</b> column for colors. The map then shows in the Google Maps app under Saved → Maps.</p>
-          <div class="inline"><button class="btn y" id="export">⬇ Export CSV for Google My Maps</button><span class="save" id="exportmsg"></span></div>
+          <div class="inline"><button class="btn y" id="export">⬇ Export CSV for Google My Maps</button><button class="btn" id="exportall">🌍 All my cities (one file)</button><span class="save" id="exportmsg"></span></div>
         </div>
         <div class="inline"><span class="lbl">Sort</span>
           <div class="seg" id="sort"><button data-s="near" class="on">Nearest to start</button><button data-s="pts">Points</button></div>
@@ -940,6 +940,12 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+
+// ---- export every city you hunt (one CSV, one My Maps layer; style by the "city" column)
+$('exportall').onclick=async()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const rows=[['name','city','latitude','longitude','points','status'].join(',')];let n=0;
+  DATA.cities.forEach(c=>{const f=flashedOf(c.code);if(!f.size&&c.mine==null)return;c.inv.forEach(i=>{if(f.has(i[0])||!(i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown')||!(i[1]||i[2]))return;rows.push([q(i[0]),q(c.name),i[1],i[2],i[3],q(i[4])].join(','));n++})});
+  const ok=await saveImage(new Blob([rows.join('\n')],{type:'text/csv'}),'invaders-all-my-cities-'+TODAY()+'.csv',$('exportmsg'));
+  if(ok){$('exportmsg').textContent='Saved '+n+' invaders. In My Maps: Import, then "Style by → city" for a colour per city.';$('exportmsg').className='save ok'}};
 
 // ---- position fixes: applied at load, no new app version needed
 let FIXES={};const INV0=new Map();
