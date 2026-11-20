@@ -1,6 +1,6 @@
 // D'oh! Hunt Planner – offline support.
 // App + data: network first, cached copy when offline. Map tiles: every tile you have viewed is kept (up to ~4000).
-const APP = 'dh-app-v1', TILES = 'dh-tiles-v1', MAX_TILES = 4000;
+const APP = 'dh-app-v2', TILES = 'dh-tiles-v2', MAX_TILES = 4000;
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(APP).then(c => c.addAll(['./', './index.html', './manifest.json'])).then(() => self.skipWaiting()));
 });
@@ -17,7 +17,7 @@ self.addEventListener('fetch', e => {
   const r = e.request;
   if (r.method !== 'GET') return;
   const u = new URL(r.url);
-  if (/(^|\.)basemaps\.cartocdn\.com$|(^|\.)tile\.openstreetmap\.org$/.test(u.hostname)) {
+  if (/(^|\.)tile\.openstreetmap\.(org|fr)$/.test(u.hostname)) {
     e.respondWith(caches.open(TILES).then(async c => {
       const hit = await c.match(r);
       if (hit) return hit;

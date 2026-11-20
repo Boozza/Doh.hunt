@@ -31,6 +31,7 @@ s=s.replace("</style>",""".leaflet-container{background:#141c3e;font-family:var(
 .near.hot{border-color:var(--green);box-shadow:0 0 0 3px rgba(69,240,138,.35)}.near .arrow{font-size:22px;transition:transform .15s}
 #near-cmp.on{outline:2px solid var(--yellow)}
 .leaflet-container.darkbase{background:#0b0d12}
+.tiles-dark{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
 .chb{width:16px;height:16px;border-radius:50%;color:#0a0d1c;font:700 11px/16px var(--f-mono);text-align:center;box-shadow:0 0 0 2px #0a0d1c}
 .mpin{width:30px;height:30px;border-radius:50% 50% 50% 4px;background:#0a0d1c;border:2px solid var(--c);color:var(--c);font:700 13px/26px var(--f-mono);text-align:center;position:relative;box-shadow:0 1px 4px #000a}
 .mpin i{position:absolute;right:-9px;top:-9px;min-width:17px;height:17px;padding:0 3px;border-radius:9px;background:var(--c);color:#0a0d1c;font:700 10px/17px var(--f-mono);font-style:normal}

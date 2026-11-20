@@ -18,9 +18,10 @@ $('map').style.display='none';
 {const a=$('mc-row'),b=$('mc-list');if(a)a.remove();if(b)b.remove()}
 const lmapEl=document.createElement('div');lmapEl.id='lmap';lmapEl.style.cssText='position:absolute;inset:0';$('screen').prepend(lmapEl);
 const LM=L.map(lmapEl,{zoomControl:false,preferCanvas:true}).setView([51.5,-0.12],13);
-const BASES={voyager:['https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png','© OpenStreetMap contributors © CARTO','Streets'],dark:['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png','© OpenStreetMap contributors © CARTO','Dark'],osm:['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png','© OpenStreetMap contributors','OSM']};
-let BASE='voyager';try{BASE=localStorage.getItem('hp_base')||'voyager'}catch(e){};if(!BASES[BASE])BASE='voyager';
-let BL=null;function setBase(k){if(BL)LM.removeLayer(BL);BASE=k;const b=BASES[k];BL=L.tileLayer(b[0],{maxZoom:19,subdomains:k==='osm'?'abc':'abcd',attribution:b[1]}).addTo(LM);BL.bringToBack();try{localStorage.setItem('hp_base',k)}catch(e){};lmapEl.classList.toggle('darkbase',k==='dark')}
+const OSMA='© OpenStreetMap contributors';
+const BASES={osm:['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',OSMA,'Streets','abc'],hot:['https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',OSMA+', tiles HOT/OSM France','Humanitarian','abc'],dark:['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',OSMA,'Dark','abc']};
+let BASE='osm';try{BASE=localStorage.getItem('hp_base')||'osm'}catch(e){};if(!BASES[BASE])BASE='osm';
+let BL=null;function setBase(k){if(BL)LM.removeLayer(BL);BASE=k;const b=BASES[k];BL=L.tileLayer(b[0],{maxZoom:19,subdomains:b[3],attribution:b[1],className:k==='dark'?'tiles-dark':''}).addTo(LM);BL.bringToBack();try{localStorage.setItem('hp_base',k)}catch(e){};lmapEl.classList.toggle('darkbase',k==='dark')}
 setBase(BASE);
 const LR=L.canvas({padding:.3,tolerance:10});let LInv=L.layerGroup().addTo(LM),LRoute=L.layerGroup().addTo(LM),LStart=L.layerGroup().addTo(LM),LMe=L.layerGroup().addTo(LM);
 let lastView='';
@@ -190,7 +191,7 @@ const _rr=renderResult;renderResult=function(loop,el){_rr(loop,el);const host=el
 
 // ================= v22 STANDALONE EXTRAS =================
 // basemap switch
-{const b=document.createElement('button');b.id='basebtn';b.title='Map style';b.setAttribute('aria-label','Map style');const lab=()=>b.textContent=BASE==='dark'?'🌙':BASE==='osm'?'OSM':'🗺';lab();gpsBtn.after(b);
+{const b=document.createElement('button');b.id='basebtn';b.title='Map style';b.setAttribute('aria-label','Map style');const lab=()=>b.textContent=BASE==='dark'?'🌙':BASE==='hot'?'H':'🗺';lab();gpsBtn.after(b);
  b.onclick=()=>{const ks=Object.keys(BASES);setBase(ks[(ks.indexOf(BASE)+1)%ks.length]);lab();toast('Map: '+BASES[BASE][2])}}
 // offline: service worker caches the app, data and every map tile you have viewed
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
