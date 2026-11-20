@@ -18,7 +18,10 @@ $('map').style.display='none';
 {const a=$('mc-row'),b=$('mc-list');if(a)a.remove();if(b)b.remove()}
 const lmapEl=document.createElement('div');lmapEl.id='lmap';lmapEl.style.cssText='position:absolute;inset:0';$('screen').prepend(lmapEl);
 const LM=L.map(lmapEl,{zoomControl:false,preferCanvas:true}).setView([51.5,-0.12],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(LM);
+const BASES={voyager:['https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png','© OpenStreetMap contributors © CARTO','Streets'],dark:['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png','© OpenStreetMap contributors © CARTO','Dark'],osm:['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png','© OpenStreetMap contributors','OSM']};
+let BASE='voyager';try{BASE=localStorage.getItem('hp_base')||'voyager'}catch(e){};if(!BASES[BASE])BASE='voyager';
+let BL=null;function setBase(k){if(BL)LM.removeLayer(BL);BASE=k;const b=BASES[k];BL=L.tileLayer(b[0],{maxZoom:19,subdomains:k==='osm'?'abc':'abcd',attribution:b[1]}).addTo(LM);BL.bringToBack();try{localStorage.setItem('hp_base',k)}catch(e){};lmapEl.classList.toggle('darkbase',k==='dark')}
+setBase(BASE);
 const LR=L.canvas({padding:.3,tolerance:10});let LInv=L.layerGroup().addTo(LM),LRoute=L.layerGroup().addTo(LM),LStart=L.layerGroup().addTo(LM),LMe=L.layerGroup().addTo(LM);
 let lastView='';
 function kToZoom(k,lat){return Math.max(2,Math.min(19,Math.log2(k*360*Math.cos(lat*Math.PI/180)/256)))}
@@ -56,7 +59,7 @@ const _runPlan=runPlan;runPlan=function(){_runPlan();view.k=0;fitRoute()};$('pla
 let ME=null,meAcc=0,gpsOn=false,watchId=null;
 const gpsBtn=document.createElement('button');gpsBtn.textContent='◎';gpsBtn.title='Show my location';gpsBtn.setAttribute('aria-label','Show my location');$('fit').after(gpsBtn);
 gpsBtn.onclick=()=>{if(!navigator.geolocation){toast('No GPS on this device.');return}
-  if(watchId===null){watchId=navigator.geolocation.watchPosition(p=>{ME=[p.coords.latitude,p.coords.longitude];meAcc=p.coords.accuracy;LMe.clearLayers();L.circle(ME,{radius:meAcc,color:'#2b8cff',weight:1,fillOpacity:.1}).addTo(LMe);L.circleMarker(ME,{radius:8,color:'#fff',weight:3,fillColor:'#2b8cff',fillOpacity:1}).addTo(LMe);if(!gpsOn){gpsOn=true;LM.setView(ME,16)}if(HUNT&&!$('hunt').hidden)renderHunt();updMeBtn()},e=>toast('Location blocked: '+e.message),{enableHighAccuracy:true,maximumAge:5000})}
+  if(watchId===null){watchId=navigator.geolocation.watchPosition(p=>{ME=[p.coords.latitude,p.coords.longitude];meAcc=p.coords.accuracy;LMe.clearLayers();L.circle(ME,{radius:meAcc,color:'#2b8cff',weight:1,fillOpacity:.1}).addTo(LMe);L.circleMarker(ME,{radius:8,color:'#fff',weight:3,fillColor:'#2b8cff',fillOpacity:1}).addTo(LMe);if(!gpsOn){gpsOn=true;LM.setView(ME,16)}if(HUNT&&!$('hunt').hidden)renderHunt();updMeBtn();onFix()},e=>toast('Location blocked: '+e.message),{enableHighAccuracy:true,maximumAge:5000})}
   else if(ME)LM.setView(ME,Math.max(LM.getZoom(),16));gpsBtn.classList.add('on')};
 function updMeBtn(){const b=$('me-start');if(b)b.hidden=!ME}
 function prevPoint(){if(ME)return ME;if(!HUNT)return start;for(let k=HUNT.idx-1;k>=0;k--){const i=invById(HUNT.stops[k]);if(i&&(HUNT.got.includes(i[0])||HUNT.missed.includes(i[0])))return [i[1],i[2]]}return HUNT.start}
@@ -67,8 +70,6 @@ $('export').onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const r
 // sessions + backup in localStorage
 const _close=renderHuntEnd;renderHuntEnd=function(){_close();const done=$('h-done'),x=$('h-x');const wrap=fn=>()=>{try{const l=JSON.parse(localStorage.getItem('hp_sessions')||'[]');if(HUNT&&HUNT.got.length){l.unshift(Object.assign({},HUNT));localStorage.setItem('hp_sessions',JSON.stringify(l.slice(0,30)))}}catch(e){};fn()};if(done){const f=done.onclick;done.onclick=wrap(f)}if(x){const f=x.onclick;x.onclick=wrap(f)}};
 try{SESSIONS=JSON.parse(localStorage.getItem('hp_sessions')||'[]')}catch(e){}
-const bk=document.createElement('div');bk.className='inline';bk.innerHTML='<button class="btn y" id="bkup">⬇ Backup my flashes</button><span class="note">Saves a text file you can paste back into Import on any device.</span>';$('appcount').after(bk);
-$('bkup').onclick=()=>{const all=[];DATA.cities.concat([SPACE]).forEach(c=>flashedOf(c.code).forEach(id=>all.push(id)));dlBlob(new Blob([all.sort().join(', ')],{type:'text/plain'}),'my-flashed-invaders.txt');toast('Backup saved: '+all.length+' invaders')};
 document.querySelectorAll('#gallery,#gal-n').forEach(e=>{const p=e.closest('.grid2>div');if(p)p.hidden=true});
 
 // ---- start from live location
@@ -186,3 +187,50 @@ $('plan').onclick=runPlan;
 const _plan0=plan;plan=function(o){const r=_plan0(o);if(!(o&&o.quiet))ensureGeo(route);return r};
 const _sd=showDay;showDay=function(d){_sd(d);ensureGeo(route)};
 const _rr=renderResult;renderResult=function(loop,el){_rr(loop,el);const host=el||$('result');if(RM&&RM.city===city.code&&route&&route.stops&&route.stops.length){const n=document.createElement('div');n.className='note';n.textContent='🛣 Walking distances follow real streets (OpenStreetMap).';host.appendChild(n)}};
+
+// ================= v22 STANDALONE EXTRAS =================
+// basemap switch
+{const b=document.createElement('button');b.id='basebtn';b.title='Map style';b.setAttribute('aria-label','Map style');const lab=()=>b.textContent=BASE==='dark'?'🌙':BASE==='osm'?'OSM':'🗺';lab();gpsBtn.after(b);
+ b.onclick=()=>{const ks=Object.keys(BASES);setBase(ks[(ks.indexOf(BASE)+1)%ks.length]);lab();toast('Map: '+BASES[BASE][2])}}
+// offline: service worker caches the app, data and every map tile you have viewed
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+window.addEventListener('offline',()=>toast('Offline – using the saved app, data and map tiles'));
+window.addEventListener('online',()=>toast('Back online'));
+// keep marks safe: persistent storage + Home Screen hint
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+(function(){const standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;let dis='';try{dis=localStorage.getItem('hp_a2hs')||''}catch(e){}
+ const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);if(standalone||(dis&&dis>new Date(Date.now()-14*864e5).toISOString()))return;
+ const d=document.createElement('div');d.className='trip';d.id='a2hs';d.innerHTML=`<span>📲 <b>Add to Home Screen</b> so your flashes stay saved${ios?' (Share ⬆ → Add to Home Screen)':' (browser menu → Install app / Add to Home screen)'}. Safari can clear sites you haven't opened for a week.</span><button class="btn" id="a2hs-x" aria-label="Dismiss">✕</button>`;
+ $('p-plan').prepend(d);$('a2hs-x').onclick=()=>{d.remove();try{localStorage.setItem('hp_a2hs',new Date().toISOString())}catch(e){}}})();
+// trip from the daily watch (public data repo)
+getData('trip.json').then(t=>{if(t)setTrip(t)}).catch(()=>{});
+// live weather & daylight for the selected city (Open-Meteo)
+const WXC={};
+function liveWx(){if(!city||!city.bbox)return;if(TRIP&&tripCity()&&tripCity().code===city.code&&TRIP.days&&TRIP.days.length)return;const code=city.code;
+  const hit=WXC[code];if(hit&&Date.now()-hit.t<36e5){WX=hit.wx;renderWx();return}
+  const [lo0,la0,lo1,la1]=city.bbox;const u=`https://api.open-meteo.com/v1/forecast?latitude=${((la0+la1)/2).toFixed(3)}&longitude=${((lo0+lo1)/2).toFixed(3)}&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum&hourly=precipitation_probability&timezone=auto&forecast_days=3`;
+  fetch(u).then(r=>r.ok?r.json():null).then(j=>{const days=wxFromOM(j);if(!days)return;const wx={city:code,days,src:'Open-Meteo, local time'};WXC[code]={t:Date.now(),wx};if(city&&city.code===code){WX=wx;renderWx()}}).catch(()=>{})}
+const _lcW=loadCity;loadCity=function(c){const r=_lcW.apply(this,arguments);try{liveWx()}catch(e){}return r};
+// GPS: nearest invader chip, proximity alert, compass, screen wake lock
+let HEADING=null,lastNear='',NEARCUR=null,WL=null;
+const near=document.createElement('div');near.id='near';near.className='near';near.hidden=true;
+near.innerHTML='<span class="arrow" id="near-ar">▲</span><span><b id="near-id"></b> <span id="near-d"></span> <span id="near-p"></span></span><button class="btn g" id="near-fl" hidden>✓ Flashed</button><button class="btn" id="near-cmp" title="Compass" aria-label="Compass">🧭</button>';
+$('screen').appendChild(near);
+armConfirm($('near-fl'),()=>{if(NEARCUR){flashWithUndo(NEARCUR[0],true);renderNear()}});
+function nearestOpen(){if(!ME||!city)return null;let b=null,bd=1e9;for(const i of city.inv){if(flashed.has(i[0])||EXCL.has(i[0])||MISSING.has(i[0]))continue;if(!(i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown'))continue;const d=hav(ME,[i[1],i[2]]);if(d<bd){bd=d;b=i}}return b?{i:b,d:bd}:null}
+function beep(){try{const A=window.AudioContext||window.webkitAudioContext;const a=beep.a||(beep.a=new A());const o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=880;g.gain.value=.06;o.connect(g);g.connect(a.destination);o.start();o.frequency.setValueAtTime(1320,a.currentTime+.12);o.stop(a.currentTime+.26)}catch(e){}}
+function renderNear(){const n=nearestOpen();if(!n||n.d>5){near.hidden=true;NEARCUR=null;return}near.hidden=false;NEARCUR=n.i;const m=Math.round(n.d*1000);
+  $('near-id').textContent=n.i[0];$('near-d').textContent=m<1000?m+' m':(m/1000).toFixed(1)+' km';$('near-p').textContent=n.i[3]+' pts';$('near-p').style.color=ptColor(n.i[3]);
+  $('near-fl').hidden=m>60;near.classList.toggle('hot',m<=40);near.dataset.b=bearing(ME,[n.i[1],n.i[2]]);updArrows();
+  if(m<=40&&lastNear!==n.i[0]){lastNear=n.i[0];if(navigator.vibrate)navigator.vibrate([200,100,200]);beep();toast(n.i[0]+' is about '+m+' m away!')}}
+function updArrows(){const b=+near.dataset.b||0;$('near-ar').style.transform=`rotate(${HEADING==null?b:b-HEADING}deg)`;
+  const ha=document.querySelector('#hunt .h-dir .arrow');if(ha&&ha.dataset.b!=null)ha.style.transform=`rotate(${HEADING==null?+ha.dataset.b:+ha.dataset.b-HEADING}deg)`}
+let arRaf=0;function onHeading(e){const h=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.absolute&&e.alpha!=null?360-e.alpha:null);if(h==null)return;HEADING=h;if(!arRaf)arRaf=requestAnimationFrame(()=>{arRaf=0;updArrows()})}
+function enableCompass(){const go=()=>{window.addEventListener('deviceorientationabsolute',onHeading,true);window.addEventListener('deviceorientation',onHeading,true);$('near-cmp').classList.add('on');toast('Compass on – arrows now point where to walk')};
+  if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')DeviceOrientationEvent.requestPermission().then(s=>s==='granted'?go():toast('Compass permission was not given')).catch(()=>toast('Compass not available'));else go()}
+$('near-cmp').onclick=enableCompass;
+async function wake(){try{if(navigator.wakeLock&&!WL){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(gpsOn||(HUNT&&!$('hunt').hidden)))wake()});
+function onFix(){renderNear();wake()}
+const _rhN=renderHunt;renderHunt=function(){const r=_rhN.apply(this,arguments);const ha=document.querySelector('#hunt .h-dir .arrow');if(ha){const m=/rotate\(([-\d.]+)deg\)/.exec(ha.style.transform||'');if(m)ha.dataset.b=m[1];updArrows()}if(HUNT&&!$('hunt').hidden)wake();return r};
+const _rfN=refresh;refresh=function(){const r=_rfN.apply(this,arguments);if(ME)renderNear();return r};

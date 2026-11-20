@@ -147,12 +147,21 @@ dl.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-siz
 footer{font-size:12px;color:var(--muted);text-align:center}
 footer a{color:var(--cyan)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.links{display:grid;gap:6px;margin-top:4px}.links .inline{flex-wrap:wrap}
+.trip{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:2px solid var(--yellow);border-radius:8px;background:rgba(255,217,15,.08)}
+.wx{display:grid;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.wxrow{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;align-items:baseline}.wxrow b{min-width:88px}
+#sc-sort{margin-left:auto}
 .leaflet-container{background:#141c3e;font-family:var(--f-body)}
 .rnum{background:#0a0d1c;color:#fff;border:1px solid #ff5aa8;font-family:var(--f-mono);font-weight:600;padding:0 4px;box-shadow:none}
 .rnum:before{display:none}
 .flag{font-size:22px;color:#ffd90f;text-shadow:0 0 3px #000}
 .maptools{z-index:500}.legend,.hint{z-index:500}.card{z-index:503}
 #c-ph,#h-photo,.mic{display:none!important}
+.near{position:absolute;left:50%;transform:translateX(-50%);bottom:56px;z-index:502;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);background:rgba(10,13,28,.92);border:2px solid var(--line);border-radius:10px;padding:6px 10px;font-size:14px;white-space:nowrap}
+.near.hot{border-color:var(--green);box-shadow:0 0 0 3px rgba(69,240,138,.35)}.near .arrow{font-size:22px;transition:transform .15s}
+#near-cmp.on{outline:2px solid var(--yellow)}
+.leaflet-container.darkbase{background:#0b0d12}
 .chb{width:16px;height:16px;border-radius:50%;color:#0a0d1c;font:700 11px/16px var(--f-mono);text-align:center;box-shadow:0 0 0 2px #0a0d1c}
 .mpin{width:30px;height:30px;border-radius:50% 50% 50% 4px;background:#0a0d1c;border:2px solid var(--c);color:var(--c);font:700 13px/26px var(--f-mono);text-align:center;position:relative;box-shadow:0 1px 4px #000a}
 .mpin i{position:absolute;right:-9px;top:-9px;min-width:17px;height:17px;padding:0 3px;border-radius:9px;background:var(--c);color:#0a0d1c;font:700 10px/17px var(--f-mono);font-style:normal}
@@ -482,21 +491,21 @@ async function drawCard(cv,s){
   for(let k=0;k<160;k++){x.fillStyle=k%3?'#2a3366':'#5a63a0';const a=(k*7919)%W2,b=(k*104729)%H2;x.fillRect(a,b,3,3)}
   x.strokeStyle='#2878ff';x.lineWidth=10;x.strokeRect(24,24,W2-48,H2-48);
   const ctxt=(t,y,sz,c)=>{x.font=P(sz);x.fillStyle=c;const w=x.measureText(t).width;x.fillText(t,(W2-w)/2,y)};
-  ctxt('HUNT REPORT',180,64,'#ffd90f');ctxt((s.cityName||'').toUpperCase(),290,52,'#22e3ff');ctxt(s.date,360,28,'#8d94bf');
-  ctxt('+'+s.got.length,600,190,'#eef0ff');ctxt('INVADERS FLASHED',690,36,'#ff5aa8');
-  ctxt('+'+(s.pts||0)+' PTS',820,56,'#45f08a');ctxt((s.km||0)+' KM  ·  '+fmtMin(s.mins||0).toUpperCase(),900,30,'#eef0ff');
+  ctxt('HUNT REPORT',320,56,'#ffd90f');ctxt((s.cityName||'').toUpperCase(),405,48,'#22e3ff');ctxt(s.date,460,26,'#8d94bf');
+  ctxt('+'+s.got.length,640,160,'#eef0ff');ctxt('INVADERS FLASHED',715,32,'#ff5aa8');
+  ctxt('+'+(s.pts||0)+' PTS',800,48,'#45f08a');ctxt((s.km||0)+' KM  ·  '+fmtMin(s.mins||0).toUpperCase(),860,26,'#eef0ff');
   // mini map
   const pts=s.got.map(id=>invById(id)).filter(Boolean),miss=(s.missed||[]).map(id=>invById(id)).filter(Boolean),all=pts.concat(miss);
   if(all.length){const la=all.map(i=>i[1]).concat([s.start[0]]),lo=all.map(i=>i[2]).concat([s.start[1]]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
-    const bx=140,by=980,bw=800,bh=560,cl=Math.cos((a+b)/2*Math.PI/180);const k=Math.min(bw/(((d-c)||1e-4)*cl),bh/((b-a)||1e-4));
+    const bx=160,by=930,bw=760,bh=420,cl=Math.cos((a+b)/2*Math.PI/180);const k=Math.min(bw/(((d-c)||1e-4)*cl),bh/((b-a)||1e-4));
     const mp=(p,q)=>[bx+bw/2+(q-(c+d)/2)*cl*k,by+bh/2-(p-(a+b)/2)*k];
     x.fillStyle='#121733';x.fillRect(bx-30,by-30,bw+60,bh+60);
     x.strokeStyle='#ff5aa8';x.lineWidth=6;x.setLineDash([18,12]);x.beginPath();let first=true;[[s.start[0],s.start[1]]].concat(pts.map(i=>[i[1],i[2]])).forEach(([p,q])=>{const [u,v]=mp(p,q);first?x.moveTo(u,v):x.lineTo(u,v);first=false});x.stroke();x.setLineDash([]);
     pts.forEach(i=>{const [u,v]=mp(i[1],i[2]);x.fillStyle=ptColor(i[3]);x.fillRect(u-14,v-14,28,28)});
     miss.forEach(i=>{const [u,v]=mp(i[1],i[2]);x.strokeStyle='#ff4d5e';x.lineWidth=6;x.beginPath();x.moveTo(u-12,v-12);x.lineTo(u+12,v+12);x.moveTo(u+12,v-12);x.lineTo(u-12,v+12);x.stroke()});
     const [u,v]=mp(s.start[0],s.start[1]);x.fillStyle='#ffd90f';x.beginPath();x.arc(u,v,12,0,7);x.fill();}
-  x.font=P(22);x.fillStyle='#8d94bf';const codes=s.got.slice(0,24).join('  ');let line='',yy=1650;codes.split('  ').forEach(w=>{if(x.measureText(line+w).width>900){ctxt(line.trim(),yy,22,'#8d94bf');yy+=40;line=''}line+=w+'  '});if(line)ctxt(line.trim(),yy,22,'#8d94bf');
-  ctxt('@DOH.INVADERS',1820,32,'#eef0ff');
+  x.font=P(22);x.fillStyle='#8d94bf';const codes=s.got.slice(0,10).join('  ')+(s.got.length>10?'  +'+(s.got.length-10):'');let line='',yy=1425;codes.split('  ').forEach(w=>{if(x.measureText(line+w).width>900){ctxt(line.trim(),yy,22,'#8d94bf');yy+=40;line=''}line+=w+'  '});if(line)ctxt(line.trim(),yy,22,'#8d94bf');
+  ctxt('@DOH.INVADERS',1515,30,'#eef0ff');
 }
 async function saveCard(s){const msg=$('h-msg')||$('sc-msg');let dl=null;try{dl=await window.claude.use('downloads')}catch(e){}
   if(!dl){if(msg)msg.textContent='Saving is not available in this view.';return}
@@ -679,6 +688,7 @@ async function initDb(){
     if(d.updated)$('src').textContent=DATA.source.replace(/to \d+ \w+ \d+/,'')+' · status checked '+d.updated;
     NEWS.changes=d.changes;renderNews();
     route=null;$('result').hidden=true;refresh()},()=>{});
+  db.doc('meta/trip').onSnapshot(s=>{setTrip(s.exists?s.data():null)},()=>{});
   db.doc('meta/news').onSnapshot(s=>{const v=s.exists?s.data():null;NEWS.items=(v&&v.items)||[];renderNews()},()=>{});
 }
 function subscribe(){
@@ -726,8 +736,8 @@ function draw(){
   for(let la=Math.floor(la0/dLat)*dLat;la<la1;la+=dLat){const y=px(la,0)[1];ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
   for(let lo=Math.floor(lo0/dLon)*dLon;lo<lo1;lo+=dLon){const x=px(0,lo)[0];ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
   const lw=Math.max(1.5,Math.min(5,view.k/2500));ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.strokeStyle='rgba(200,170,90,.55)';ctx.lineWidth=lw;
-  for(const ln of (city.roads||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+  if(!drawStreets(lw)){ctx.strokeStyle='rgba(200,170,90,.55)';ctx.lineWidth=lw;
+  for(const ln of (city.roads||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}}
   ctx.strokeStyle='rgba(180,190,230,.6)';ctx.lineWidth=Math.max(1,lw*.7);ctx.setLineDash([6,5]);
   for(const ln of (city.rails||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
   ctx.setLineDash([]);
@@ -797,6 +807,8 @@ function showCard(i){
   <div class="row">${cat==='dead'&&!fl?'':`<button class="btn ${fl?'':'g'}" id="c-fl">${fl?'Unmark':'✓ Flashed'}</button>`}
   <a class="btn y" href="${gmapsPoint(i[1],i[2])}" target="_blank" rel="noopener">Navigate</a>
   <a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Photos ↗</a>
+  <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener">Street View ↗</a>
+  <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener">spotter ↗</a>
   <button class="btn" id="c-start">Start here</button><button class="btn" id="c-x" aria-label="Close">✕</button></div>`;
   c.hidden=false;cardExtras(i);const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)';
   const f=$('c-fl');if(f)armConfirm(f,()=>flashWithUndo(i[0],!fl),fl?'Tap again to unmark':'Tap again to confirm');
@@ -953,6 +965,113 @@ $('export').onclick=async()=>{
 };
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
+/*EXTRAS*/
+// ================= v22 EXTRAS (shared by both versions) =================
+const TODAY=()=>new Date().toISOString().slice(0,10);
+// ---- generic file save: Claude downloads capability, else a normal browser download
+async function saveImage(blob,name,msg){let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
+  if(dl){try{await dl.save({filename:name,data:blob});if(msg)msg.textContent='Saved.';return true}catch(e){if(msg)msg.textContent=e&&e.code==='declined'?'Cancelled.':'Could not save right now.';return false}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);if(msg)msg.textContent='Saved.';return true}
+// ---- flash dates (activity stats): stamp ids newly added since the last refresh
+let FLT=null;try{FLT=JSON.parse(localStorage.getItem('hp_fltime')||'null')}catch(e){}
+if(!FLT){FLT={};DATA.cities.forEach(c=>flashedOf(c.code).forEach(id=>FLT[id]='0'))}
+let PREVFL=new Set();
+const _refreshX=refresh;refresh=function(){const r=_refreshX.apply(this,arguments);PREVFL=new Set(flashed);return r};
+const _persistX=persist;persist=function(){const add=[...flashed].filter(id=>!PREVFL.has(id)&&!FLT[id]);
+  if(add.length){const v=add.length>10?'0':TODAY();add.forEach(id=>FLT[id]=v);try{localStorage.setItem('hp_fltime',JSON.stringify(FLT))}catch(e){}}
+  return _persistX.apply(this,arguments)};
+// ---- backup (both versions)
+{const w=document.createElement('div');w.className='inline';w.innerHTML='<button class="btn y" id="bkup">⬇ Backup my flashes</button><span class="note" id="bknote"></span>';$('appcount').after(w)}
+function bkNote(){let t='';try{t=localStorage.getItem('hp_lastbk')||''}catch(e){};$('bknote').textContent=t?'Last backup: '+t+'. To restore, load the file in Import below.':'Saves a file you can load back with Import below, on any device.'}
+$('bkup').onclick=async()=>{const all=[];DATA.cities.concat([SPACE]).forEach(c=>flashedOf(c.code).forEach(id=>all.push(id)));
+  const txt="D'oh! Hunt Planner backup "+TODAY()+' ('+all.length+' invaders)\n'+all.sort().join(', ')+'\n';
+  const ok=await saveImage(new Blob([txt],{type:'text/plain'}),'my-flashed-invaders-'+TODAY()+'.txt',$('bknote'));
+  if(ok){try{localStorage.setItem('hp_lastbk',TODAY())}catch(e){};toast('Backup saved: '+all.length+' invaders');setTimeout(bkNote,2500)}};
+bkNote();
+// ---- info links
+const svUrl=(la,lo)=>`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${la},${lo}`;
+const spotUrl=id=>'https://www.google.com/search?q='+encodeURIComponent('"'+id+'" invader-spotter');
+const INFO_LINKS=[['invader-spotter: news','https://www.invader-spotter.art/news.php'],['invader-spotter: cities','https://www.invader-spotter.art/villes.php'],['invader-spotter: stats','https://www.invader-spotter.art/stats.php'],['space-invaders.com (official)','https://space-invaders.com'],['FlashInvaders app','https://apps.apple.com/app/id895180919'],['Reddit: Flash Invaders','https://www.reddit.com/search/?q=flash%20invaders&sort=new']];
+{const d=document.createElement('div');d.className='links';d.innerHTML='<span class="lbl">Info sources</span><div class="inline">'+INFO_LINKS.map(([t,u])=>`<a class="btn" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')+'</div>';$('newslist').after(d)}
+// ---- city progress card (Story 1080×1920, text kept inside Instagram's safe area: y 260–1530)
+function cityRow(code){const c=code==='SPACE'?SPACE:CITYBY.get(code)||DATA.cities.find(x=>x.code===code);if(!c)return null;const f=flashedOf(c.code);
+  const up=c.inv.filter(i=>i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown');const mine=c.inv.filter(i=>f.has(i[0]));const left=up.filter(i=>!f.has(i[0]));
+  return {c,f,n:mine.length,tot:c.inv.length,up:up.length,pts:mine.reduce((s,i)=>s+i[3],0)+(ADJ[c.code]||0),left:left.length,leftPts:left.reduce((s,i)=>s+i[3],0)}}
+async function drawCityCard(cv,code){
+  try{await document.fonts.load('40px "Press Start 2P"')}catch(e){}
+  const r=cityRow(code);const x=cv.getContext('2d'),W2=1080,H2=1920;const P=sz=>`${sz}px "Press Start 2P", monospace`;
+  x.fillStyle='#0a0d1c';x.fillRect(0,0,W2,H2);
+  for(let k=0;k<160;k++){x.fillStyle=k%3?'#2a3366':'#5a63a0';const a=(k*7919)%W2,b=(k*104729)%H2;x.fillRect(a,b,3,3)}
+  x.strokeStyle='#2878ff';x.lineWidth=10;x.strokeRect(24,24,W2-48,H2-48);
+  const ctxt=(t,y,sz,c)=>{x.font=P(sz);let s=sz;while(x.measureText(t).width>960&&s>16){s-=2;x.font=P(s)}x.fillStyle=c;const w=x.measureText(t).width;x.fillText(t,(W2-w)/2,y)};
+  ctxt('CITY PROGRESS',330,50,'#ffd90f');ctxt(r.c.name.toUpperCase(),420,60,'#22e3ff');ctxt(TODAY(),475,24,'#8d94bf');
+  ctxt(r.n+'/'+r.tot,630,120,'#eef0ff');ctxt('INVADERS FLASHED',700,30,'#ff5aa8');
+  const pct=r.tot?r.n/r.tot:0;x.fillStyle='#1b2250';x.fillRect(140,735,800,40);x.fillStyle='#45f08a';x.fillRect(140,735,Math.round(800*pct),40);x.strokeStyle='#eef0ff';x.lineWidth=4;x.strokeRect(140,735,800,40);
+  ctxt(Math.round(pct*100)+'%  ·  '+r.pts.toLocaleString('en-US')+' PTS',835,34,'#45f08a');
+  ctxt(r.left?(r.left+' STILL ON THE WALLS · '+r.leftPts+' PTS'):'CITY COMPLETE!',890,22,'#eef0ff');
+  // mini map of the city: flashed = dim, still to hunt = colour by points
+  const pts=r.c.inv.filter(i=>i[1]||i[2]);if(pts.length){const la=pts.map(i=>i[1]),lo=pts.map(i=>i[2]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
+    const bx=140,by=950,bw=800,bh=500,cl=Math.cos((a+b)/2*Math.PI/180);const k=Math.min(bw/(((d-c)||1e-3)*cl),bh/((b-a)||1e-3));
+    const mp=(p,q)=>[bx+bw/2+(q-(c+d)/2)*cl*k,by+bh/2-(p-(a+b)/2)*k];
+    x.fillStyle='#121733';x.fillRect(bx-25,by-25,bw+50,bh+50);
+    pts.forEach(i=>{const [u,v]=mp(i[1],i[2]);const fl=r.f.has(i[0]);const dead=i[4]==='destroyed'||i[4]==='hidden';
+      if(fl){x.fillStyle='#45f08a';x.fillRect(u-6,v-6,12,12)}else if(dead){x.fillStyle='#3a4270';x.fillRect(u-3,v-3,6,6)}else{x.strokeStyle=ptColor(i[3]);x.lineWidth=3;x.strokeRect(u-6,v-6,12,12)}})}
+  ctxt('@DOH.INVADERS',1515,30,'#eef0ff');
+}
+{const d=document.createElement('div');d.className='inline';d.innerHTML='<span class="lbl">Story card</span><select id="cc-city" aria-label="City for the card"></select><button class="btn y" id="cc-go">⬇ City progress card</button><span class="save" id="cc-msg"></span>';$('sc-tot').after(d)}
+function fillCC(){const s=$('cc-city');const cur=s.value||(city&&city.code);const opts=DATA.cities.filter(c=>flashedOf(c.code).size||c.mine!=null);s.innerHTML=opts.map(c=>`<option value="${c.code}">${c.name}</option>`).join('');if(cur&&opts.some(c=>c.code===cur))s.value=cur}
+$('cc-go').onclick=async()=>{const code=$('cc-city').value;if(!code)return;const cv2=document.createElement('canvas');cv2.width=1080;cv2.height=1920;await drawCityCard(cv2,code);
+  cv2.toBlob(b=>saveImage(b,'city-'+code+'-'+TODAY()+'.png',$('cc-msg')),'image/png')};
+// ---- progress: sort + recent activity
+let SCSORT='most';try{SCSORT=localStorage.getItem('hp_scsort')||'most'}catch(e){}
+{const d=document.createElement('div');d.className='seg';d.id='sc-sort';d.innerHTML='<button data-s="most">Most flashed</button><button data-s="close">Closest to 100%</button>';$('sc-note').after(d);
+  d.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.s===SCSORT);b.onclick=()=>{SCSORT=b.dataset.s;try{localStorage.setItem('hp_scsort',SCSORT)}catch(e){};d.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderScore()}})}
+const _renderScoreX=renderScore;renderScore=function(){_renderScoreX();
+  if(SCSORT==='close'){const tb=$('sc-body');const rows=[...tb.querySelectorAll('tr')];const key=tr=>{const r=cityRow(tr.dataset.c);return !r||!r.left?1e9:r.left};rows.sort((a,b)=>key(a)-key(b));rows.forEach(tr=>tb.appendChild(tr))}
+  const ago=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);const ds=Object.values(FLT).filter(v=>v&&v!=='0');
+  const m30=ds.filter(v=>v>=ago(30)).length,m7=ds.filter(v=>v>=ago(7)).length;const last=ds.sort().slice(-1)[0];
+  const t=$('sc-tot');t.insertAdjacentHTML('beforeend',`<div class="stat"><b>${m7} / ${m30}</b><span>Flashed last 7 / 30 days</span></div><div class="stat"><b>${last?last.slice(5):'–'}</b><span>Last flash logged</span></div>`);
+  try{fillCC()}catch(e){}};
+// ---- trip + weather & daylight
+let TRIP=null,WX=null;
+{const t=document.createElement('div');t.id='tripbar';t.className='trip';t.hidden=true;$('p-plan').prepend(t);
+ const w=document.createElement('div');w.id='wx';w.className='wx';w.hidden=true;$('plan').before(w)}
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtD=s=>{const d=new Date(s+'T12:00:00');return WD[d.getDay()]+' '+d.getDate()+' '+MO[d.getMonth()]};
+function wxFromOM(j){if(!j||!j.daily)return null;const D=j.daily,Hh=j.hourly||{};const out=[];
+  for(let k=0;k<D.time.length;k++){const date=D.time[k],sr=(D.sunrise[k]||'').slice(11,16),ss=(D.sunset[k]||'').slice(11,16);
+    const hrs=[];(Hh.time||[]).forEach((t,n)=>{if(t.slice(0,10)!==date)return;const hh=t.slice(11,16);if(hh>=sr.slice(0,2)+':00'&&hh<ss&&(Hh.precipitation_probability[n]??0)<30)hrs.push(+hh.slice(0,2))});
+    const win=[];hrs.forEach(h=>{const l=win[win.length-1];if(l&&l[1]===h)l[1]=h+1;else win.push([h,h+1])});
+    out.push({date,sunrise:sr,sunset:ss,tmax:Math.round(D.temperature_2m_max[k]),tmin:Math.round(D.temperature_2m_min[k]),rain:Math.round((D.precipitation_sum[k]||0)*10)/10,dry:win.filter(w=>w[1]-w[0]>=1).map(w=>String(w[0]).padStart(2,'0')+'–'+String(w[1]).padStart(2,'0')).join(', ')})}
+  return out}
+function renderWx(){const el=$('wx');if(!WX||!WX.days||!WX.days.length||!city||WX.city!==city.code){el.hidden=true;return}
+  el.hidden=false;el.innerHTML=`<span class="lbl">Weather &amp; daylight · ${escapeHtml(city.name)}${WX.src?' <span class="note">('+WX.src+')</span>':''}</span>`+
+  WX.days.slice(0,5).map(d=>`<div class="wxrow"><b>${fmtD(d.date)}</b><span>☀ ${d.sunrise}–${d.sunset}</span><span>${d.tmin}–${d.tmax}°</span><span>${d.rain>0.2?'🌧 '+d.rain+' mm':'dry'}</span><span class="note">${d.dry?'best: '+d.dry:'no dry daylight window'}</span></div>`).join('')}
+function tripCity(){if(!TRIP||!TRIP.city)return null;return DATA.cities.find(c=>c.code===TRIP.city)||DATA.cities.find(c=>c.name.toLowerCase()===String(TRIP.city).toLowerCase())||null}
+function renderTrip(){const el=$('tripbar');const c=tripCity();if(!c||!TRIP.end||TRIP.end<TODAY()){el.hidden=true;return}
+  const n=Math.max(1,Math.round((Date.parse(TRIP.end)-Date.parse(TRIP.start))/864e5)+1);
+  el.hidden=false;el.innerHTML=`<span>✈ <b>${escapeHtml(c.name)}</b> · ${fmtD(TRIP.start)} – ${fmtD(TRIP.end)} (${n} day${n>1?'s':''})${TRIP.hotel&&TRIP.hotel.name?' · 🏨 '+escapeHtml(TRIP.hotel.name):''}</span><button class="btn y" id="trip-go">${city&&city.code===c.code?'Plan this trip':'Switch &amp; plan'}</button>`;
+  $('trip-go').onclick=()=>{if(!city||city.code!==c.code){sel.value=c.code;try{localStorage.setItem('hp_city',c.code)}catch(e){};loadCity(c.code)}
+    $('days').value=Math.min(7,n);const h=TRIP.hotel;if(h&&h.lat&&h.lon&&!HOTEL)saveHotel({lat:h.lat,lon:h.lon,name:h.name||'Hotel'});
+    if(TRIP.days&&TRIP.days.length){WX={city:c.code,days:TRIP.days,src:'trip forecast'};renderWx()}
+    $('plan').scrollIntoView({behavior:'smooth',block:'center'});toast('Trip loaded: '+n+' day'+(n>1?'s':'')+' in '+c.name)};
+  if(city&&city.code===c.code&&TRIP.days&&TRIP.days.length&&(!WX||WX.city!==c.code)){WX={city:c.code,days:TRIP.days,src:'trip forecast'};renderWx()}}
+function setTrip(t){TRIP=t&&t.city?t:null;renderTrip()}
+const _loadCityX=loadCity;loadCity=function(code){const r=_loadCityX.apply(this,arguments);try{renderTrip();renderWx();const cs=$('cc-city');if(cs&&[...cs.options].some(o=>o.value===code))cs.value=code}catch(e){}return r};
+// ---- detailed streets (Claude version; data embedded at build time)
+function drawStreets(lw){const S=city&&city.streets;if(!S)return false;const z=view.k;
+  const [la0,lo0]=unpx(0,H),[la1,lo1]=unpx(W,0);const mLa=(la1-la0)*.1,mLo=(lo1-lo0)*.1;
+  const vis=ln=>{if(!ln.bb){let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const p of ln){if(p[0]<a)a=p[0];if(p[0]>b)b=p[0];if(p[1]<c)c=p[1];if(p[1]>d)d=p[1]}ln.bb=[a,b,c,d]}const bb=ln.bb;return !(bb[1]<lo0-mLo||bb[0]>lo1+mLo||bb[3]<la0-mLa||bb[2]>la1+mLa)};
+  const stroke=(arr,w,col)=>{if(!arr)return;ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();for(const ln of arr){if(!vis(ln))continue;ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)})}ctx.stroke()};
+  if(z>30000)stroke(S.f,1,'rgba(150,165,215,.35)');
+  if(z>7000)stroke(S.m,Math.max(1,lw*.55),'rgba(205,180,110,.42)');
+  stroke(S.M,lw,'rgba(225,195,115,.7)');
+  if(z>45000&&S.L){ctx.save();ctx.font='600 11px "IBM Plex Sans",system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const used=[];
+    for(const l of S.L){if(!l[4]&&z<90000)continue;const [x,y]=px(l[2],l[1]);if(x<0||y<0||x>W||y>H)continue;if(used.some(u=>Math.abs(u[0]-x)<90&&Math.abs(u[1]-y)<18))continue;used.push([x,y]);
+      let a=l[3]*Math.PI/180;if(a>Math.PI/2)a-=Math.PI;if(a<-Math.PI/2)a+=Math.PI;ctx.translate(x,y);ctx.rotate(a);ctx.lineWidth=3;ctx.strokeStyle='rgba(10,13,28,.85)';ctx.strokeText(l[0],0,0);ctx.fillStyle='#d9dcf2';ctx.fillText(l[0],0,0);ctx.setTransform(dpr,0,0,dpr,0,0)}
+    ctx.restore()}
+  return true}
+
 // ================= STANDALONE (Leaflet + GPS) =================
 const STANDALONE=true;
 (function seed(){const S={"SD": ["SD_08"], "TK": ["TK_103", "TK_104", "TK_113", "TK_126", "TK_127", "TK_129", "TK_29", "TK_54", "TK_58", "TK_80", "TK_97"], "LA": ["LA_07", "LA_100", "LA_101", "LA_109", "LA_113", "LA_128", "LA_134", "LA_141", "LA_142", "LA_146", "LA_160", "LA_164", "LA_165", "LA_171", "LA_174", "LA_176", "LA_192", "LA_196", "LA_203", "LA_204", "LA_207", "LA_211", "LA_36", "LA_37", "LA_49", "LA_84", "LA_90"], "BGK": ["BGK_03", "BGK_10", "BGK_16", "BGK_20", "BGK_25", "BGK_36", "BGK_37", "BGK_38", "BGK_39", "BGK_41", "BGK_47"], "ELT": ["ELT_01", "ELT_02"], "LDN": ["LDN_03", "LDN_05", "LDN_06", "LDN_07", "LDN_08", "LDN_100", "LDN_102", "LDN_104", "LDN_106", "LDN_11", "LDN_110", "LDN_111", "LDN_116", "LDN_119", "LDN_12", "LDN_120", "LDN_121", "LDN_126", "LDN_13", "LDN_131", "LDN_133", "LDN_134", "LDN_136", "LDN_138", "LDN_139", "LDN_143", "LDN_144", "LDN_15", "LDN_150", "LDN_151", "LDN_152", "LDN_153", "LDN_157", "LDN_158", "LDN_159", "LDN_160", "LDN_161", "LDN_162", "LDN_163", "LDN_165", "LDN_166", "LDN_167", "LDN_168", "LDN_169", "LDN_170", "LDN_171", "LDN_172", "LDN_177", "LDN_178", "LDN_179", "LDN_180", "LDN_182", "LDN_183", "LDN_184", "LDN_185", "LDN_186", "LDN_187", "LDN_188", "LDN_189", "LDN_19", "LDN_190", "LDN_191", "LDN_192", "LDN_193", "LDN_20", "LDN_21", "LDN_22", "LDN_24", "LDN_25", "LDN_27", "LDN_29", "LDN_31", "LDN_32", "LDN_33", "LDN_35", "LDN_38", "LDN_43", "LDN_45", "LDN_46", "LDN_47", "LDN_48", "LDN_49", "LDN_51", "LDN_53", "LDN_54", "LDN_55", "LDN_56", "LDN_57", "LDN_58", "LDN_64", "LDN_67", "LDN_68", "LDN_69", "LDN_70", "LDN_72", "LDN_73", "LDN_76", "LDN_79", "LDN_82", "LDN_83", "LDN_87", "LDN_88", "LDN_91", "LDN_92", "LDN_93", "LDN_94", "LDN_96", "LDN_97", "LDN_99"], "ROM": ["ROM_05", "ROM_09", "ROM_10", "ROM_20", "ROM_21", "ROM_22", "ROM_25", "ROM_26", "ROM_28", "ROM_30", "ROM_31", "ROM_33", "ROM_34", "ROM_36", "ROM_37", "ROM_38", "ROM_40", "ROM_42", "ROM_43", "ROM_44", "ROM_46", "ROM_48", "ROM_49", "ROM_50", "ROM_53", "ROM_55", "ROM_56", "ROM_57", "ROM_58", "ROM_60", "ROM_61", "ROM_64", "ROM_67"], "PA": ["PA_10", "PA_1013", "PA_1032", "PA_1033", "PA_1101", "PA_1102", "PA_1127", "PA_1156", "PA_1160", "PA_117", "PA_1172", "PA_1213", "PA_1229", "PA_1249", "PA_1258", "PA_1275", "PA_1295", "PA_1303", "PA_1322", "PA_1361", "PA_1374", "PA_1424", "PA_1425", "PA_1468", "PA_178", "PA_194", "PA_22", "PA_249", "PA_273", "PA_277", "PA_28", "PA_34", "PA_341", "PA_35", "PA_37", "PA_372", "PA_464", "PA_465", "PA_472", "PA_48", "PA_480", "PA_50", "PA_503", "PA_51", "PA_510", "PA_544", "PA_572", "PA_580", "PA_585", "PA_586", "PA_65", "PA_654", "PA_698", "PA_718", "PA_734", "PA_74", "PA_754", "PA_755", "PA_756", "PA_769", "PA_818", "PA_836", "PA_837", "PA_862", "PA_878", "PA_879", "PA_91", "PA_926", "PA_997"], "NY": ["NY_100", "NY_101", "NY_115", "NY_116", "NY_136", "NY_147", "NY_148", "NY_149", "NY_151", "NY_153", "NY_154", "NY_155", "NY_156", "NY_157", "NY_159", "NY_160", "NY_161", "NY_162", "NY_163", "NY_165", "NY_167", "NY_168", "NY_169", "NY_170", "NY_171", "NY_172", "NY_176", "NY_183", "NY_185", "NY_216", "NY_218", "NY_27", "NY_31", "NY_33", "NY_36", "NY_79"], "HK": ["HK_05", "HK_105", "HK_110", "HK_111", "HK_113", "HK_115", "HK_116", "HK_117", "HK_118", "HK_119", "HK_122", "HK_130", "HK_20", "HK_25", "HK_54", "HK_60", "HK_78", "HK_79", "HK_80", "HK_92", "HK_94"], "WN": ["WN_02", "WN_03", "WN_04", "WN_05", "WN_06", "WN_08", "WN_09", "WN_10", "WN_12", "WN_13", "WN_14", "WN_15", "WN_16", "WN_17", "WN_21", "WN_23", "WN_24", "WN_25", "WN_27", "WN_28", "WN_29", "WN_30", "WN_31", "WN_32", "WN_33", "WN_34", "WN_35", "WN_36", "WN_37", "WN_38", "WN_39", "WN_40", "WN_41", "WN_42", "WN_44", "WN_45", "WN_46", "WN_47", "WN_48", "WN_49", "WN_50", "WN_51", "WN_54", "WN_56"], "SPACE": ["SPACE_02"]};for(const [code,ids] of Object.entries(S)){try{if(localStorage.getItem('hp_fl_'+code)===null)localStorage.setItem('hp_fl_'+code,JSON.stringify(ids))}catch(e){}}})();
@@ -973,7 +1092,10 @@ $('map').style.display='none';
 {const a=$('mc-row'),b=$('mc-list');if(a)a.remove();if(b)b.remove()}
 const lmapEl=document.createElement('div');lmapEl.id='lmap';lmapEl.style.cssText='position:absolute;inset:0';$('screen').prepend(lmapEl);
 const LM=L.map(lmapEl,{zoomControl:false,preferCanvas:true}).setView([51.5,-0.12],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(LM);
+const BASES={voyager:['https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png','© OpenStreetMap contributors © CARTO','Streets'],dark:['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png','© OpenStreetMap contributors © CARTO','Dark'],osm:['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png','© OpenStreetMap contributors','OSM']};
+let BASE='voyager';try{BASE=localStorage.getItem('hp_base')||'voyager'}catch(e){};if(!BASES[BASE])BASE='voyager';
+let BL=null;function setBase(k){if(BL)LM.removeLayer(BL);BASE=k;const b=BASES[k];BL=L.tileLayer(b[0],{maxZoom:19,subdomains:k==='osm'?'abc':'abcd',attribution:b[1]}).addTo(LM);BL.bringToBack();try{localStorage.setItem('hp_base',k)}catch(e){};lmapEl.classList.toggle('darkbase',k==='dark')}
+setBase(BASE);
 const LR=L.canvas({padding:.3,tolerance:10});let LInv=L.layerGroup().addTo(LM),LRoute=L.layerGroup().addTo(LM),LStart=L.layerGroup().addTo(LM),LMe=L.layerGroup().addTo(LM);
 let lastView='';
 function kToZoom(k,lat){return Math.max(2,Math.min(19,Math.log2(k*360*Math.cos(lat*Math.PI/180)/256)))}
@@ -1011,7 +1133,7 @@ const _runPlan=runPlan;runPlan=function(){_runPlan();view.k=0;fitRoute()};$('pla
 let ME=null,meAcc=0,gpsOn=false,watchId=null;
 const gpsBtn=document.createElement('button');gpsBtn.textContent='◎';gpsBtn.title='Show my location';gpsBtn.setAttribute('aria-label','Show my location');$('fit').after(gpsBtn);
 gpsBtn.onclick=()=>{if(!navigator.geolocation){toast('No GPS on this device.');return}
-  if(watchId===null){watchId=navigator.geolocation.watchPosition(p=>{ME=[p.coords.latitude,p.coords.longitude];meAcc=p.coords.accuracy;LMe.clearLayers();L.circle(ME,{radius:meAcc,color:'#2b8cff',weight:1,fillOpacity:.1}).addTo(LMe);L.circleMarker(ME,{radius:8,color:'#fff',weight:3,fillColor:'#2b8cff',fillOpacity:1}).addTo(LMe);if(!gpsOn){gpsOn=true;LM.setView(ME,16)}if(HUNT&&!$('hunt').hidden)renderHunt();updMeBtn()},e=>toast('Location blocked: '+e.message),{enableHighAccuracy:true,maximumAge:5000})}
+  if(watchId===null){watchId=navigator.geolocation.watchPosition(p=>{ME=[p.coords.latitude,p.coords.longitude];meAcc=p.coords.accuracy;LMe.clearLayers();L.circle(ME,{radius:meAcc,color:'#2b8cff',weight:1,fillOpacity:.1}).addTo(LMe);L.circleMarker(ME,{radius:8,color:'#fff',weight:3,fillColor:'#2b8cff',fillOpacity:1}).addTo(LMe);if(!gpsOn){gpsOn=true;LM.setView(ME,16)}if(HUNT&&!$('hunt').hidden)renderHunt();updMeBtn();onFix()},e=>toast('Location blocked: '+e.message),{enableHighAccuracy:true,maximumAge:5000})}
   else if(ME)LM.setView(ME,Math.max(LM.getZoom(),16));gpsBtn.classList.add('on')};
 function updMeBtn(){const b=$('me-start');if(b)b.hidden=!ME}
 function prevPoint(){if(ME)return ME;if(!HUNT)return start;for(let k=HUNT.idx-1;k>=0;k--){const i=invById(HUNT.stops[k]);if(i&&(HUNT.got.includes(i[0])||HUNT.missed.includes(i[0])))return [i[1],i[2]]}return HUNT.start}
@@ -1022,8 +1144,6 @@ $('export').onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const r
 // sessions + backup in localStorage
 const _close=renderHuntEnd;renderHuntEnd=function(){_close();const done=$('h-done'),x=$('h-x');const wrap=fn=>()=>{try{const l=JSON.parse(localStorage.getItem('hp_sessions')||'[]');if(HUNT&&HUNT.got.length){l.unshift(Object.assign({},HUNT));localStorage.setItem('hp_sessions',JSON.stringify(l.slice(0,30)))}}catch(e){};fn()};if(done){const f=done.onclick;done.onclick=wrap(f)}if(x){const f=x.onclick;x.onclick=wrap(f)}};
 try{SESSIONS=JSON.parse(localStorage.getItem('hp_sessions')||'[]')}catch(e){}
-const bk=document.createElement('div');bk.className='inline';bk.innerHTML='<button class="btn y" id="bkup">⬇ Backup my flashes</button><span class="note">Saves a text file you can paste back into Import on any device.</span>';$('appcount').after(bk);
-$('bkup').onclick=()=>{const all=[];DATA.cities.concat([SPACE]).forEach(c=>flashedOf(c.code).forEach(id=>all.push(id)));dlBlob(new Blob([all.sort().join(', ')],{type:'text/plain'}),'my-flashed-invaders.txt');toast('Backup saved: '+all.length+' invaders')};
 document.querySelectorAll('#gallery,#gal-n').forEach(e=>{const p=e.closest('.grid2>div');if(p)p.hidden=true});
 
 // ---- start from live location
@@ -1141,6 +1261,53 @@ $('plan').onclick=runPlan;
 const _plan0=plan;plan=function(o){const r=_plan0(o);if(!(o&&o.quiet))ensureGeo(route);return r};
 const _sd=showDay;showDay=function(d){_sd(d);ensureGeo(route)};
 const _rr=renderResult;renderResult=function(loop,el){_rr(loop,el);const host=el||$('result');if(RM&&RM.city===city.code&&route&&route.stops&&route.stops.length){const n=document.createElement('div');n.className='note';n.textContent='🛣 Walking distances follow real streets (OpenStreetMap).';host.appendChild(n)}};
+
+// ================= v22 STANDALONE EXTRAS =================
+// basemap switch
+{const b=document.createElement('button');b.id='basebtn';b.title='Map style';b.setAttribute('aria-label','Map style');const lab=()=>b.textContent=BASE==='dark'?'🌙':BASE==='osm'?'OSM':'🗺';lab();gpsBtn.after(b);
+ b.onclick=()=>{const ks=Object.keys(BASES);setBase(ks[(ks.indexOf(BASE)+1)%ks.length]);lab();toast('Map: '+BASES[BASE][2])}}
+// offline: service worker caches the app, data and every map tile you have viewed
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+window.addEventListener('offline',()=>toast('Offline – using the saved app, data and map tiles'));
+window.addEventListener('online',()=>toast('Back online'));
+// keep marks safe: persistent storage + Home Screen hint
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+(function(){const standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;let dis='';try{dis=localStorage.getItem('hp_a2hs')||''}catch(e){}
+ const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);if(standalone||(dis&&dis>new Date(Date.now()-14*864e5).toISOString()))return;
+ const d=document.createElement('div');d.className='trip';d.id='a2hs';d.innerHTML=`<span>📲 <b>Add to Home Screen</b> so your flashes stay saved${ios?' (Share ⬆ → Add to Home Screen)':' (browser menu → Install app / Add to Home screen)'}. Safari can clear sites you haven't opened for a week.</span><button class="btn" id="a2hs-x" aria-label="Dismiss">✕</button>`;
+ $('p-plan').prepend(d);$('a2hs-x').onclick=()=>{d.remove();try{localStorage.setItem('hp_a2hs',new Date().toISOString())}catch(e){}}})();
+// trip from the daily watch (public data repo)
+getData('trip.json').then(t=>{if(t)setTrip(t)}).catch(()=>{});
+// live weather & daylight for the selected city (Open-Meteo)
+const WXC={};
+function liveWx(){if(!city||!city.bbox)return;if(TRIP&&tripCity()&&tripCity().code===city.code&&TRIP.days&&TRIP.days.length)return;const code=city.code;
+  const hit=WXC[code];if(hit&&Date.now()-hit.t<36e5){WX=hit.wx;renderWx();return}
+  const [lo0,la0,lo1,la1]=city.bbox;const u=`https://api.open-meteo.com/v1/forecast?latitude=${((la0+la1)/2).toFixed(3)}&longitude=${((lo0+lo1)/2).toFixed(3)}&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum&hourly=precipitation_probability&timezone=auto&forecast_days=3`;
+  fetch(u).then(r=>r.ok?r.json():null).then(j=>{const days=wxFromOM(j);if(!days)return;const wx={city:code,days,src:'Open-Meteo, local time'};WXC[code]={t:Date.now(),wx};if(city&&city.code===code){WX=wx;renderWx()}}).catch(()=>{})}
+const _lcW=loadCity;loadCity=function(c){const r=_lcW.apply(this,arguments);try{liveWx()}catch(e){}return r};
+// GPS: nearest invader chip, proximity alert, compass, screen wake lock
+let HEADING=null,lastNear='',NEARCUR=null,WL=null;
+const near=document.createElement('div');near.id='near';near.className='near';near.hidden=true;
+near.innerHTML='<span class="arrow" id="near-ar">▲</span><span><b id="near-id"></b> <span id="near-d"></span> <span id="near-p"></span></span><button class="btn g" id="near-fl" hidden>✓ Flashed</button><button class="btn" id="near-cmp" title="Compass" aria-label="Compass">🧭</button>';
+$('screen').appendChild(near);
+armConfirm($('near-fl'),()=>{if(NEARCUR){flashWithUndo(NEARCUR[0],true);renderNear()}});
+function nearestOpen(){if(!ME||!city)return null;let b=null,bd=1e9;for(const i of city.inv){if(flashed.has(i[0])||EXCL.has(i[0])||MISSING.has(i[0]))continue;if(!(i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown'))continue;const d=hav(ME,[i[1],i[2]]);if(d<bd){bd=d;b=i}}return b?{i:b,d:bd}:null}
+function beep(){try{const A=window.AudioContext||window.webkitAudioContext;const a=beep.a||(beep.a=new A());const o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=880;g.gain.value=.06;o.connect(g);g.connect(a.destination);o.start();o.frequency.setValueAtTime(1320,a.currentTime+.12);o.stop(a.currentTime+.26)}catch(e){}}
+function renderNear(){const n=nearestOpen();if(!n||n.d>5){near.hidden=true;NEARCUR=null;return}near.hidden=false;NEARCUR=n.i;const m=Math.round(n.d*1000);
+  $('near-id').textContent=n.i[0];$('near-d').textContent=m<1000?m+' m':(m/1000).toFixed(1)+' km';$('near-p').textContent=n.i[3]+' pts';$('near-p').style.color=ptColor(n.i[3]);
+  $('near-fl').hidden=m>60;near.classList.toggle('hot',m<=40);near.dataset.b=bearing(ME,[n.i[1],n.i[2]]);updArrows();
+  if(m<=40&&lastNear!==n.i[0]){lastNear=n.i[0];if(navigator.vibrate)navigator.vibrate([200,100,200]);beep();toast(n.i[0]+' is about '+m+' m away!')}}
+function updArrows(){const b=+near.dataset.b||0;$('near-ar').style.transform=`rotate(${HEADING==null?b:b-HEADING}deg)`;
+  const ha=document.querySelector('#hunt .h-dir .arrow');if(ha&&ha.dataset.b!=null)ha.style.transform=`rotate(${HEADING==null?+ha.dataset.b:+ha.dataset.b-HEADING}deg)`}
+let arRaf=0;function onHeading(e){const h=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.absolute&&e.alpha!=null?360-e.alpha:null);if(h==null)return;HEADING=h;if(!arRaf)arRaf=requestAnimationFrame(()=>{arRaf=0;updArrows()})}
+function enableCompass(){const go=()=>{window.addEventListener('deviceorientationabsolute',onHeading,true);window.addEventListener('deviceorientation',onHeading,true);$('near-cmp').classList.add('on');toast('Compass on – arrows now point where to walk')};
+  if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')DeviceOrientationEvent.requestPermission().then(s=>s==='granted'?go():toast('Compass permission was not given')).catch(()=>toast('Compass not available'));else go()}
+$('near-cmp').onclick=enableCompass;
+async function wake(){try{if(navigator.wakeLock&&!WL){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(gpsOn||(HUNT&&!$('hunt').hidden)))wake()});
+function onFix(){renderNear();wake()}
+const _rhN=renderHunt;renderHunt=function(){const r=_rhN.apply(this,arguments);const ha=document.querySelector('#hunt .h-dir .arrow');if(ha){const m=/rotate\(([-\d.]+)deg\)/.exec(ha.style.transform||'');if(m)ha.dataset.b=m[1];updArrows()}if(HUNT&&!$('hunt').hidden)wake();return r};
+const _rfN=refresh;refresh=function(){const r=_rfN.apply(this,arguments);if(ME)renderNear();return r};
 
 loadCity(sel.value);
 initDb().then(initField);

@@ -140,6 +140,11 @@ dl.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-siz
 footer{font-size:12px;color:var(--muted);text-align:center}
 footer a{color:var(--cyan)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.links{display:grid;gap:6px;margin-top:4px}.links .inline{flex-wrap:wrap}
+.trip{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:2px solid var(--yellow);border-radius:8px;background:rgba(255,217,15,.08)}
+.wx{display:grid;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.wxrow{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;align-items:baseline}.wxrow b{min-width:88px}
+#sc-sort{margin-left:auto}
 </style>
 
 <div class="wrap">
@@ -459,21 +464,21 @@ async function drawCard(cv,s){
   for(let k=0;k<160;k++){x.fillStyle=k%3?'#2a3366':'#5a63a0';const a=(k*7919)%W2,b=(k*104729)%H2;x.fillRect(a,b,3,3)}
   x.strokeStyle='#2878ff';x.lineWidth=10;x.strokeRect(24,24,W2-48,H2-48);
   const ctxt=(t,y,sz,c)=>{x.font=P(sz);x.fillStyle=c;const w=x.measureText(t).width;x.fillText(t,(W2-w)/2,y)};
-  ctxt('HUNT REPORT',180,64,'#ffd90f');ctxt((s.cityName||'').toUpperCase(),290,52,'#22e3ff');ctxt(s.date,360,28,'#8d94bf');
-  ctxt('+'+s.got.length,600,190,'#eef0ff');ctxt('INVADERS FLASHED',690,36,'#ff5aa8');
-  ctxt('+'+(s.pts||0)+' PTS',820,56,'#45f08a');ctxt((s.km||0)+' KM  ·  '+fmtMin(s.mins||0).toUpperCase(),900,30,'#eef0ff');
+  ctxt('HUNT REPORT',320,56,'#ffd90f');ctxt((s.cityName||'').toUpperCase(),405,48,'#22e3ff');ctxt(s.date,460,26,'#8d94bf');
+  ctxt('+'+s.got.length,640,160,'#eef0ff');ctxt('INVADERS FLASHED',715,32,'#ff5aa8');
+  ctxt('+'+(s.pts||0)+' PTS',800,48,'#45f08a');ctxt((s.km||0)+' KM  ·  '+fmtMin(s.mins||0).toUpperCase(),860,26,'#eef0ff');
   // mini map
   const pts=s.got.map(id=>invById(id)).filter(Boolean),miss=(s.missed||[]).map(id=>invById(id)).filter(Boolean),all=pts.concat(miss);
   if(all.length){const la=all.map(i=>i[1]).concat([s.start[0]]),lo=all.map(i=>i[2]).concat([s.start[1]]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
-    const bx=140,by=980,bw=800,bh=560,cl=Math.cos((a+b)/2*Math.PI/180);const k=Math.min(bw/(((d-c)||1e-4)*cl),bh/((b-a)||1e-4));
+    const bx=160,by=930,bw=760,bh=420,cl=Math.cos((a+b)/2*Math.PI/180);const k=Math.min(bw/(((d-c)||1e-4)*cl),bh/((b-a)||1e-4));
     const mp=(p,q)=>[bx+bw/2+(q-(c+d)/2)*cl*k,by+bh/2-(p-(a+b)/2)*k];
     x.fillStyle='#121733';x.fillRect(bx-30,by-30,bw+60,bh+60);
     x.strokeStyle='#ff5aa8';x.lineWidth=6;x.setLineDash([18,12]);x.beginPath();let first=true;[[s.start[0],s.start[1]]].concat(pts.map(i=>[i[1],i[2]])).forEach(([p,q])=>{const [u,v]=mp(p,q);first?x.moveTo(u,v):x.lineTo(u,v);first=false});x.stroke();x.setLineDash([]);
     pts.forEach(i=>{const [u,v]=mp(i[1],i[2]);x.fillStyle=ptColor(i[3]);x.fillRect(u-14,v-14,28,28)});
     miss.forEach(i=>{const [u,v]=mp(i[1],i[2]);x.strokeStyle='#ff4d5e';x.lineWidth=6;x.beginPath();x.moveTo(u-12,v-12);x.lineTo(u+12,v+12);x.moveTo(u+12,v-12);x.lineTo(u-12,v+12);x.stroke()});
     const [u,v]=mp(s.start[0],s.start[1]);x.fillStyle='#ffd90f';x.beginPath();x.arc(u,v,12,0,7);x.fill();}
-  x.font=P(22);x.fillStyle='#8d94bf';const codes=s.got.slice(0,24).join('  ');let line='',yy=1650;codes.split('  ').forEach(w=>{if(x.measureText(line+w).width>900){ctxt(line.trim(),yy,22,'#8d94bf');yy+=40;line=''}line+=w+'  '});if(line)ctxt(line.trim(),yy,22,'#8d94bf');
-  ctxt('@DOH.INVADERS',1820,32,'#eef0ff');
+  x.font=P(22);x.fillStyle='#8d94bf';const codes=s.got.slice(0,10).join('  ')+(s.got.length>10?'  +'+(s.got.length-10):'');let line='',yy=1425;codes.split('  ').forEach(w=>{if(x.measureText(line+w).width>900){ctxt(line.trim(),yy,22,'#8d94bf');yy+=40;line=''}line+=w+'  '});if(line)ctxt(line.trim(),yy,22,'#8d94bf');
+  ctxt('@DOH.INVADERS',1515,30,'#eef0ff');
 }
 async function saveCard(s){const msg=$('h-msg')||$('sc-msg');let dl=null;try{dl=await window.claude.use('downloads')}catch(e){}
   if(!dl){if(msg)msg.textContent='Saving is not available in this view.';return}
@@ -656,6 +661,7 @@ async function initDb(){
     if(d.updated)$('src').textContent=DATA.source.replace(/to \d+ \w+ \d+/,'')+' · status checked '+d.updated;
     NEWS.changes=d.changes;renderNews();
     route=null;$('result').hidden=true;refresh()},()=>{});
+  db.doc('meta/trip').onSnapshot(s=>{setTrip(s.exists?s.data():null)},()=>{});
   db.doc('meta/news').onSnapshot(s=>{const v=s.exists?s.data():null;NEWS.items=(v&&v.items)||[];renderNews()},()=>{});
 }
 function subscribe(){
@@ -703,8 +709,8 @@ function draw(){
   for(let la=Math.floor(la0/dLat)*dLat;la<la1;la+=dLat){const y=px(la,0)[1];ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
   for(let lo=Math.floor(lo0/dLon)*dLon;lo<lo1;lo+=dLon){const x=px(0,lo)[0];ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
   const lw=Math.max(1.5,Math.min(5,view.k/2500));ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.strokeStyle='rgba(200,170,90,.55)';ctx.lineWidth=lw;
-  for(const ln of (city.roads||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+  if(!drawStreets(lw)){ctx.strokeStyle='rgba(200,170,90,.55)';ctx.lineWidth=lw;
+  for(const ln of (city.roads||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}}
   ctx.strokeStyle='rgba(180,190,230,.6)';ctx.lineWidth=Math.max(1,lw*.7);ctx.setLineDash([6,5]);
   for(const ln of (city.rails||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
   ctx.setLineDash([]);
@@ -774,6 +780,8 @@ function showCard(i){
   <div class="row">${cat==='dead'&&!fl?'':`<button class="btn ${fl?'':'g'}" id="c-fl">${fl?'Unmark':'✓ Flashed'}</button>`}
   <a class="btn y" href="${gmapsPoint(i[1],i[2])}" target="_blank" rel="noopener">Navigate</a>
   <a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Photos ↗</a>
+  <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener">Street View ↗</a>
+  <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener">spotter ↗</a>
   <button class="btn" id="c-start">Start here</button><button class="btn" id="c-x" aria-label="Close">✕</button></div>`;
   c.hidden=false;cardExtras(i);const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)';
   const f=$('c-fl');if(f)armConfirm(f,()=>flashWithUndo(i[0],!fl),fl?'Tap again to unmark':'Tap again to confirm');
@@ -929,6 +937,113 @@ $('export').onclick=async()=>{
   catch(e){msg.textContent=e&&e.code==='declined'?'Export cancelled.':'Could not export right now.';msg.className='save warn'}
 };
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
+
+/*EXTRAS*/
+// ================= v22 EXTRAS (shared by both versions) =================
+const TODAY=()=>new Date().toISOString().slice(0,10);
+// ---- generic file save: Claude downloads capability, else a normal browser download
+async function saveImage(blob,name,msg){let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
+  if(dl){try{await dl.save({filename:name,data:blob});if(msg)msg.textContent='Saved.';return true}catch(e){if(msg)msg.textContent=e&&e.code==='declined'?'Cancelled.':'Could not save right now.';return false}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);if(msg)msg.textContent='Saved.';return true}
+// ---- flash dates (activity stats): stamp ids newly added since the last refresh
+let FLT=null;try{FLT=JSON.parse(localStorage.getItem('hp_fltime')||'null')}catch(e){}
+if(!FLT){FLT={};DATA.cities.forEach(c=>flashedOf(c.code).forEach(id=>FLT[id]='0'))}
+let PREVFL=new Set();
+const _refreshX=refresh;refresh=function(){const r=_refreshX.apply(this,arguments);PREVFL=new Set(flashed);return r};
+const _persistX=persist;persist=function(){const add=[...flashed].filter(id=>!PREVFL.has(id)&&!FLT[id]);
+  if(add.length){const v=add.length>10?'0':TODAY();add.forEach(id=>FLT[id]=v);try{localStorage.setItem('hp_fltime',JSON.stringify(FLT))}catch(e){}}
+  return _persistX.apply(this,arguments)};
+// ---- backup (both versions)
+{const w=document.createElement('div');w.className='inline';w.innerHTML='<button class="btn y" id="bkup">⬇ Backup my flashes</button><span class="note" id="bknote"></span>';$('appcount').after(w)}
+function bkNote(){let t='';try{t=localStorage.getItem('hp_lastbk')||''}catch(e){};$('bknote').textContent=t?'Last backup: '+t+'. To restore, load the file in Import below.':'Saves a file you can load back with Import below, on any device.'}
+$('bkup').onclick=async()=>{const all=[];DATA.cities.concat([SPACE]).forEach(c=>flashedOf(c.code).forEach(id=>all.push(id)));
+  const txt="D'oh! Hunt Planner backup "+TODAY()+' ('+all.length+' invaders)\n'+all.sort().join(', ')+'\n';
+  const ok=await saveImage(new Blob([txt],{type:'text/plain'}),'my-flashed-invaders-'+TODAY()+'.txt',$('bknote'));
+  if(ok){try{localStorage.setItem('hp_lastbk',TODAY())}catch(e){};toast('Backup saved: '+all.length+' invaders');setTimeout(bkNote,2500)}};
+bkNote();
+// ---- info links
+const svUrl=(la,lo)=>`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${la},${lo}`;
+const spotUrl=id=>'https://www.google.com/search?q='+encodeURIComponent('"'+id+'" invader-spotter');
+const INFO_LINKS=[['invader-spotter: news','https://www.invader-spotter.art/news.php'],['invader-spotter: cities','https://www.invader-spotter.art/villes.php'],['invader-spotter: stats','https://www.invader-spotter.art/stats.php'],['space-invaders.com (official)','https://space-invaders.com'],['FlashInvaders app','https://apps.apple.com/app/id895180919'],['Reddit: Flash Invaders','https://www.reddit.com/search/?q=flash%20invaders&sort=new']];
+{const d=document.createElement('div');d.className='links';d.innerHTML='<span class="lbl">Info sources</span><div class="inline">'+INFO_LINKS.map(([t,u])=>`<a class="btn" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')+'</div>';$('newslist').after(d)}
+// ---- city progress card (Story 1080×1920, text kept inside Instagram's safe area: y 260–1530)
+function cityRow(code){const c=code==='SPACE'?SPACE:CITYBY.get(code)||DATA.cities.find(x=>x.code===code);if(!c)return null;const f=flashedOf(c.code);
+  const up=c.inv.filter(i=>i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown');const mine=c.inv.filter(i=>f.has(i[0]));const left=up.filter(i=>!f.has(i[0]));
+  return {c,f,n:mine.length,tot:c.inv.length,up:up.length,pts:mine.reduce((s,i)=>s+i[3],0)+(ADJ[c.code]||0),left:left.length,leftPts:left.reduce((s,i)=>s+i[3],0)}}
+async function drawCityCard(cv,code){
+  try{await document.fonts.load('40px "Press Start 2P"')}catch(e){}
+  const r=cityRow(code);const x=cv.getContext('2d'),W2=1080,H2=1920;const P=sz=>`${sz}px "Press Start 2P", monospace`;
+  x.fillStyle='#0a0d1c';x.fillRect(0,0,W2,H2);
+  for(let k=0;k<160;k++){x.fillStyle=k%3?'#2a3366':'#5a63a0';const a=(k*7919)%W2,b=(k*104729)%H2;x.fillRect(a,b,3,3)}
+  x.strokeStyle='#2878ff';x.lineWidth=10;x.strokeRect(24,24,W2-48,H2-48);
+  const ctxt=(t,y,sz,c)=>{x.font=P(sz);let s=sz;while(x.measureText(t).width>960&&s>16){s-=2;x.font=P(s)}x.fillStyle=c;const w=x.measureText(t).width;x.fillText(t,(W2-w)/2,y)};
+  ctxt('CITY PROGRESS',330,50,'#ffd90f');ctxt(r.c.name.toUpperCase(),420,60,'#22e3ff');ctxt(TODAY(),475,24,'#8d94bf');
+  ctxt(r.n+'/'+r.tot,630,120,'#eef0ff');ctxt('INVADERS FLASHED',700,30,'#ff5aa8');
+  const pct=r.tot?r.n/r.tot:0;x.fillStyle='#1b2250';x.fillRect(140,735,800,40);x.fillStyle='#45f08a';x.fillRect(140,735,Math.round(800*pct),40);x.strokeStyle='#eef0ff';x.lineWidth=4;x.strokeRect(140,735,800,40);
+  ctxt(Math.round(pct*100)+'%  ·  '+r.pts.toLocaleString('en-US')+' PTS',835,34,'#45f08a');
+  ctxt(r.left?(r.left+' STILL ON THE WALLS · '+r.leftPts+' PTS'):'CITY COMPLETE!',890,22,'#eef0ff');
+  // mini map of the city: flashed = dim, still to hunt = colour by points
+  const pts=r.c.inv.filter(i=>i[1]||i[2]);if(pts.length){const la=pts.map(i=>i[1]),lo=pts.map(i=>i[2]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
+    const bx=140,by=950,bw=800,bh=500,cl=Math.cos((a+b)/2*Math.PI/180);const k=Math.min(bw/(((d-c)||1e-3)*cl),bh/((b-a)||1e-3));
+    const mp=(p,q)=>[bx+bw/2+(q-(c+d)/2)*cl*k,by+bh/2-(p-(a+b)/2)*k];
+    x.fillStyle='#121733';x.fillRect(bx-25,by-25,bw+50,bh+50);
+    pts.forEach(i=>{const [u,v]=mp(i[1],i[2]);const fl=r.f.has(i[0]);const dead=i[4]==='destroyed'||i[4]==='hidden';
+      if(fl){x.fillStyle='#45f08a';x.fillRect(u-6,v-6,12,12)}else if(dead){x.fillStyle='#3a4270';x.fillRect(u-3,v-3,6,6)}else{x.strokeStyle=ptColor(i[3]);x.lineWidth=3;x.strokeRect(u-6,v-6,12,12)}})}
+  ctxt('@DOH.INVADERS',1515,30,'#eef0ff');
+}
+{const d=document.createElement('div');d.className='inline';d.innerHTML='<span class="lbl">Story card</span><select id="cc-city" aria-label="City for the card"></select><button class="btn y" id="cc-go">⬇ City progress card</button><span class="save" id="cc-msg"></span>';$('sc-tot').after(d)}
+function fillCC(){const s=$('cc-city');const cur=s.value||(city&&city.code);const opts=DATA.cities.filter(c=>flashedOf(c.code).size||c.mine!=null);s.innerHTML=opts.map(c=>`<option value="${c.code}">${c.name}</option>`).join('');if(cur&&opts.some(c=>c.code===cur))s.value=cur}
+$('cc-go').onclick=async()=>{const code=$('cc-city').value;if(!code)return;const cv2=document.createElement('canvas');cv2.width=1080;cv2.height=1920;await drawCityCard(cv2,code);
+  cv2.toBlob(b=>saveImage(b,'city-'+code+'-'+TODAY()+'.png',$('cc-msg')),'image/png')};
+// ---- progress: sort + recent activity
+let SCSORT='most';try{SCSORT=localStorage.getItem('hp_scsort')||'most'}catch(e){}
+{const d=document.createElement('div');d.className='seg';d.id='sc-sort';d.innerHTML='<button data-s="most">Most flashed</button><button data-s="close">Closest to 100%</button>';$('sc-note').after(d);
+  d.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.s===SCSORT);b.onclick=()=>{SCSORT=b.dataset.s;try{localStorage.setItem('hp_scsort',SCSORT)}catch(e){};d.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderScore()}})}
+const _renderScoreX=renderScore;renderScore=function(){_renderScoreX();
+  if(SCSORT==='close'){const tb=$('sc-body');const rows=[...tb.querySelectorAll('tr')];const key=tr=>{const r=cityRow(tr.dataset.c);return !r||!r.left?1e9:r.left};rows.sort((a,b)=>key(a)-key(b));rows.forEach(tr=>tb.appendChild(tr))}
+  const ago=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);const ds=Object.values(FLT).filter(v=>v&&v!=='0');
+  const m30=ds.filter(v=>v>=ago(30)).length,m7=ds.filter(v=>v>=ago(7)).length;const last=ds.sort().slice(-1)[0];
+  const t=$('sc-tot');t.insertAdjacentHTML('beforeend',`<div class="stat"><b>${m7} / ${m30}</b><span>Flashed last 7 / 30 days</span></div><div class="stat"><b>${last?last.slice(5):'–'}</b><span>Last flash logged</span></div>`);
+  try{fillCC()}catch(e){}};
+// ---- trip + weather & daylight
+let TRIP=null,WX=null;
+{const t=document.createElement('div');t.id='tripbar';t.className='trip';t.hidden=true;$('p-plan').prepend(t);
+ const w=document.createElement('div');w.id='wx';w.className='wx';w.hidden=true;$('plan').before(w)}
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtD=s=>{const d=new Date(s+'T12:00:00');return WD[d.getDay()]+' '+d.getDate()+' '+MO[d.getMonth()]};
+function wxFromOM(j){if(!j||!j.daily)return null;const D=j.daily,Hh=j.hourly||{};const out=[];
+  for(let k=0;k<D.time.length;k++){const date=D.time[k],sr=(D.sunrise[k]||'').slice(11,16),ss=(D.sunset[k]||'').slice(11,16);
+    const hrs=[];(Hh.time||[]).forEach((t,n)=>{if(t.slice(0,10)!==date)return;const hh=t.slice(11,16);if(hh>=sr.slice(0,2)+':00'&&hh<ss&&(Hh.precipitation_probability[n]??0)<30)hrs.push(+hh.slice(0,2))});
+    const win=[];hrs.forEach(h=>{const l=win[win.length-1];if(l&&l[1]===h)l[1]=h+1;else win.push([h,h+1])});
+    out.push({date,sunrise:sr,sunset:ss,tmax:Math.round(D.temperature_2m_max[k]),tmin:Math.round(D.temperature_2m_min[k]),rain:Math.round((D.precipitation_sum[k]||0)*10)/10,dry:win.filter(w=>w[1]-w[0]>=1).map(w=>String(w[0]).padStart(2,'0')+'–'+String(w[1]).padStart(2,'0')).join(', ')})}
+  return out}
+function renderWx(){const el=$('wx');if(!WX||!WX.days||!WX.days.length||!city||WX.city!==city.code){el.hidden=true;return}
+  el.hidden=false;el.innerHTML=`<span class="lbl">Weather &amp; daylight · ${escapeHtml(city.name)}${WX.src?' <span class="note">('+WX.src+')</span>':''}</span>`+
+  WX.days.slice(0,5).map(d=>`<div class="wxrow"><b>${fmtD(d.date)}</b><span>☀ ${d.sunrise}–${d.sunset}</span><span>${d.tmin}–${d.tmax}°</span><span>${d.rain>0.2?'🌧 '+d.rain+' mm':'dry'}</span><span class="note">${d.dry?'best: '+d.dry:'no dry daylight window'}</span></div>`).join('')}
+function tripCity(){if(!TRIP||!TRIP.city)return null;return DATA.cities.find(c=>c.code===TRIP.city)||DATA.cities.find(c=>c.name.toLowerCase()===String(TRIP.city).toLowerCase())||null}
+function renderTrip(){const el=$('tripbar');const c=tripCity();if(!c||!TRIP.end||TRIP.end<TODAY()){el.hidden=true;return}
+  const n=Math.max(1,Math.round((Date.parse(TRIP.end)-Date.parse(TRIP.start))/864e5)+1);
+  el.hidden=false;el.innerHTML=`<span>✈ <b>${escapeHtml(c.name)}</b> · ${fmtD(TRIP.start)} – ${fmtD(TRIP.end)} (${n} day${n>1?'s':''})${TRIP.hotel&&TRIP.hotel.name?' · 🏨 '+escapeHtml(TRIP.hotel.name):''}</span><button class="btn y" id="trip-go">${city&&city.code===c.code?'Plan this trip':'Switch &amp; plan'}</button>`;
+  $('trip-go').onclick=()=>{if(!city||city.code!==c.code){sel.value=c.code;try{localStorage.setItem('hp_city',c.code)}catch(e){};loadCity(c.code)}
+    $('days').value=Math.min(7,n);const h=TRIP.hotel;if(h&&h.lat&&h.lon&&!HOTEL)saveHotel({lat:h.lat,lon:h.lon,name:h.name||'Hotel'});
+    if(TRIP.days&&TRIP.days.length){WX={city:c.code,days:TRIP.days,src:'trip forecast'};renderWx()}
+    $('plan').scrollIntoView({behavior:'smooth',block:'center'});toast('Trip loaded: '+n+' day'+(n>1?'s':'')+' in '+c.name)};
+  if(city&&city.code===c.code&&TRIP.days&&TRIP.days.length&&(!WX||WX.city!==c.code)){WX={city:c.code,days:TRIP.days,src:'trip forecast'};renderWx()}}
+function setTrip(t){TRIP=t&&t.city?t:null;renderTrip()}
+const _loadCityX=loadCity;loadCity=function(code){const r=_loadCityX.apply(this,arguments);try{renderTrip();renderWx();const cs=$('cc-city');if(cs&&[...cs.options].some(o=>o.value===code))cs.value=code}catch(e){}return r};
+// ---- detailed streets (Claude version; data embedded at build time)
+function drawStreets(lw){const S=city&&city.streets;if(!S)return false;const z=view.k;
+  const [la0,lo0]=unpx(0,H),[la1,lo1]=unpx(W,0);const mLa=(la1-la0)*.1,mLo=(lo1-lo0)*.1;
+  const vis=ln=>{if(!ln.bb){let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const p of ln){if(p[0]<a)a=p[0];if(p[0]>b)b=p[0];if(p[1]<c)c=p[1];if(p[1]>d)d=p[1]}ln.bb=[a,b,c,d]}const bb=ln.bb;return !(bb[1]<lo0-mLo||bb[0]>lo1+mLo||bb[3]<la0-mLa||bb[2]>la1+mLa)};
+  const stroke=(arr,w,col)=>{if(!arr)return;ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();for(const ln of arr){if(!vis(ln))continue;ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)})}ctx.stroke()};
+  if(z>30000)stroke(S.f,1,'rgba(150,165,215,.35)');
+  if(z>7000)stroke(S.m,Math.max(1,lw*.55),'rgba(205,180,110,.42)');
+  stroke(S.M,lw,'rgba(225,195,115,.7)');
+  if(z>45000&&S.L){ctx.save();ctx.font='600 11px "IBM Plex Sans",system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const used=[];
+    for(const l of S.L){if(!l[4]&&z<90000)continue;const [x,y]=px(l[2],l[1]);if(x<0||y<0||x>W||y>H)continue;if(used.some(u=>Math.abs(u[0]-x)<90&&Math.abs(u[1]-y)<18))continue;used.push([x,y]);
+      let a=l[3]*Math.PI/180;if(a>Math.PI/2)a-=Math.PI;if(a<-Math.PI/2)a+=Math.PI;ctx.translate(x,y);ctx.rotate(a);ctx.lineWidth=3;ctx.strokeStyle='rgba(10,13,28,.85)';ctx.strokeText(l[0],0,0);ctx.fillStyle='#d9dcf2';ctx.fillText(l[0],0,0);ctx.setTransform(dpr,0,0,dpr,0,0)}
+    ctx.restore()}
+  return true}
 
 loadCity(sel.value);
 initDb().then(initField);
