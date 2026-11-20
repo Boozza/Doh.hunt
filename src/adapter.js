@@ -6,11 +6,13 @@ function applyStatus(ch){const MAP={destroyed:'destroyed',degraded:'damaged',dam
   Object.entries(ch||{}).forEach(([id,v])=>{const i=idx.get(id);if(!i||!v)return;const st=MAP[v.type];if(st){i[4]=st;i[5]=v.type+' on '+(v.date||'')+' (invader-spotter)'}});
   NEWS.changes=ch||{}}
 applyStatus(__CHANGES__);NEWS.items=__ITEMS__;ADJ={LDN:860};
+const DATA_URL='https://raw.githubusercontent.com/Boozza/Doh-data/main/';
+const getData=f=>fetch(DATA_URL+f+'?t='+Math.floor(Date.now()/3e5),{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).catch(()=>fetch('data/'+f,{cache:'no-store'}).then(r=>r.ok?r.json():null));
 // live data files (updated daily in the repo → Netlify redeploys)
-fetch('data/status.json?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(!d||!d.changes)return;applyStatus(d.changes);
+getData('status.json').then(d=>{if(!d||!d.changes)return;applyStatus(d.changes);
   if(d.updated)$('src').textContent=DATA.source.replace(/to \d+ \w+ \d+/,'')+' · status checked '+d.updated;
   try{renderNews()}catch(e){};if(city){route=null;$('result').hidden=true;refresh()}}).catch(()=>{});
-fetch('data/news.json?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&Array.isArray(d.items)){NEWS.items=d.items;try{renderNews()}catch(e){}}}).catch(()=>{});
+getData('news.json').then(d=>{if(d&&Array.isArray(d.items)){NEWS.items=d.items;try{renderNews()}catch(e){}}}).catch(()=>{});
 setTimeout(()=>{const n=$('adjnote');if(n){n.textContent='* London includes +860 for LDN_163–193, which have no points in the community data (calibrated to the official score of 12,120 on 19 Nov 2026).';n.hidden=false}},0);
 $('map').style.display='none';
 {const a=$('mc-row'),b=$('mc-list');if(a)a.remove();if(b)b.remove()}
