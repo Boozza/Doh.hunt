@@ -780,7 +780,7 @@ function showCard(i){
   <div class="row">${cat==='dead'&&!fl?'':`<button class="btn ${fl?'':'g'}" id="c-fl">${fl?'Unmark':'✓ Flashed'}</button>`}
   <a class="btn y" href="${gmapsPoint(i[1],i[2])}" target="_blank" rel="noopener">Navigate</a>
   <a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Photos ↗</a>
-  <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener">Street View ↗</a>
+  <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener" title="Satellite view; drag the yellow figure onto a blue street line for real Street View">Satellite ↗</a>
   <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener">spotter ↗</a>
   <button class="btn" id="c-start">Start here</button><button class="btn" id="c-x" aria-label="Close">✕</button></div>`;
   c.hidden=false;cardExtras(i);const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)';
@@ -962,7 +962,7 @@ $('bkup').onclick=async()=>{const all=[];DATA.cities.concat([SPACE]).forEach(c=>
   if(ok){try{localStorage.setItem('hp_lastbk',TODAY())}catch(e){};toast('Backup saved: '+all.length+' invaders');setTimeout(bkNote,2500)}};
 bkNote();
 // ---- info links
-const svUrl=(la,lo)=>`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${la},${lo}`;
+const svUrl=(la,lo)=>`https://www.google.com/maps/@?api=1&map_action=map&center=${la},${lo}&zoom=20&basemap=satellite`;
 const spotUrl=id=>'https://www.google.com/search?q='+encodeURIComponent('"'+id+'" invader-spotter');
 const INFO_LINKS=[['invader-spotter: news','https://www.invader-spotter.art/news.php'],['invader-spotter: cities','https://www.invader-spotter.art/villes.php'],['invader-spotter: stats','https://www.invader-spotter.art/stats.php'],['space-invaders.com (official)','https://space-invaders.com'],['FlashInvaders app','https://apps.apple.com/app/id895180919'],['Reddit: Flash Invaders','https://www.reddit.com/search/?q=flash%20invaders&sort=new']];
 {const d=document.createElement('div');d.className='links';d.innerHTML='<span class="lbl">Info sources</span><div class="inline">'+INFO_LINKS.map(([t,u])=>`<a class="btn" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')+'</div>';$('newslist').after(d)}
