@@ -1,0 +1,936 @@
+<title>D'oh! Hunt Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: arcade cabinet — header strip, radar map as the screen, control panel below (side panel on wide screens). Single dark look by design. */
+:root{
+  --bg:#0a0d1c; --panel:#121733; --panel2:#1a2147; --line:#2a3366;
+  --fg:#eef0ff; --muted:#8d94bf; --yellow:#ffd90f; --pink:#ff5aa8; --cyan:#22e3ff; --green:#45f08a; --orange:#ff9a3c; --red:#ff4d5e;
+  --water:#0c1c3d; --land:#16264a; --river:#1f4f8f; --grid:#1b2650;
+  --f-display:"Press Start 2P",ui-monospace,monospace;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;justify-content:space-between}
+.logo{font-family:var(--f-display);font-size:clamp(14px,3.4vw,20px);letter-spacing:.04em;color:var(--yellow);text-shadow:3px 3px 0 #5a3e00;line-height:1.5}
+.logo small{display:block;font-size:.52em;color:var(--cyan);text-shadow:none;letter-spacing:.12em}
+.citysel{display:flex;align-items:center;gap:8px}
+.citysel label{font-family:var(--f-display);font-size:9px;color:var(--muted);letter-spacing:.1em}
+select{background:var(--panel2);border:2px solid var(--line);border-radius:6px;padding:8px 10px;min-width:180px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.stat b{display:block;font-family:var(--f-mono);font-size:22px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat.hl b{color:var(--yellow)}
+.main{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:900px){.main{grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)}}
+.screen{position:relative;background:#141c3e;border:3px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;height:min(62vh,640px);min-height:360px;touch-action:none}
+canvas{display:block;width:100%;height:100%;cursor:grab}
+.maptools{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px}
+.maptools button,.chipbtn{background:rgba(18,23,51,.9);border:1px solid var(--line);border-radius:6px;min-width:38px;height:38px;padding:0 10px;cursor:pointer}
+.maptools button:hover,.chipbtn:hover{border-color:var(--cyan)}
+.maptools button.on{border-color:var(--yellow);color:var(--yellow)}
+.legend{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px 10px;background:rgba(10,13,28,.82);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:11px;color:var(--muted);max-width:calc(100% - 20px)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.hint{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--yellow);color:#1a1400;font-weight:600;font-size:13px;border-radius:6px;padding:6px 10px}
+.card{position:absolute;left:10px;top:10px;width:min(290px,calc(100% - 70px));background:var(--panel);border:2px solid var(--yellow);border-radius:10px;padding:12px;display:grid;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.card h3{margin:0;font-family:var(--f-display);font-size:12px;color:var(--yellow);display:flex;justify-content:space-between;gap:8px}
+.card .meta{font-size:13px;color:var(--muted)}
+.card .row{display:flex;flex-wrap:wrap;gap:6px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;min-width:0;display:flex;flex-direction:column}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;background:none;border:0;border-bottom:3px solid transparent;padding:12px 6px;font-family:var(--f-display);font-size:10px;letter-spacing:.06em;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--yellow);border-bottom-color:var(--yellow)}
+.tabbody{padding:14px;display:grid;gap:12px;align-content:start}
+.field{display:grid;gap:5px}
+.field label,.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.inline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=number],input[type=text],textarea{background:var(--panel2);border:2px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+textarea{font-family:var(--f-mono);min-height:70px;resize:vertical}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{background:var(--panel2);border:0;padding:7px 12px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--yellow);color:#1a1400;font-weight:600}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--yellow)}
+.go{background:var(--pink);border:0;border-radius:8px;padding:13px;font-family:var(--f-display);font-size:12px;letter-spacing:.06em;color:#fff;cursor:pointer;box-shadow:0 4px 0 #8f1f57}
+.go:active{transform:translateY(2px);box-shadow:0 2px 0 #8f1f57}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer;font-size:13px;text-decoration:none;color:var(--fg);display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--cyan)}
+.btn.y{border-color:var(--yellow);color:var(--yellow)}
+.btn.g{border-color:var(--green);color:var(--green)}
+.result{border:2px dashed var(--line);border-radius:10px;padding:12px;display:grid;gap:10px}
+.result .big{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.result .big b{display:block;font-family:var(--f-mono);font-size:19px;color:var(--yellow);font-variant-numeric:tabular-nums}
+.result .big span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+ol.route,ul.list{margin:0;padding:0;list-style:none;display:grid;gap:4px;max-height:340px;overflow:auto}
+ol.route li.leg{background:none;padding:2px 9px;font-size:12px}
+ol.route li,ul.list li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--panel2);border-radius:6px;padding:6px 9px;font-size:13px}
+.num{font-family:var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;min-width:22px}
+.pts{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.tag{font-size:11px;border-radius:4px;padding:1px 6px;border:1px solid var(--line);color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+.note b{color:var(--fg)}
+.save{font-size:12px;color:var(--muted)}
+.save.ok{color:var(--green)}
+.save.warn{color:var(--orange)}
+.score{padding:14px;display:grid;gap:12px}
+.sc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;justify-content:space-between}
+.sc-head h2{margin:0;font-family:var(--f-display);font-size:16px;color:var(--yellow);text-shadow:2px 2px 0 #5a3e00}
+.tblwrap{overflow-x:auto}
+table.sc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:560px}
+table.sc th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:500}
+table.sc th:first-child,table.sc td:first-child{text-align:left}
+table.sc td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--panel2);font-family:var(--f-mono);font-size:14px}
+table.sc td:first-child{font-family:var(--f-body);font-weight:500}
+table.sc tbody tr{cursor:pointer}table.sc tbody tr:hover{background:var(--panel2)}
+table.sc tfoot td{color:var(--yellow);font-weight:600;border-top:2px solid var(--line);border-bottom:0}
+.bar{display:inline-block;width:52px;height:6px;background:var(--panel2);border-radius:3px;vertical-align:middle;margin-left:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green)}
+.badge{display:inline-block;margin-left:5px;background:var(--pink);color:#fff;border-radius:9px;padding:1px 6px;font-size:9px;vertical-align:1px}
+ul.news li{grid-template-columns:auto 1fr auto;cursor:pointer}
+ul.news .d{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.chip{font-size:10px;letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:2px 6px;font-weight:600}
+.chip.reactivated,.chip.restored{background:rgba(69,240,138,.15);color:var(--green)}
+.chip.destroyed{background:rgba(255,77,94,.15);color:var(--red)}
+.chip.degraded{background:rgba(255,154,60,.15);color:var(--orange)}
+.chip.new{background:rgba(34,227,255,.15);color:var(--cyan)}
+.opp{color:var(--green);font-weight:600;font-size:11px}
+.hunt{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;max-width:640px;margin:0 auto}
+.h-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--f-display);font-size:11px;color:var(--cyan)}
+.h-bar{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}.h-bar i{display:block;height:100%;background:var(--green)}
+.h-main{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;justify-items:center;text-align:center}
+.h-code{font-family:var(--f-display);font-size:clamp(26px,9vw,44px);color:var(--fg)}
+.h-pts{font-family:var(--f-mono);font-size:18px;font-weight:600}
+.h-dir{font-family:var(--f-mono);font-size:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.arrow{display:inline-block;color:var(--yellow);font-size:26px}
+.h-ph{max-width:100%;max-height:220px;border-radius:8px}
+.h-nav{text-align:center;text-decoration:none;display:block;font-size:15px;padding:16px}
+.h-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.h-acts.small{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.h-big{border:2px solid var(--line);background:var(--panel2);border-radius:10px;padding:18px 8px;font-family:var(--f-display);font-size:12px;cursor:pointer}
+.h-big.g{background:var(--green);color:#062b15;border-color:var(--green)}.h-big.r{border-color:var(--red);color:var(--red)}
+.mic.on{background:var(--pink);color:#fff;border-color:var(--pink)}
+.toast{width:max-content;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--yellow);color:#1a1400;font-weight:600;border-radius:8px;padding:10px 14px;max-width:calc(100% - 32px);display:flex;gap:10px;align-items:center}
+.toast .btn{background:#1a1400;color:var(--yellow);border-color:#1a1400}
+.grid2{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:800px){.grid2{grid-template-columns:1fr 1fr}}
+.grid2>div{min-width:0}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-top:6px}
+.gph{position:relative;padding:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel2);cursor:pointer;aspect-ratio:1;max-width:100%}
+.gph img{width:100%;height:100%;object-fit:cover;display:block}.gph span{position:absolute;left:0;right:0;bottom:0;background:rgba(10,13,28,.8);font-family:var(--f-mono);font-size:10px;padding:2px}
+.filters{position:absolute;top:10px;left:10px;right:60px;display:flex;flex-wrap:wrap;gap:6px;z-index:501}
+.fchip{display:inline-flex;align-items:center;gap:6px;background:rgba(10,13,28,.88);border:1px solid var(--line);border-radius:16px;padding:5px 10px;font-size:12px;color:var(--muted);cursor:pointer}
+.fchip i{width:9px;height:9px;border-radius:50%;border:2px solid var(--c)}.fchip.on{color:var(--fg);border-color:var(--c)}.fchip.on i{background:var(--c)}
+.fchip b{font-family:var(--f-mono);font-weight:500;color:var(--muted)}
+.card{overflow:auto}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:13px}dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;min-width:0}.mono{font-family:var(--f-mono);font-size:12px}
+.btn.armed{background:var(--yellow)!important;color:#1a1400!important;border-color:var(--yellow)!important;font-weight:600}
+.mrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
+.mrow .mtx{flex:1;min-width:0;display:flex;flex-direction:column}.mrow .mtx b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mrow .mtx span{font-size:11.5px;color:var(--muted)}
+.mdot{width:10px;height:10px;border-radius:50%;flex:none}#mc-btn.on{outline:2px solid #ffd90f}.hotelbox>*{min-width:0}
+.hotelbox{border:1px solid var(--line);border-radius:8px;padding:10px;display:grid;gap:8px}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+footer{font-size:12px;color:var(--muted);text-align:center}
+footer a{color:var(--cyan)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="logo">D'OH! HUNT PLANNER<small>@DOH.INVADERS · ROUTE MACHINE</small></div>
+    <div class="citysel"><button class="btn mic" id="mic-top" title="Say an invader number to mark it flashed">🎤</button><button class="btn y" id="resume" hidden>▶ Resume hunt</button><label for="city">CITY</label><select id="city"></select></div>
+  </header>
+
+  <section class="stats" aria-label="City stats">
+    <div class="stat"><b id="s-total">–</b><span>On record</span></div>
+    <div class="stat"><b id="s-active">–</b><span>Still up</span></div>
+    <div class="stat hl"><b id="s-flashed">–</b><span>Marked flashed</span></div>
+    <div class="stat"><b id="s-left">–</b><span>Left to hunt</span></div>
+    <div class="stat"><b id="s-pts">–</b><span>Pts available</span></div>
+  </section>
+
+  <div class="main">
+    <div class="screen" id="screen">
+      <div class="filters" id="filters" role="group" aria-label="Show on map"></div>
+      <canvas id="map" aria-label="Map of invaders in the selected city"></canvas>
+      <div class="maptools">
+        <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+        <button id="zout" title="Zoom out" aria-label="Zoom out">−</button>
+        <button id="fit" title="Fit city" aria-label="Fit city">⤢</button>
+        <button id="startmode" title="Set start point" aria-label="Set start point">⚑</button>
+      </div>
+      <div class="hint" id="hint" hidden>Tap the map to set your start</div>
+      <div class="card" id="card" hidden></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="t-plan" aria-selected="true">PLAN</button>
+        <button role="tab" id="t-list" aria-selected="false">TARGETS</button>
+        <button role="tab" id="t-mark" aria-selected="false">MARK</button>
+        <button role="tab" id="t-news" aria-selected="false">NEWS<span id="nbadge" class="badge" hidden></span></button>
+      </div>
+
+      <div class="tabbody" id="p-plan">
+        <div class="hotelbox">
+          <div class="inline" style="justify-content:space-between"><span class="lbl">🏨 Hotel / base</span><span class="note" id="hotelname">not set</span></div>
+          <div class="inline">
+            <button class="btn" id="h-setmap">Set on map</button>
+            <button class="btn" id="h-paste">Paste location</button>
+            <button class="btn" id="h-clear" hidden>Remove</button>
+          </div>
+          <div class="inline" id="mc-row"><button class="btn y" id="mc-btn">Ⓜ Marriott hotels</button><span class="note" id="mc-upd"></span></div>
+          <div id="mc-list" style="min-width:0"></div>
+          <div class="inline" id="h-pastebox" hidden>
+            <input type="text" id="h-txt" placeholder="Google Maps link or 41.8925, 12.4770" aria-label="Hotel location">
+            <input type="text" id="h-nm" placeholder="Hotel name (optional)" aria-label="Hotel name">
+            <button class="btn g" id="h-save">Save hotel</button>
+          </div>
+        </div>
+        <div class="field"><span class="lbl">Start from</span>
+          <div class="seg" id="startsrc"><button data-s="hotel">🏨 Hotel</button><button data-s="gps" id="ss-gps">◎ My location</button><button data-s="pin">⚑ Map pin</button></div>
+        </div>
+        <div class="note" id="startnote"></div>
+        <div class="field">
+          <span class="lbl">Budget</span>
+          <div class="inline">
+            <div class="seg" id="mode"><button data-m="time" class="on">Time</button><button data-m="dist">Distance</button></div>
+            <input id="budget" type="number" min="10" step="10" value="120" style="width:96px" aria-label="Budget">
+            <span id="unit" class="note">minutes</span>
+          </div>
+        </div>
+        <div class="inline">
+          <div class="field" style="flex:1;min-width:120px"><label for="speed">Walking km/h</label><input id="speed" type="number" min="2" max="8" step="0.5" value="4.5"></div>
+          <div class="field" style="flex:1;min-width:120px"><label for="stop">Min per flash</label><input id="stop" type="number" min="0" max="15" step="1" value="2"></div>
+        </div>
+        <div class="field"><span class="lbl">Getting around</span>
+          <div class="seg" id="travel"><button data-t="walk" class="on">🚶 Walk</button><button data-t="transit">🚇 + Transit</button><button data-t="taxi">🚕 + Taxi</button></div>
+          <div class="inline" id="mwrap" hidden><label for="maxwalk" class="note">Walk legs up to</label><input id="maxwalk" type="number" min="0.2" max="5" step="0.1" value="1" style="width:80px"><span class="note">km, longer hops ride</span></div>
+        </div>
+        <div class="field"><label for="days">Days (trip planner: one route per day from the same start)</label><input id="days" type="number" min="1" max="7" value="1" style="width:96px"></div>
+        <label class="check"><input type="checkbox" id="loop" checked> Loop back to start</label>
+        <label class="check"><input type="checkbox" id="dmg" checked> Include damaged pieces</label>
+        <button class="go" id="plan">PLAN MY HUNT</button>
+        <div class="result" id="result" hidden></div>
+      </div>
+
+      <div class="tabbody" id="p-list" hidden>
+        <div class="result" style="gap:8px">
+          <span class="lbl">See them on a real Google map</span>
+          <p class="note" style="margin:0">Export what's left in this city, then import it in <a href="https://www.google.com/maps/d/" target="_blank" rel="noopener" style="color:var(--cyan)">Google My Maps</a>: Create a new map → Import → pick the file → choose <b>latitude/longitude</b> for position and <b>name</b> for the title. Style by the <b>points</b> column for colors. The map then shows in the Google Maps app under Saved → Maps.</p>
+          <div class="inline"><button class="btn y" id="export">⬇ Export CSV for Google My Maps</button><span class="save" id="exportmsg"></span></div>
+        </div>
+        <div class="inline"><span class="lbl">Sort</span>
+          <div class="seg" id="sort"><button data-s="near" class="on">Nearest to start</button><button data-s="pts">Points</button></div>
+        </div>
+        <ul class="list" id="targets"></ul>
+      </div>
+
+      <div class="tabbody" id="p-news" hidden>
+        <div class="inline"><div class="seg" id="nfilter"><button data-f="mine" class="on">My cities</button><button data-f="all">Everywhere</button></div><label class="check" style="font-size:13px"><input type="checkbox" id="nopps"> New targets only</label></div>
+        <ul class="list news" id="newslist"></ul>
+        <p class="note" style="margin:0">From invader-spotter, updated each morning by your daily watch. <b style="color:var(--green)">NEW TARGET</b> = back on the wall in a city of yours and not flashed yet.</p>
+      </div>
+      <div class="tabbody" id="p-mark" hidden>
+        <p class="note">Mark what you already flashed in the app, so the planner skips it. Type the invader numbers for this city, ranges allowed.</p>
+        <div class="field"><label for="bulk">Numbers, e.g. 1-12, 15, 31</label><textarea id="bulk" placeholder="1-12, 15, 31"></textarea></div>
+        <div class="inline">
+          <button class="btn g" id="bulkadd">Mark as flashed</button>
+          <button class="btn" id="bulkrm">Unmark these</button>
+          <span id="clearwrap"><button class="btn" id="clear">Clear city…</button></span>
+        </div>
+        <div class="note" id="appcount"></div>
+        <div class="result" style="gap:8px">
+          <span class="lbl">Import from a file or a list</span>
+          <p class="note" style="margin:0">Any text, CSV or JSON file that contains invader codes like <b>LDN_67</b> or <b>PA_1234</b> works, for every city at once. You can also paste the list.</p>
+          <input type="file" id="impfile" accept=".txt,.csv,.json,.tsv,text/plain,text/csv,application/json" aria-label="Choose a file to import">
+          <textarea id="imptext" placeholder="LDN_01, LDN_02, PA_1023, ROM_34 …" aria-label="Paste invader codes"></textarea>
+          <div class="inline"><button class="btn g" id="impgo">Import as flashed</button><span class="save" id="impmsg"></span></div>
+        </div>
+        <div class="save" id="save">Loading saved marks…</div>
+      </div>
+    </div>
+  </div>
+
+  <section class="panel score" aria-labelledby="sc-h">
+    <div class="sc-head"><h2 id="sc-h">HIGH SCORE</h2><span class="note" id="sc-note"></span></div>
+    <div class="stats" id="sc-tot"></div>
+    <div class="grid2"><div><span class="lbl">Recent hunts</span><ol class="route" id="sessions" style="margin-top:6px"></ol><span class="save" id="sc-msg"></span></div>
+    <div><span class="lbl">My hunt photos <span id="gal-n"></span></span><div class="gallery" id="gallery"></div></div></div>
+    <div class="tblwrap"><table class="sc"><thead><tr><th>City</th><th>Flashed</th><th>On record</th><th>Still up</th><th>% of up</th><th>My pts</th><th>City bonus</th><th>Pts left</th></tr></thead><tbody id="sc-body"></tbody><tfoot id="sc-foot"></tfoot></table></div>
+    <p class="note" style="margin:0" id="adjnote" hidden></p>
+    <p class="note" style="margin:0">Score = invader points + 100 bonus for each city where you flashed at least one. Points come from the community database. Some pieces have 0 points there (new or unverified), so a small gap from the official app is possible. Tap a city to open it.</p>
+  </section>
+  <div class="hunt" id="hunt" hidden role="dialog" aria-label="Hunt mode"></div>
+  <div class="toast" id="toast" hidden role="status"></div>
+  <footer>Invader data: community database (<span id="src"></span>). Pieces get destroyed and restored all the time, so check the Flash Invaders app before you go. Navigation opens Google Maps.</footer>
+</div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+(function(){
+const DATA=JSON.parse(document.getElementById('data').textContent);
+const $=id=>document.getElementById(id);
+const COLORS={10:'#22e3ff',20:'#45f08a',30:'#ffd90f',40:'#ff9a3c',50:'#ff5aa8',100:'#ff4d5e'};
+const ptColor=p=>p>=100?COLORS[100]:p>=50?COLORS[50]:p>=40?COLORS[40]:p>=30?COLORS[30]:p>=20?COLORS[20]:COLORS[10];
+const R=6371;
+function hav(a,b){const dLa=(b[0]-a[0])*Math.PI/180,dLo=(b[1]-a[1])*Math.PI/180;const s=Math.sin(dLa/2)**2+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(s));}
+let ROADD=null; // optional street-distance lookup (web app)
+const walk=(a,b)=>{if(ROADD){const v=ROADD(a,b);if(v!=null)return v}return hav(a,b)*1.3}; // street-network factor fallback
+
+// ---------- state
+let city=null, flashed=new Set(), start=null, route=null, selected=null, startMode=false, showDead=false;
+let view={lon:0,lat:0,k:1}; // k = px per degree latitude
+let db=null, unsub=null, writing=false, pendingWrite=false, canWrite=true;
+
+// ---------- city select
+const sel=$('city');
+const mine=DATA.cities.filter(c=>c.mine!=null), others=DATA.cities.filter(c=>c.mine==null);
+function opt(c){const o=document.createElement('option');o.value=c.code;o.textContent=c.name+' ('+c.inv.length+')';return o;}
+const g1=document.createElement('optgroup');g1.label='My cities';mine.forEach(c=>g1.appendChild(opt(c)));
+const g2=document.createElement('optgroup');g2.label='All invaded cities';others.forEach(c=>g2.appendChild(opt(c)));
+sel.append(g1,g2);
+$('src').textContent=DATA.source;
+let saved=null; try{saved=localStorage.getItem('hp_city')}catch(e){}
+sel.value=saved&&DATA.cities.some(c=>c.code===saved)?saved:'LDN';
+sel.addEventListener('change',()=>{try{localStorage.setItem('hp_city',sel.value)}catch(e){};loadCity(sel.value)});
+
+// ---------- legend
+$('legend').innerHTML=[[10,'10'],[20,'20'],[30,'30'],[40,'40'],[50,'50'],[100,'100+']].map(([p,l])=>`<span><i style="background:${ptColor(p)}"></i>${l}</span>`).join('')+'<span><i style="background:#3a4270"></i>flashed</span><span><i style="background:none;border:2px solid #45f08a;border-radius:50%;box-shadow:0 0 0 2px #ff4d5e"></i>status changed ≤30d</span>';
+// ---------- map filters
+const FILTER={up:true,damaged:true,flashed:true,dead:false};try{Object.assign(FILTER,JSON.parse(localStorage.getItem('hp_filter')||'{}'))}catch(e){}
+function catOf(i){if(flashed.has(i[0]))return 'flashed';if(i[4]==='destroyed'||i[4]==='hidden')return 'dead';return i[4]==='ok'?'up':'damaged'}
+const CH_DAYS=30,CH_COL={reactivated:'#45f08a',restored:'#45f08a',ok:'#45f08a',destroyed:'#ff4d5e',degraded:'#ff9a3c',damaged:'#ff9a3c'};
+function recentCh(id){const c=(typeof NEWS!=='undefined'&&NEWS.changes)?NEWS.changes[id]:null;if(!c||!c.date)return null;const age=(Date.now()-Date.parse(c.date))/864e5;return age<=CH_DAYS&&age>-2?c:null}
+function chLabel(t){return {reactivated:'Reactivated',restored:'Restored',destroyed:'Destroyed',degraded:'Degraded',damaged:'Degraded',ok:'Restored'}[t]||t}
+function visible(i){return !!FILTER[catOf(i)]||!!recentCh(i[0])}
+function renderFilters(){if(!city)return;const n={up:0,damaged:0,flashed:0,dead:0};city.inv.forEach(i=>n[catOf(i)]++);
+  const L=[['up','To hunt','#45f08a'],['damaged','Damaged','#ff9a3c'],['flashed','Flashed','#8d94bf'],['dead','Destroyed','#ff4d5e']];
+  $('filters').innerHTML=L.map(([k,l,c])=>`<button class="fchip${FILTER[k]?' on':''}" data-k="${k}" aria-pressed="${FILTER[k]}" style="--c:${c}"><i></i>${l} <b>${n[k]}</b></button>`).join('')+(()=>{const r={up:0,dn:0,dm:0};city.inv.forEach(i=>{const c=recentCh(i[0]);if(!c)return;if(c.type==='destroyed')r.dn++;else if(c.type==='degraded'||c.type==='damaged')r.dm++;else r.up++});const t=[r.up?`<b style="color:#45f08a">↑${r.up}</b> back up`:'',r.dn?`<b style="color:#ff4d5e">✕${r.dn}</b> destroyed`:'',r.dm?`<b style="color:#ff9a3c">!${r.dm}</b> degraded`:''].filter(Boolean);return t.length?`<span class="note" style="flex-basis:100%;font-size:11px">Status updates (30 days): ${t.join(' · ')}</span>`:''})();
+  $('filters').querySelectorAll('.fchip').forEach(b=>b.onclick=()=>{FILTER[b.dataset.k]=!FILTER[b.dataset.k];try{localStorage.setItem('hp_filter',JSON.stringify(FILTER))}catch(e){};if(selected&&!visible(selected)){selected=null;$('card').hidden=true}renderFilters();draw()})}
+
+// ---------- helpers
+const isActive=i=>i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown';
+const numOf=id=>{const m=id.match(/_(\d+)$/);return m?parseInt(m[1],10):null};
+function candidates(){const dmg=$('dmg').checked;return city.inv.filter(i=>!flashed.has(i[0])&&!EXCL.has(i[0])&&!MISSING.has(i[0])&&(i[4]==='ok'||(dmg&&(i[4]==='damaged'||i[4]==='unknown'))));}
+function photos(id){return 'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(id+' space invader')}
+function gmapsPoint(lat,lon){return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`}
+function gmapsLegs(pts){ // pts: [[lat,lon],...] in order
+  const legs=[];let i=0;
+  while(i<pts.length-1){const seg=pts.slice(i,i+11);const o=seg[0],d=seg[seg.length-1],w=seg.slice(1,-1);
+    let u=`https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=${o[0]},${o[1]}&destination=${d[0]},${d[1]}`;
+    if(w.length)u+='&waypoints='+w.map(p=>p[0]+','+p[1]).join('%7C');
+    legs.push(u);i+=seg.length-1;}
+  return legs;
+}
+function median(a){const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]}
+
+// ---------- load city
+function loadCity(code){
+  city=DATA.cities.find(c=>c.code===code); route=null; selected=null; $('card').hidden=true; $('result').hidden=true;
+  const act=city.inv.filter(isActive); const base=act.length?act:city.inv;
+  start=[median(base.map(i=>i[1])),median(base.map(i=>i[2]))];
+  try{const s=JSON.parse(localStorage.getItem('hp_start_'+code)||'null');if(s)start=s}catch(e){}
+  flashed=new Set(); try{const l=JSON.parse(localStorage.getItem('hp_fl_'+code)||'[]');l.forEach(x=>flashed.add(x))}catch(e){}
+  fitCity(); subscribe(); loadHotel(); refresh();
+}
+function refresh(){renderFilters();updateStats();renderTargets();renderStartNote();draw();renderScore();if(typeof mcRender==='function')mcRender();}
+// ================= FIELD FEATURES =================
+const EXCL=new Set(); let MISSING=new Set(); let PHOTOS={}; let SESSIONS=[];
+try{JSON.parse(localStorage.getItem('hp_missing')||'[]').forEach(x=>MISSING.add(x))}catch(e){}
+function toast(msg,undo){const t=$('toast');t.innerHTML=escapeHtml(msg)+(undo?' <button class="btn" id="t-undo">Undo</button>':'');t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,undo?6000:3000);if(undo)$('t-undo').onclick=()=>{undo();t.hidden=true}}
+async function saveMissing(){const ids=[...MISSING];try{localStorage.setItem('hp_missing',JSON.stringify(ids))}catch(e){};if(db&&canWrite){try{await db.doc('missing/all').set({ids})}catch(e){}}}
+const DIRS=['N','NE','E','SE','S','SW','W','NW'];
+function bearing(a,b){const y=Math.sin((b[1]-a[1])*Math.PI/180)*Math.cos(b[0]*Math.PI/180),x=Math.cos(a[0]*Math.PI/180)*Math.sin(b[0]*Math.PI/180)-Math.sin(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.cos((b[1]-a[1])*Math.PI/180);return (Math.atan2(y,x)*180/Math.PI+360)%360}
+const navTo=(lat,lon)=>`https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${lat},${lon}`;
+function blobUrl(p){return p.url||('/_blob/'+p.id)}
+
+// ---------- multi-day
+let DAYS=null;
+function runPlan(){
+  const n=Math.max(1,Math.min(7,+$('days').value||1));
+  if(n===1){DAYS=null;plan();return}
+  DAYS=[];EXCL.clear();
+  for(let d=0;d<n;d++){const r=plan({quiet:true});if(!r||!r.stops.length)break;DAYS.push(r);r.stops.forEach(s=>EXCL.add(s[0]))}
+  EXCL.clear();
+  if(!DAYS.length){route={stops:[],path:[start],km:0,minutes:0,pts:0};renderResult($('loop').checked);return}
+  showDay(0);
+}
+function showDay(d){
+  route=DAYS[d];const el=$('result');el.hidden=false;
+  const tot=DAYS.reduce((s,r)=>s+r.stops.length,0),pts=DAYS.reduce((s,r)=>s+r.pts,0);
+  el.innerHTML=`<div class="note"><b>${DAYS.length}-day trip:</b> ${tot} invaders · ${pts} pts</div><div class="seg" id="daybar">${DAYS.map((r,j)=>`<button data-d="${j}" class="${j===d?'on':''}">Day ${j+1}</button>`).join('')}</div><div id="dayres" class="result" style="border:0;padding:0"></div>`;
+  el.querySelectorAll('#daybar button').forEach(b=>b.onclick=()=>showDay(+b.dataset.d));
+  renderResult($('loop').checked,$('dayres'));fitRoute();draw();
+}
+function fitRoute(){if(!route||route.path.length<2)return;const la=route.path.map(p=>p[0]),lo=route.path.map(p=>p[1]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);view.lat=(a+b)/2;view.lon=(c+d)/2;view.k=Math.min((W-60)/(((d-c)||1e-3)*Math.cos(view.lat*Math.PI/180)),(H-80)/((b-a)||1e-3),3e6)}
+
+// ---------- hunt mode
+let HUNT=null;
+function startHunt(){
+  if(!route||!route.stops.length)return;
+  HUNT={city:city.code,cityName:city.name,stops:route.stops.map(s=>s[0]),idx:0,t0:Date.now(),got:[],missed:[],skipped:[],budget:+$('budget').value||120,mode,cfg:travelCfg(),start:start.slice(),date:new Date().toISOString().slice(0,10)};
+  saveHunt();renderHunt();
+}
+function saveHunt(){try{localStorage.setItem('hp_hunt',JSON.stringify(HUNT))}catch(e){}}
+function invById(id){const h=INVBY.get(id);return h?h[1]:null}
+function prevPoint(){if(!HUNT)return start;for(let k=HUNT.idx-1;k>=0;k--){const i=invById(HUNT.stops[k]);if(i&&(HUNT.got.includes(i[0])||HUNT.missed.includes(i[0])))return [i[1],i[2]]}return HUNT.start}
+function renderHunt(){
+  const o=$('hunt');if(!HUNT){o.hidden=true;return}o.hidden=false;
+  if(HUNT.idx>=HUNT.stops.length){return renderHuntEnd()}
+  const i=invById(HUNT.stops[HUNT.idx]);if(!i){HUNT.idx++;return renderHunt()}
+  const hc=HUNT.cfg||{travel:'walk',maxWalk:1,v:4.5};const p=prevPoint(),dist=walk(p,[i[1],i[2]]),LG=legOf(dist,hc),dir=DIRS[Math.round(bearing(p,[i[1],i[2]])/45)%8];
+  const mins=Math.round((Date.now()-HUNT.t0)/60000),pts=HUNT.got.reduce((s,id)=>s+((invById(id)||[0,0,0,0])[3]),0);
+  const ph=PHOTOS[i[0]];
+  o.innerHTML=`<div class="h-top"><span>STOP ${HUNT.idx+1}/${HUNT.stops.length}</span><span>⏱ ${fmtMin(mins)}</span><span style="color:var(--yellow)">+${pts} PTS</span><button class="btn" id="h-close" aria-label="Minimize">▾</button></div>
+  <div class="h-bar"><i style="width:${100*HUNT.idx/HUNT.stops.length}%"></i></div>
+  <div class="h-main"><div class="h-code">${i[0]}</div><div class="h-pts" style="color:${ptColor(i[3])}">${i[3]} PTS${i[4]!=='ok'?' · <span class="tag">'+i[4]+'</span>':''}</div>
+  <div class="h-dir"><span class="arrow" style="transform:rotate(${bearing(p,[i[1],i[2]])}deg)">▲</span> ${(dist*1000>=1000?dist.toFixed(1)+' km':Math.round(dist*1000/10)*10+' m')} ${dir} <span class="note">from ${HUNT.idx?'last stop':'start'}</span></div>
+  ${ph?`<img class="h-ph" src="${blobUrl(ph)}" alt="Your photo of ${i[0]}">`:''}
+  ${i[5]?`<div class="note">${escapeHtml(i[5])}</div>`:''}</div>
+  ${LG.m!=='walk'?`<div class="note" style="text-align:center">${LEGICON[LG.m]} Faster by ${LG.m==='transit'?'public transport':'taxi'}: ~${Math.round(LG.min)} min instead of ~${Math.round(dist/hc.v*60)} min on foot</div>`:''}
+  <a class="go h-nav" href="https://www.google.com/maps/dir/?api=1&travelmode=${GMODE[LG.m]}&destination=${i[1]},${i[2]}" target="_blank" rel="noopener">▶ NAVIGATE ${LEGICON[LG.m]}</a>
+  ${LG.m!=='walk'?`<a class="btn" style="justify-content:center" href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${i[1]},${i[2]}" target="_blank" rel="noopener">🚶 Walk there instead</a>`:''}
+  <div class="h-acts"><button class="h-big g" id="h-fl">✓ FLASHED</button><button class="h-big r" id="h-miss">✗ NOT FOUND</button></div>
+  <div class="h-acts small"><button class="btn" id="h-skip">Skip ›</button><button class="btn" id="h-photo">📷 My photo</button><button class="btn mic" id="h-mic">🎤 Say a number</button><a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Look it up ↗</a><button class="btn" id="h-tired">${hc.travel==='walk'||hc.maxWalk>0.6?'🥱 Tired: ride more':'🚶 Back to walking'}</button><button class="btn" id="h-end">End hunt</button></div>
+  <div class="note" id="h-heard"></div>`;
+  $('h-close').onclick=()=>{o.hidden=true;$('resume').hidden=false};
+  $('h-fl').onclick=()=>huntFlash(i[0]);
+  $('h-miss').onclick=()=>huntMiss(i[0]);
+  $('h-skip').onclick=()=>{HUNT.skipped.push(i[0]);HUNT.idx++;saveHunt();renderHunt()};
+  $('h-photo').onclick=()=>pickPhoto(i[0],renderHunt);
+  $('h-end').onclick=()=>{HUNT.idx=HUNT.stops.length;saveHunt();renderHunt()};
+  $('h-tired').onclick=()=>{const tired=hc.travel==='walk'||hc.maxWalk>0.6;HUNT.cfg=tired?{travel:hc.travel==='taxi'?'taxi':'transit',maxWalk:0.5,v:hc.v,prev:hc}:(hc.prev||{travel:'walk',maxWalk:1,v:hc.v});replanFromHere(tired?'Tired mode: walks over 500 m by transit/taxi.':'Back to your normal pace.')};
+  bindMic($('h-mic'));
+}
+function huntFlash(id){
+  if(HUNT.stops[HUNT.idx]===id){HUNT.got.push(id);HUNT.idx++}else if(!HUNT.got.includes(id))HUNT.got.push(id);
+  flashedSetFor(HUNT.city,id,true);saveHunt();renderHunt();toast(id+' flashed',()=>{flashedSetFor(HUNT.city,id,false);HUNT.got=HUNT.got.filter(x=>x!==id);if(HUNT.stops[HUNT.idx-1]===id)HUNT.idx--;saveHunt();renderHunt()});
+}
+function huntMiss(id){
+  HUNT.missed.push(id);MISSING.add(id);saveMissing();
+  const here=invById(id);const used=(Date.now()-HUNT.t0)/60000;
+  const rem=HUNT.mode==='time'?Math.max(10,HUNT.budget-used):Math.max(0.5,HUNT.budget-walkedKm());
+  const oldStart=start;start=[here[1],here[2]];
+  const r=plan({quiet:true,budget:rem,cfg:HUNT.cfg});start=oldStart;
+  const done=HUNT.stops.slice(0,HUNT.idx+1);
+  HUNT.stops=done.concat(r?r.stops.map(s=>s[0]).filter(x=>!done.includes(x)):[]);HUNT.idx++;
+  route=r;saveHunt();renderHunt();draw();
+  toast(`Marked ${id} as not found. New route from here: ${HUNT.stops.length-HUNT.idx} stops.`,()=>{MISSING.delete(id);saveMissing()});
+}
+function replanFromHere(msg){const p=prevPoint();const used=(Date.now()-HUNT.t0)/60000;
+  const rem=HUNT.mode==='time'?Math.max(10,HUNT.budget-used):Math.max(0.5,HUNT.budget-walkedKm());
+  const oldStart=start;start=[p[0],p[1]];const r=plan({quiet:true,budget:rem,cfg:HUNT.cfg});start=oldStart;
+  const done=HUNT.stops.slice(0,HUNT.idx);HUNT.stops=done.concat(r?r.stops.map(s=>s[0]).filter(x=>!done.includes(x)&&!HUNT.got.includes(x)):[]);
+  route=r;saveHunt();renderHunt();draw();toast(msg+' New route: '+(HUNT.stops.length-HUNT.idx)+' stops.')}
+function walkedKm(){let p=HUNT.start,s=0;HUNT.got.concat(HUNT.missed).forEach(id=>{const i=invById(id);if(i){s+=walk(p,[i[1],i[2]]);p=[i[1],i[2]]}});return s}
+function flashedSetFor(code,id,on){
+  if(city&&city.code===code){toggleFlash(id,on);return}
+  const s=flashedOf(code);on?s.add(id):s.delete(id);allFlashed[code]=s;const arr=[...s].sort();
+  try{localStorage.setItem('hp_fl_'+code,JSON.stringify(arr))}catch(e){}
+  if(db&&canWrite)db.doc('flashed/'+code).set({ids:arr,city:code}).catch(()=>{});renderScore();
+}
+function renderHuntEnd(){
+  const o=$('hunt');const pts=HUNT.got.reduce((s,id)=>s+((invById(id)||[0,0,0,0])[3]),0),mins=Math.round((Date.now()-HUNT.t0)/60000);
+  HUNT.km=+walkedKm().toFixed(1);HUNT.mins=mins;HUNT.pts=pts;
+  o.innerHTML=`<div class="h-top"><span>HUNT COMPLETE</span><span></span><button class="btn" id="h-x" aria-label="Close">✕</button></div>
+  <div class="h-main"><div class="h-code" style="color:var(--yellow)">+${HUNT.got.length}</div><div class="h-pts">INVADERS · +${pts} PTS · ${HUNT.km} km · ${fmtMin(mins)}</div>
+  ${HUNT.missed.length?`<div class="note">Not found: ${HUNT.missed.join(', ')}</div>`:''}
+  <canvas id="h-card" width="1080" height="1920" style="width:min(100%,270px);border-radius:8px;border:1px solid var(--line);margin-top:10px"></canvas></div>
+  <div class="h-acts"><button class="h-big g" id="h-save">⬇ Save story card</button><button class="h-big" id="h-done">Done</button></div><div class="note" id="h-msg"></div>`;
+  drawCard($('h-card'),HUNT);
+  $('h-save').onclick=()=>saveCard(HUNT);
+  const close=async()=>{const s=Object.assign({},HUNT,{id:HUNT.date+'-'+HUNT.city+'-'+HUNT.t0});if(db&&canWrite&&HUNT.got.length){try{await db.doc('sessions/'+s.id).set(s)}catch(e){}}HUNT=null;try{localStorage.removeItem('hp_hunt')}catch(e){};o.hidden=true;$('resume').hidden=true;refresh()};
+  $('h-done').onclick=close;$('h-x').onclick=close;
+}
+// ---------- story card
+async function drawCard(cv,s){
+  try{await document.fonts.load('40px "Press Start 2P"')}catch(e){}
+  const x=cv.getContext('2d'),W2=1080,H2=1920;const P=sz=>`${sz}px "Press Start 2P", monospace`;
+  x.fillStyle='#0a0d1c';x.fillRect(0,0,W2,H2);
+  for(let k=0;k<160;k++){x.fillStyle=k%3?'#2a3366':'#5a63a0';const a=(k*7919)%W2,b=(k*104729)%H2;x.fillRect(a,b,3,3)}
+  x.strokeStyle='#2878ff';x.lineWidth=10;x.strokeRect(24,24,W2-48,H2-48);
+  const ctxt=(t,y,sz,c)=>{x.font=P(sz);x.fillStyle=c;const w=x.measureText(t).width;x.fillText(t,(W2-w)/2,y)};
+  ctxt('HUNT REPORT',180,64,'#ffd90f');ctxt((s.cityName||'').toUpperCase(),290,52,'#22e3ff');ctxt(s.date,360,28,'#8d94bf');
+  ctxt('+'+s.got.length,600,190,'#eef0ff');ctxt('INVADERS FLASHED',690,36,'#ff5aa8');
+  ctxt('+'+(s.pts||0)+' PTS',820,56,'#45f08a');ctxt((s.km||0)+' KM  ·  '+fmtMin(s.mins||0).toUpperCase(),900,30,'#eef0ff');
+  // mini map
+  const pts=s.got.map(id=>invById(id)).filter(Boolean),miss=(s.missed||[]).map(id=>invById(id)).filter(Boolean),all=pts.concat(miss);
+  if(all.length){const la=all.map(i=>i[1]).concat([s.start[0]]),lo=all.map(i=>i[2]).concat([s.start[1]]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
+    const bx=140,by=980,bw=800,bh=560,cl=Math.cos((a+b)/2*Math.PI/180);const k=Math.min(bw/(((d-c)||1e-4)*cl),bh/((b-a)||1e-4));
+    const mp=(p,q)=>[bx+bw/2+(q-(c+d)/2)*cl*k,by+bh/2-(p-(a+b)/2)*k];
+    x.fillStyle='#121733';x.fillRect(bx-30,by-30,bw+60,bh+60);
+    x.strokeStyle='#ff5aa8';x.lineWidth=6;x.setLineDash([18,12]);x.beginPath();let first=true;[[s.start[0],s.start[1]]].concat(pts.map(i=>[i[1],i[2]])).forEach(([p,q])=>{const [u,v]=mp(p,q);first?x.moveTo(u,v):x.lineTo(u,v);first=false});x.stroke();x.setLineDash([]);
+    pts.forEach(i=>{const [u,v]=mp(i[1],i[2]);x.fillStyle=ptColor(i[3]);x.fillRect(u-14,v-14,28,28)});
+    miss.forEach(i=>{const [u,v]=mp(i[1],i[2]);x.strokeStyle='#ff4d5e';x.lineWidth=6;x.beginPath();x.moveTo(u-12,v-12);x.lineTo(u+12,v+12);x.moveTo(u+12,v-12);x.lineTo(u-12,v+12);x.stroke()});
+    const [u,v]=mp(s.start[0],s.start[1]);x.fillStyle='#ffd90f';x.beginPath();x.arc(u,v,12,0,7);x.fill();}
+  x.font=P(22);x.fillStyle='#8d94bf';const codes=s.got.slice(0,24).join('  ');let line='',yy=1650;codes.split('  ').forEach(w=>{if(x.measureText(line+w).width>900){ctxt(line.trim(),yy,22,'#8d94bf');yy+=40;line=''}line+=w+'  '});if(line)ctxt(line.trim(),yy,22,'#8d94bf');
+  ctxt('@DOH.INVADERS',1820,32,'#eef0ff');
+}
+async function saveCard(s){const msg=$('h-msg')||$('sc-msg');let dl=null;try{dl=await window.claude.use('downloads')}catch(e){}
+  if(!dl){if(msg)msg.textContent='Saving is not available in this view.';return}
+  const cv=document.createElement('canvas');cv.width=1080;cv.height=1920;await drawCard(cv,s);
+  cv.toBlob(async b=>{try{await dl.save({filename:`hunt-${s.city}-${s.date}.png`,data:b});if(msg)msg.textContent='Saved. Post it as a Story.'}catch(e){if(msg)msg.textContent=e&&e.code==='declined'?'Cancelled.':'Could not save right now.'}},'image/png');
+}
+// ---------- photos
+let ASSETS=null;
+async function pickPhoto(id,after){
+  if(!ASSETS){try{ASSETS=await window.claude.use('assets')}catch(e){}}
+  if(!ASSETS){toast('Photo upload is not available here.');return}
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+  inp.onchange=async()=>{const f=inp.files[0];if(!f)return;toast('Uploading '+id+'…');
+    try{const blob=await shrink(f,1600);const r=await ASSETS.upload(blob);const hit=INVBY.get(id);
+      const doc={id:r.id,url:r.url,code:id,city:hit?hit[0].code:'',date:new Date().toISOString().slice(0,10)};PHOTOS[id]=doc;
+      if(db&&canWrite)await db.doc('photos/'+id).set(doc);toast('Photo saved for '+id);renderGallery();after&&after()}
+    catch(e){toast('Upload failed: '+((e&&e.code)||'try again'))}};
+  inp.click();
+}
+function shrink(file,max){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(b=>b?res(b):rej(),'image/jpeg',0.86);URL.revokeObjectURL(img.src)};img.onerror=rej;img.src=URL.createObjectURL(file)})}
+function renderGallery(){
+  const list=Object.values(PHOTOS).sort((a,b)=>(b.date||'').localeCompare(a.date||''));const g=$('gallery');
+  $('gal-n').textContent=list.length?'('+list.length+')':'';
+  g.innerHTML=list.length?list.map(p=>`<button class="gph" data-id="${p.code}" title="${p.code}"><img src="${blobUrl(p)}" alt="${p.code}" loading="lazy"><span>${p.code}</span></button>`).join(''):'<p class="note" style="margin:0">No photos yet. Use 📷 on an invader card or in hunt mode to keep your own shots here for posts.</p>';
+  g.querySelectorAll('.gph').forEach(b=>b.onclick=()=>{const h=INVBY.get(b.dataset.id);if(!h)return;if(city.code!==h[0].code){sel.value=h[0].code;loadCity(h[0].code)}view.lat=h[1][1];view.lon=h[1][2];view.k=Math.max(view.k,40000);showCard(h[1]);window.scrollTo({top:0,behavior:'smooth'})});
+}
+function cardExtras(i){const c=$('card');const ph=PHOTOS[i[0]];const d=document.createElement('div');d.className='row';
+  d.innerHTML=(ph?`<img src="${blobUrl(ph)}" alt="Your photo of ${i[0]}" style="width:100%;border-radius:6px">`:'')+`<button class="btn" id="c-ph">📷 ${ph?'Replace my photo':'Add my photo'}</button>`;
+  c.appendChild(d);$('c-ph').onclick=()=>pickPhoto(i[0],()=>showCard(i));}
+// ---------- sessions list
+function renderSessions(){const el=$('sessions');if(!SESSIONS.length){el.innerHTML='<p class="note" style="margin:0">Finish a hunt in hunt mode to log it here and make a Story card.</p>';return}
+  el.innerHTML=SESSIONS.slice(0,10).map((s,k)=>`<li><span class="num">${s.date.slice(5)}</span><span>${s.cityName} · <b>+${s.got.length}</b> · +${s.pts||0} pts · ${s.km||0} km</span><button class="btn y" data-k="${k}">⬇ Card</button></li>`).join('');
+  el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>saveCard(SESSIONS[+b.dataset.k]));}
+// ---------- voice
+let DICT=null,micBtn=null;
+async function bindMic(btn){
+  if(!btn)return;if(DICT===null){try{DICT=await window.claude.use('dictation')||false}catch(e){DICT=false}
+    if(DICT){DICT.onFinal(({text})=>handleSpeech(text));DICT.onPartial(({text})=>{const h=$('h-heard');if(h&&text)h.textContent='… '+text});DICT.onState(({state})=>{document.querySelectorAll('.mic').forEach(b=>b.classList.toggle('on',state!=='idle'))})}}
+  if(!DICT){btn.hidden=true;return}
+  btn.onclick=()=>{if(DICT.active()){DICT.stop();return}DICT.start().catch(e=>{if(e&&e.code==='not_granted')document.querySelectorAll('.mic').forEach(b=>b.hidden=true);else toast('Microphone did not start: '+(e&&e.code||''))})};
+}
+function handleSpeech(text){
+  const h=$('h-heard');if(h)h.textContent='Heard: '+text;
+  const code=HUNT?HUNT.city:city.code;const m=text.toUpperCase().match(/([A-Z]{2,5})?[\s_-]*(\d{1,4})/g)||[];
+  const done=[];
+  m.forEach(tok=>{const mm=tok.match(/([A-Z]{2,5})?[\s_-]*(\d{1,4})/);let cc=mm[1]&&CITYBY.has(mm[1])?mm[1]:code;const n=parseInt(mm[2],10);
+    const c=CITYBY.get(cc);if(!c)return;const inv=c.inv.find(i=>{const k=i[0].match(/_(\d+)$/);return k&&+k[1]===n});if(!inv)return;
+    if(HUNT&&HUNT.city===cc&&HUNT.stops[HUNT.idx]===inv[0]){huntFlash(inv[0])}else{flashedSetFor(cc,inv[0],true);if(HUNT&&HUNT.city===cc&&!HUNT.got.includes(inv[0])){HUNT.got.push(inv[0]);saveHunt()}}
+    done.push(inv[0])});
+  if(done.length){toast('Flashed by voice: '+done.join(', '),()=>done.forEach(id=>flashedSetFor(id.split('_')[0],id,false)));if(HUNT)renderHunt()}
+  else toast('No invader number heard. Say e.g. "42" or "London 42".');
+}
+// ---------- wiring
+function initField(){
+  try{const h=JSON.parse(localStorage.getItem('hp_hunt')||'null');if(h&&h.stops){HUNT=h;$('resume').hidden=false}}catch(e){}
+  $('resume').onclick=()=>{if(!HUNT)return;if(city.code!==HUNT.city){sel.value=HUNT.city;loadCity(HUNT.city)}$('resume').hidden=true;renderHunt()};
+  bindMic($('mic-top'));
+  renderGallery();renderSessions();
+  if(!db)return;
+  db.doc('missing/all').onSnapshot(s=>{const v=s.exists?s.data():null;if(v&&Array.isArray(v.ids)){MISSING=new Set(v.ids);try{localStorage.setItem('hp_missing',JSON.stringify(v.ids))}catch(e){}}},()=>{});
+  db.collection('photos').onSnapshot(s=>{PHOTOS={};s.docs.forEach(d=>{PHOTOS[d.id]=d.data()});renderGallery();if(selected&&!$('card').hidden)showCard(selected)},()=>{});
+  db.collection('sessions').onSnapshot(s=>{SESSIONS=s.docs.map(d=>d.data()).sort((a,b)=>(b.t0||0)-(a.t0||0));renderSessions()},()=>{});
+}
+
+// ---------- news
+const NEWS={changes:{},items:[]};let nf='mine';
+const CITYBY=new Map(DATA.cities.map(c=>[c.code,c]));const INVBY=new Map();DATA.cities.forEach(c=>c.inv.forEach(i=>INVBY.set(i[0],[c,i])));
+function renderNews(){
+  const mineCodes=new Set(DATA.cities.filter(c=>c.mine!=null).map(c=>c.code));const opps=$('nopps').checked;
+  let rows=Object.entries(NEWS.changes).map(([id,v])=>{const hit=INVBY.get(id);const code=id.split('_')[0];const c=hit?hit[0]:CITYBY.get(code);
+    const f=flashedOf(code);const opp=(v.type==='reactivated'||v.type==='restored')&&mineCodes.has(code)&&!f.has(id);
+    return {date:v.date||'',id,type:v.type,city:c?c.name:code,code,opp,mine:f.has(id),has:!!hit}});
+  rows=rows.concat((NEWS.items||[]).map(n=>({date:n.date||'',text:n.text,link:n.link,type:'new',code:n.city||'',city:n.city_name||'',item:true})));
+  if(nf==='mine')rows=rows.filter(r=>r.item?true:mineCodes.has(r.code));
+  if(opps)rows=rows.filter(r=>r.opp);
+  rows.sort((a,b)=>b.date.localeCompare(a.date));
+  $('newslist').innerHTML=rows.slice(0,200).map((r,k)=>r.item?
+    `<li data-k="${k}"><span class="d">${r.date.slice(5)}</span><span><span class="chip new">news</span> ${escapeHtml(r.text||'')}</span><span>${r.link?`<a class="btn" href="${r.link}" target="_blank" rel="noopener">↗</a>`:''}</span></li>`:
+    `<li data-id="${r.id}"><span class="d">${r.date.slice(5)}</span><span><b>${r.id}</b> <span class="chip ${r.type}">${r.type}</span> <span class="note">${r.city}</span>${r.opp?' <span class="opp">NEW TARGET</span>':''}${r.mine?' <span class="tag">flashed</span>':''}</span><span>›</span></li>`).join('')||'<li><span></span><span class="note">No changes yet.</span><span></span></li>';
+  $('newslist').querySelectorAll('li[data-id]').forEach(li=>li.onclick=()=>{const hit=INVBY.get(li.dataset.id);if(!hit)return;const [c,i]=hit;if(!city||city.code!==c.code){sel.value=c.code;loadCity(c.code)}
+    view.lat=i[1];view.lon=i[2];view.k=Math.max(view.k,40000);showCard(i);window.scrollTo({top:0,behavior:'smooth'})});
+  let seen='';try{seen=localStorage.getItem('hp_news_seen')||''}catch(e){}
+  const fresh=rows.filter(r=>r.date>seen&&(r.opp||r.item)).length;const b=$('nbadge');b.textContent=fresh;b.hidden=!fresh||$('t-news').getAttribute('aria-selected')==='true';
+}
+$('nfilter').querySelectorAll('button').forEach(b=>b.onclick=()=>{nf=b.dataset.f;$('nfilter').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderNews()});
+$('nopps').onchange=renderNews;
+$('t-news').addEventListener('click',()=>{const ds=Object.values(NEWS.changes).map(v=>v.date||'').concat(NEWS.items.map(n=>n.date||'')).sort();try{localStorage.setItem('hp_news_seen',ds[ds.length-1]||'')}catch(e){};$('nbadge').hidden=true});
+// ---------- score
+const SPACE={code:'SPACE',name:'Space',inv:[['SPACE_02',0,0,100,'ok',''],['SPACE_01',0,0,0,'hidden','']]};
+let allFlashed={}; // code -> Set
+let ADJ={}; // code -> extra pts not in community data
+function flashedOf(code){if(city&&code===city.code)return flashed;if(allFlashed[code])return allFlashed[code];try{return new Set(JSON.parse(localStorage.getItem('hp_fl_'+code)||'[]'))}catch(e){return new Set()}}
+function renderScore(){
+  const rows=[];
+  const cs=DATA.cities.concat([SPACE]);
+  for(const c of cs){const f=flashedOf(c.code);if(!f.size&&c.mine==null&&c.code!=='SPACE')continue;
+    const inv=c.inv,up=inv.filter(i=>i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown');
+    const mine=inv.filter(i=>f.has(i[0]));const upLeft=up.filter(i=>!f.has(i[0]));
+    rows.push({c,n:mine.length,tot:inv.length,up:up.length,pct:up.length?Math.round(100*up.filter(i=>f.has(i[0])).length/up.length):100,pts:mine.reduce((s,i)=>s+i[3],0)+(ADJ[c.code]||0),adj:ADJ[c.code]||0,left:upLeft.reduce((s,i)=>s+i[3],0),upLeft:upLeft.length});}
+  rows.sort((a,b)=>b.n-a.n);
+  const S=k=>rows.reduce((s,r)=>s+r[k],0);
+  $('sc-body').innerHTML=rows.map(r=>`<tr data-c="${r.c.code}"><td>${r.c.name}</td><td>${r.n}</td><td>${r.tot}</td><td>${r.up}</td><td>${r.pct}%<span class="bar"><i style="width:${r.pct}%"></i></span></td><td>${r.pts.toLocaleString('en-US')}${r.adj?'*':''}</td><td>${r.n?'+100':'–'}</td><td>${r.left.toLocaleString('en-US')}</td></tr>`).join('');
+  $('sc-foot').innerHTML=`<tr><td>Total · ${rows.filter(r=>r.n).length} cities</td><td>${S('n')}</td><td>${S('tot')}</td><td>${S('up')}</td><td></td><td>${S('pts').toLocaleString('en-US')}</td><td>+${(rows.filter(r=>r.n).length*100).toLocaleString('en-US')}</td><td>${S('left').toLocaleString('en-US')}</td></tr>`;
+  $('sc-tot').innerHTML=[['Invaders flashed',S('n'),1],['Score (incl. city bonus)',(S('pts')+100*rows.filter(r=>r.n).length).toLocaleString('en-US'),1],['Invader pts',S('pts').toLocaleString('en-US')],['Cities',rows.filter(r=>r.n).length],['Still up to hunt',S('upLeft')],['Pts still on the walls',S('left').toLocaleString('en-US')]].map(([l,v,h])=>`<div class="stat${h?' hl':''}"><b>${v}</b><span>${l}</span></div>`).join('');
+  $('sc-body').querySelectorAll('tr').forEach(tr=>tr.onclick=()=>{const code=tr.dataset.c;if(code==='SPACE')return;sel.value=code;try{localStorage.setItem('hp_city',code)}catch(e){};loadCity(code);window.scrollTo({top:0,behavior:'smooth'})});
+}
+function updateStats(){
+  const act=city.inv.filter(isActive);const fl=city.inv.filter(i=>flashed.has(i[0]));
+  const left=act.filter(i=>!flashed.has(i[0]));
+  $('s-total').textContent=city.inv.length;$('s-active').textContent=act.length;$('s-flashed').textContent=fl.length;
+  $('s-left').textContent=left.length;$('s-pts').textContent=left.reduce((s,i)=>s+i[3],0).toLocaleString('en-US');
+  $('appcount').innerHTML=city.mine!=null?`Your Flash Invaders gallery says <b>${city.mine}</b> flashed here. Marked in this planner: <b>${fl.length}</b>.`:'';
+}
+// ---------- hotel / base
+let HOTEL=null,startSrc='pin',hotelMode=false;
+function loadHotel(){HOTEL=null;try{HOTEL=JSON.parse(localStorage.getItem('hp_hotel_'+city.code)||'null')}catch(e){}
+  let s=null;try{s=localStorage.getItem('hp_src_'+city.code)}catch(e){}
+  startSrc=s||(HOTEL?'hotel':'pin');if(startSrc==='hotel'&&!HOTEL)startSrc='pin';applyStart();renderHotel()}
+function saveHotel(h){HOTEL=h;try{h?localStorage.setItem('hp_hotel_'+city.code,JSON.stringify(h)):localStorage.removeItem('hp_hotel_'+city.code)}catch(e){}
+  if(db&&canWrite){try{h?db.doc('hotels/'+city.code).set(h):db.doc('hotels/'+city.code).delete()}catch(e){}}
+  setSrc(h?'hotel':'pin')}
+function setSrc(s){startSrc=s;try{localStorage.setItem('hp_src_'+city.code,s)}catch(e){};applyStart();route=null;$('result').hidden=true;refresh()}
+function applyStart(){if(startSrc==='hotel'&&HOTEL)start=[HOTEL.lat,HOTEL.lon];
+  else if(startSrc==='pin'){try{const s=JSON.parse(localStorage.getItem('hp_start_'+city.code)||'null');if(s)start=s}catch(e){}}}
+function renderHotel(){$('hotelname').textContent=HOTEL?(HOTEL.name||'Saved')+' · '+HOTEL.lat.toFixed(4)+', '+HOTEL.lon.toFixed(4):'not set';$('h-clear').hidden=!HOTEL;
+  $('startsrc').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.s===startSrc);b.disabled=b.dataset.s==='hotel'&&!HOTEL})}
+function parseLoc(s){let m=s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||s.match(/[?&](?:q|query|ll|destination)=(-?\d+\.\d+)(?:%2C|,)\s*(-?\d+\.\d+)/)||s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||s.match(/(-?\d{1,2}\.\d{3,})\s*[, ]\s*(-?\d{1,3}\.\d{3,})/);
+  return m?[+m[1],+m[2]]:null}
+$('h-setmap').onclick=()=>{hotelMode=true;startMode=false;$('hint').textContent='Tap the map where your hotel is';$('hint').hidden=false;window.scrollTo({top:0,behavior:'smooth'})};
+$('h-paste').onclick=()=>{$('h-pastebox').hidden=!$('h-pastebox').hidden};
+$('h-save').onclick=()=>{const p=parseLoc($('h-txt').value);if(!p){toast('Could not read a location. Paste a Google Maps link with coordinates, or "lat, lon".');return}
+  saveHotel({lat:p[0],lon:p[1],name:$('h-nm').value.trim()||'Hotel'});$('h-pastebox').hidden=true;toast('Hotel saved – it is now your start point')};
+$('h-clear').onclick=()=>{saveHotel(null)};
+$('startsrc').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.disabled)return;if(b.dataset.s==='gps'&&typeof ME==='undefined'){toast('Live location works in the web app version.');return}setSrc(b.dataset.s)});
+function renderStartNote(){renderHotel();$('startnote').innerHTML=`<b>Start:</b> ${startSrc==='hotel'&&HOTEL?'🏨 '+escapeHtml(HOTEL.name||'Hotel'):startSrc==='gps'?'◎ your live location':start[0].toFixed(4)+', '+start[1].toFixed(4)}${$('loop').checked?' · route ends back here':''}`}
+
+// ---------- Marriott layer (data from db: marriott/<CITY>, filled by Claude from OpenStreetMap)
+const MC_TIER={L:['#ffd90f','Luxury'],P:['#ff5aa8','Premium'],S:['#3ee0ff','Select']};
+let MCD={},mcOn=false,mcSel=null;try{MCD=JSON.parse(localStorage.getItem('hp_mc')||'{}')}catch(e){}
+function mcHav(a,b,c,d){const x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,h=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))}
+function mcScore(h){let n1=0,p1=0,n3=0;for(const i of city.inv){const st=i[4];if(st==='destroyed'||st==='hidden'||flashed.has(i[0]))continue;const d=mcHav(h.lat,h.lon,i[1],i[2]);if(d<=1){n1++;p1+=i[3]}if(d<=2.5)n3++}return {n1,p1,n3}}
+function mcRows(){const d=MCD[city.code];if(!d||!d.hotels)return null;return d.hotels.map(h=>({h,s:mcScore(h)})).sort((a,b)=>b.s.n1-a.s.n1||b.s.p1-a.s.p1||b.s.n3-a.s.n3)}
+function mcIsBase(h){return HOTEL&&Math.abs(HOTEL.lat-h.lat)<1e-5&&Math.abs(HOTEL.lon-h.lon)<1e-5}
+function mcSet(h){saveHotel({lat:h.lat,lon:h.lon,name:h.n});toast(h.n+' is now your base');mcRender()}
+function mcRender(){const box=$('mc-list'),upd=$('mc-upd');if(!box)return;$('mc-btn').classList.toggle('on',mcOn);
+  const d=MCD[city.code];upd.textContent=d&&d.updated?'OSM data · '+d.updated:'';
+  if(!mcOn){box.innerHTML='';return}
+  const rows=mcRows();
+  if(!rows){box.innerHTML='<div class="note">Hotel data for this city is not loaded yet. Ask Claude to refresh the Marriott list.</div>';return}
+  if(!rows.length){box.innerHTML='<div class="note">No Marriott-family hotels on OpenStreetMap for this city. Use Set on map or Paste location.</div>';return}
+  box.innerHTML=`<div class="note">${rows.length} Marriott-family hotels · ranked by invaders left to hunt within 1 km</div>`+rows.slice(0,15).map((r,k)=>`<div class="mrow"><span class="mdot" style="background:${MC_TIER[r.h.t][0]}"></span><div class="mtx"><b>${mcIsBase(r.h)?'🏨 ':''}${escapeHtml(r.h.n)}</b><span>${escapeHtml(r.h.b)} · 👾 ${r.s.n1} ≤1 km (${r.s.p1} pts) · ${r.s.n3} ≤2.5 km</span></div><button class="btn" data-mz="${k}" aria-label="Show on map">◎</button><button class="btn g" data-ms="${k}">Set</button></div>`).join('');
+  box.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>mcSet(rows[+b.dataset.ms].h));
+  box.querySelectorAll('[data-mz]').forEach(b=>b.onclick=()=>{const h=rows[+b.dataset.mz].h;window.scrollTo({top:0,behavior:'smooth'});view.lat=h.lat;view.lon=h.lon;view.k=Math.max(view.k,40000);mcCard(h)})}
+function mcCard(h){mcSel=h;selected=null;const s=mcScore(h),c=$('card');
+  c.innerHTML=`<h3><span>${escapeHtml(h.n)}</span><span style="color:${MC_TIER[h.t][0]}">Ⓜ</span></h3><dl class="kv"><dt>Brand</dt><dd>${escapeHtml(h.b)} · ${MC_TIER[h.t][1]}</dd><dt>≤ 1 km</dt><dd>👾 ${s.n1} to hunt (${s.p1} pts)</dd><dt>≤ 2.5 km</dt><dd>${s.n3} to hunt</dd></dl><div class="inline"><button class="btn g" id="mc-set">${mcIsBase(h)?'✓ Your base':'Set as my base'}</button><button class="btn" id="mc-x">Close</button></div>`;
+  c.hidden=false;$('mc-set').onclick=()=>{mcSet(h);mcCard(h)};$('mc-x').onclick=()=>{mcSel=null;c.hidden=true;draw()};draw()}
+function mcDraw(){if(!mcOn)return;const d=MCD[city.code];if(!d||!d.hotels)return;
+  for(const h of d.hotels){const [x,y]=px(h.lat,h.lon);if(x<-20||y<-20||x>W+20||y>H+20)continue;const col=MC_TIER[h.t][0],base=mcIsBase(h),r=base?13:10;
+    ctx.fillStyle='#0a0d1c';ctx.strokeStyle=(mcSel===h)?'#fff':col;ctx.lineWidth=base||mcSel===h?3:2;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle=col;ctx.font='bold 11px "IBM Plex Mono",monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('M',x,y+1);
+    const n=String(mcScore(h).n1);ctx.beginPath();ctx.arc(x+r,y-r,8,0,7);ctx.fill();ctx.fillStyle='#0a0d1c';ctx.font='bold 9px "IBM Plex Mono",monospace';ctx.fillText(n,x+r,y-r+1);ctx.textAlign='start';ctx.textBaseline='alphabetic'}}
+function mcHit(x,y){if(!mcOn)return null;const d=MCD[city.code];if(!d||!d.hotels)return null;let best=null,bd=18;for(const h of d.hotels){const [hx,hy]=px(h.lat,h.lon);const dd=Math.hypot(hx-x,hy-y);if(dd<bd){bd=dd;best=h}}return best?{h:best,d:bd}:null}
+$('mc-btn').onclick=()=>{mcOn=!mcOn;mcSel=null;mcRender();if(mcOn){const d=MCD[city.code];if(d&&d.hotels&&d.hotels.length){let la0=90,la1=-90,lo0=180,lo1=-180;d.hotels.forEach(h=>{la0=Math.min(la0,h.lat);la1=Math.max(la1,h.lat);lo0=Math.min(lo0,h.lon);lo1=Math.max(lo1,h.lon)});view.lat=(la0+la1)/2;view.lon=(lo0+lo1)/2;const kx=W/Math.max(.004,(lo1-lo0)*cosL()*1.25),ky=H/Math.max(.004,(la1-la0)*1.25);view.k=Math.min(kx,ky,60000)}}draw()};
+
+// ---------- persistence
+function setSave(t,c){const s=$('save');s.textContent=t;s.className='save '+(c||'')}
+async function initDb(){
+  try{ if(window.claude&&window.claude.use) db=await window.claude.use('db'); }catch(e){db=null}
+  try{ const u=window.claude&&window.claude.use?await window.claude.use('user'):null; if(u){const c=await u.can('data.write'); if(c===false)canWrite=false;} }catch(e){}
+  if(!db){setSave('Saved on this device only (sync unavailable here).','warn');return}
+  subscribe();
+  db.collection('flashed').onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();if(v&&Array.isArray(v.ids)){allFlashed[d.id]=new Set(v.ids);try{localStorage.setItem('hp_fl_'+d.id,JSON.stringify(v.ids))}catch(e){}}});renderScore()},()=>{});
+  db.collection('hotels').onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();try{localStorage.setItem('hp_hotel_'+d.id,JSON.stringify(v))}catch(e){}});if(city){const had=!!HOTEL;loadHotel();if(!had&&HOTEL)refresh()}},()=>{});
+  db.collection('marriott').onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();if(v&&Array.isArray(v.hotels))MCD[d.id]={updated:v.updated,hotels:v.hotels}});try{localStorage.setItem('hp_mc',JSON.stringify(MCD))}catch(e){};if(city){mcRender();draw()}},()=>{});
+  db.doc('meta/adjust').onSnapshot(s=>{const v=s.exists?s.data():null;ADJ=(v&&v.pts)||{};const n=$('adjnote');if(v&&v.note){n.textContent='* '+v.note;n.hidden=false}else n.hidden=true;renderScore()},()=>{});
+  db.doc('meta/status').onSnapshot(snap=>{const d=snap.exists?snap.data():null;if(!d||!d.changes)return;
+    const MAP={destroyed:'destroyed',degraded:'damaged',damaged:'damaged',restored:'ok',reactivated:'ok',ok:'ok'};
+    const idx=new Map();DATA.cities.forEach(c=>c.inv.forEach(i=>idx.set(i[0],i)));
+    Object.entries(d.changes).forEach(([id,v])=>{const i=idx.get(id);if(!i||!v)return;const st=MAP[v.type];if(st){i[4]=st;i[5]=v.type+' on '+(v.date||'')+' (invader-spotter)'}});
+    if(d.updated)$('src').textContent=DATA.source.replace(/to \d+ \w+ \d+/,'')+' · status checked '+d.updated;
+    NEWS.changes=d.changes;renderNews();
+    route=null;$('result').hidden=true;refresh()},()=>{});
+  db.doc('meta/news').onSnapshot(s=>{const v=s.exists?s.data():null;NEWS.items=(v&&v.items)||[];renderNews()},()=>{});
+}
+function subscribe(){
+  if(!db||!city)return; if(unsub){unsub();unsub=null}
+  const code=city.code; let timer=setTimeout(()=>setSave('Sync is slow to answer; showing marks saved on this device.','warn'),10000);
+  unsub=db.doc('flashed/'+code).onSnapshot(snap=>{
+    if(!city||city.code!==code)return;
+    if(!snap.metadata.fromCache){clearTimeout(timer)}
+    const d=snap.exists?snap.data():null;
+    if(d&&Array.isArray(d.ids)){flashed=new Set(d.ids);try{localStorage.setItem('hp_fl_'+code,JSON.stringify(d.ids))}catch(e){}}
+    setSave(canWrite?'Synced across your devices.':'Read-only: only the owner can change marks.',canWrite?'ok':'warn');
+    refresh();
+  },err=>{clearTimeout(timer);setSave('Sync stopped; marks are saved on this device.','warn')});
+}
+async function persist(){
+  const code=city.code, ids=[...flashed].sort();
+  try{localStorage.setItem('hp_fl_'+code,JSON.stringify(ids))}catch(e){}
+  if(!db||!canWrite)return;
+  if(writing){pendingWrite=true;return}
+  writing=true;
+  try{await db.doc('flashed/'+code).set({ids,city:code});setSave('Synced across your devices.','ok')}
+  catch(e){ if(e&&e.code==='invalid_argument'){canWrite=false;setSave('Read-only: only the owner can change marks.','warn')} else setSave('Could not sync just now; kept on this device.','warn') }
+  writing=false; if(pendingWrite){pendingWrite=false;persist()}
+}
+function toggleFlash(id,on){ if(on)flashed.add(id);else flashed.delete(id); if(route)route=null,$('result').hidden=true; persist(); refresh(); if(selected)showCard(selected) }
+
+// ---------- map
+const cv=$('map'),ctx=cv.getContext('2d');let W=0,H=0,dpr=1;
+function resize(){const r=$('screen').getBoundingClientRect();dpr=window.devicePixelRatio||1;W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
+new ResizeObserver(resize).observe($('screen'));
+const cosL=()=>Math.cos(view.lat*Math.PI/180);
+function px(lat,lon){return [W/2+(lon-view.lon)*cosL()*view.k, H/2-(lat-view.lat)*view.k]}
+function unpx(x,y){return [view.lat-(y-H/2)/view.k, view.lon+(x-W/2)/(cosL()*view.k)]}
+function fitCity(){const [lo0,la0,lo1,la1]=city.bbox;view.lat=(la0+la1)/2;view.lon=(lo0+lo1)/2;const r=$('screen').getBoundingClientRect();
+  const kx=(r.width-40)/((lo1-lo0)*Math.cos(view.lat*Math.PI/180)||1e-3),ky=(r.height-40)/((la1-la0)||1e-3);view.k=Math.min(kx,ky);draw()}
+function draw(){
+  if(!city||!W)return; ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#141c3e';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#0b1a3a';
+  for(const poly of city.water){ctx.beginPath();poly.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.fill()}
+  // grid every ~500 m
+  const kmPerPx=1/(view.k/111.32); let step=0.5; while(step/kmPerPx<70)step*=2; while(step/kmPerPx>200&&step>0.125)step/=2;
+  ctx.strokeStyle='rgba(60,80,150,.25)';ctx.lineWidth=1;const dLat=step/111.32,dLon=dLat/cosL();
+  const [la0,lo0]=unpx(0,H),[la1,lo1]=unpx(W,0);
+  for(let la=Math.floor(la0/dLat)*dLat;la<la1;la+=dLat){const y=px(la,0)[1];ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  for(let lo=Math.floor(lo0/dLon)*dLon;lo<lo1;lo+=dLon){const x=px(0,lo)[0];ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  const lw=Math.max(1.5,Math.min(5,view.k/2500));ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle='rgba(200,170,90,.55)';ctx.lineWidth=lw;
+  for(const ln of (city.roads||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+  ctx.strokeStyle='rgba(180,190,230,.6)';ctx.lineWidth=Math.max(1,lw*.7);ctx.setLineDash([6,5]);
+  for(const ln of (city.rails||[])){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+  ctx.setLineDash([]);
+  ctx.strokeStyle='#2b6cc4';ctx.lineWidth=Math.max(2,Math.min(8,view.k/900));ctx.lineCap='round';ctx.lineJoin='round';
+  for(const ln of city.rivers){ctx.beginPath();ln.forEach(([lo,la],j)=>{const [x,y]=px(la,lo);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+  // scale bar
+  ctx.fillStyle='#8d94bf';ctx.font='11px "IBM Plex Mono",monospace';const bw=step/kmPerPx;ctx.fillRect(W-bw-14,H-18,bw,3);ctx.fillText(step>=1?step+' km':(step*1000)+' m',W-bw-14,H-24);
+  // route
+  if(route){ctx.strokeStyle='#ff5aa8';ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.beginPath();route.path.forEach((p,j)=>{const [x,y]=px(p[0],p[1]);j?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.setLineDash([])}
+  const r0=Math.max(4,Math.min(9,view.k/2500));
+  const order=route?new Map(route.stops.map((s,j)=>[s[0],j+1])):null;
+  for(const i of city.inv){
+    const st=i[4]; const fl=flashed.has(i[0]);
+    if(!visible(i))continue;
+    if(!fl&&(st==='destroyed'||st==='hidden')){ const [x,y]=px(i[1],i[2]);ctx.strokeStyle='#59607f';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-3,y-3);ctx.lineTo(x+3,y+3);ctx.moveTo(x+3,y-3);ctx.lineTo(x-3,y+3);ctx.stroke();continue }
+    const [x,y]=px(i[1],i[2]); if(x<-20||y<-20||x>W+20||y>H+20)continue;
+    if(fl){ctx.fillStyle='#3a4270';ctx.fillRect(x-r0*.7,y-r0*.7,r0*1.4,r0*1.4);continue}
+    ctx.fillStyle=ptColor(i[3]);ctx.fillRect(x-r0,y-r0,r0*2,r0*2);
+    if(st!=='ok'){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.strokeRect(x-r0-2,y-r0-2,r0*2+4,r0*2+4);ctx.setLineDash([])}
+    if(order&&order.has(i[0])){ctx.fillStyle='#0a0d1c';ctx.font='bold 10px "IBM Plex Mono",monospace';const n=String(order.get(i[0]));ctx.fillStyle='#fff';ctx.strokeStyle='#0a0d1c';ctx.lineWidth=3;ctx.strokeText(n,x+r0+2,y-r0);ctx.fillText(n,x+r0+2,y-r0)}
+    if(selected&&selected[0]===i[0]){ctx.strokeStyle='#ffd90f';ctx.lineWidth=2;ctx.strokeRect(x-r0-5,y-r0-5,r0*2+10,r0*2+10)}
+  }
+  for(const i of city.inv){const c=recentCh(i[0]);if(!c||!visible(i))continue;const [x,y]=px(i[1],i[2]);if(x<-20||y<-20||x>W+20||y>H+20)continue;
+    const col=CH_COL[c.type]||'#fff';ctx.strokeStyle='#0a0d1c';ctx.lineWidth=5;ctx.beginPath();ctx.arc(x,y,r0+7,0,7);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,r0+7,0,7);ctx.stroke();
+    const g=c.type==='destroyed'?'✕':(c.type==='degraded'||c.type==='damaged')?'!':'↑';ctx.font='bold 11px "IBM Plex Mono",monospace';const bx=x+r0+6,by=y-r0-6;ctx.fillStyle=col;ctx.beginPath();ctx.arc(bx,by,7,0,7);ctx.fill();ctx.fillStyle='#0a0d1c';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(g,bx,by+0.5);ctx.textAlign='start';ctx.textBaseline='alphabetic'}
+  mcDraw();
+  // start flag
+  const [sx,sy]=px(start[0],start[1]);ctx.fillStyle='#ffd90f';ctx.fillRect(sx-1.5,sy-22,3,22);ctx.beginPath();ctx.moveTo(sx+1.5,sy-22);ctx.lineTo(sx+16,sy-16);ctx.lineTo(sx+1.5,sy-10);ctx.fill();
+  ctx.beginPath();ctx.arc(sx,sy,4,0,7);ctx.fill();
+  if(HOTEL){const [hx,hy]=px(HOTEL.lat,HOTEL.lon);ctx.font='20px sans-serif';ctx.fillText('🏨',hx-10,hy+7)}
+}
+// interactions
+const ptrs=new Map();let lastPinch=null,downAt=null,moved=false;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.offsetX,e.offsetY]);downAt=[e.offsetX,e.offsetY];moved=false;lastPinch=null});
+cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const prev=ptrs.get(e.pointerId);ptrs.set(e.pointerId,[e.offsetX,e.offsetY]);
+  if(ptrs.size===1){const dx=e.offsetX-prev[0],dy=e.offsetY-prev[1];if(Math.abs(e.offsetX-downAt[0])+Math.abs(e.offsetY-downAt[1])>(e.pointerType==='touch'?14:6))moved=true;view.lon-=dx/(cosL()*view.k);view.lat+=dy/view.k;draw()}
+  else if(ptrs.size===2){moved=true;const [a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(lastPinch){zoomAt((a[0]+b[0])/2,(a[1]+b[1])/2,d/lastPinch)}lastPinch=d}});
+function endPtr(e){if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);if(ptrs.size<2)lastPinch=null;if(!moved&&ptrs.size===0)tap(e.offsetX,e.offsetY)}
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId)});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*0.0015))},{passive:false});
+function zoomAt(x,y,f){const [la,lo]=unpx(x,y);view.k=Math.max(200,Math.min(3e6,view.k*f));const [la2,lo2]=unpx(x,y);view.lat+=la-la2;view.lon+=lo-lo2;draw()}
+$('zin').onclick=()=>zoomAt(W/2,H/2,1.6);$('zout').onclick=()=>zoomAt(W/2,H/2,1/1.6);$('fit').onclick=fitCity;
+$('startmode').onclick=()=>{startMode=!startMode;$('startmode').classList.toggle('on',startMode);$('hint').hidden=!startMode};
+function tap(x,y){
+  if(hotelMode){const p=unpx(x,y);hotelMode=false;$('hint').hidden=true;$('hint').textContent='Tap the map to set your start';saveHotel({lat:p[0],lon:p[1],name:'Hotel'});toast('Hotel saved – it is now your start point');return}
+  if(startMode){startSrc='pin';try{localStorage.setItem('hp_src_'+city.code,'pin')}catch(e){};start=unpx(x,y);try{localStorage.setItem('hp_start_'+city.code,JSON.stringify(start))}catch(e){};startMode=false;$('startmode').classList.remove('on');$('hint').hidden=true;route=null;$('result').hidden=true;refresh();return}
+  let best=null,bd=30;for(const i of city.inv){if(!visible(i))continue;const [px_,py_]=px(i[1],i[2]);const d=Math.hypot(px_-x,py_-y);if(d<bd){bd=d;best=i}}
+  const mh=mcHit(x,y);if(mh&&(!best||mh.d<bd-4)){mcCard(mh.h);return}
+  mcSel=null;if(best)showCard(best);else{selected=null;$('card').hidden=true;draw()}
+}
+function showCard(i){
+  selected=i;const fl=flashed.has(i[0]);const c=$('card');const cat=catOf(i);
+  const stLabel={ok:'Up on the wall',damaged:'Damaged',unknown:'Status unknown',destroyed:'Destroyed',hidden:'Hidden / not reachable'}[i[4]];
+  const stColor={ok:'var(--green)',damaged:'var(--orange)',unknown:'var(--muted)',destroyed:'var(--red)',hidden:'var(--cyan)'}[i[4]];
+  const ch=(typeof NEWS!=='undefined'&&NEWS.changes)?NEWS.changes[i[0]]:null;
+  const rIdx=route?route.stops.findIndex(s=>s[0]===i[0]):-1;
+  const cname=(INVBY.get(i[0])||[{name:''}])[0].name;
+  c.innerHTML=`<h3><span>${i[0]}</span><span style="color:${ptColor(i[3])}">${i[3]} PTS</span></h3>
+  <dl class="kv"><dt>City</dt><dd>${cname}</dd>
+  <dt>Status</dt><dd style="color:${stColor}">${stLabel}</dd>
+  <dt>You</dt><dd>${fl?'<span style="color:var(--green)">✓ Flashed</span>':(cat==='dead'?'Can\'t be flashed now':'<span style="color:var(--yellow)">Not flashed yet</span>')}</dd>
+  ${ch?`<dt>Last change</dt><dd style="color:${CH_COL[ch.type]||'inherit'};font-weight:600">${chLabel(ch.type)} · ${ch.date}${recentCh(i[0])?' <span class="opp" style="background:'+(CH_COL[ch.type]||'#fff')+'">UPDATED</span>':''}<br><span class="note">source: invader-spotter</span></dd>`:''}
+  ${rIdx>=0?`<dt>Route</dt><dd>Stop ${rIdx+1} of ${route.stops.length}</dd>`:''}
+  <dt>Distance</dt><dd>${(walk(start,[i[1],i[2]])).toFixed(1)} km walk from start</dd>
+  <dt>Position</dt><dd class="mono">${i[1].toFixed(5)}, ${i[2].toFixed(5)}</dd>
+  ${i[5]&&!ch?`<dt>Note</dt><dd>${escapeHtml(i[5])}</dd>`:''}</dl>
+  <div class="row">${cat==='dead'&&!fl?'':`<button class="btn ${fl?'':'g'}" id="c-fl">${fl?'Unmark':'✓ Flashed'}</button>`}
+  <a class="btn y" href="${gmapsPoint(i[1],i[2])}" target="_blank" rel="noopener">Navigate</a>
+  <a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Photos ↗</a>
+  <button class="btn" id="c-start">Start here</button><button class="btn" id="c-x" aria-label="Close">✕</button></div>`;
+  c.hidden=false;cardExtras(i);const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)';
+  const f=$('c-fl');if(f)armConfirm(f,()=>flashWithUndo(i[0],!fl),fl?'Tap again to unmark':'Tap again to confirm');
+  $('c-start').onclick=()=>{startSrc='pin';try{localStorage.setItem('hp_src_'+city.code,'pin')}catch(e){};start=[i[1],i[2]];try{localStorage.setItem('hp_start_'+city.code,JSON.stringify(start))}catch(e){};route=null;$('result').hidden=true;refresh()};
+  $('c-x').onclick=()=>{selected=null;c.hidden=true;draw()};
+  draw();
+}
+// two-step confirm for quick ✓ buttons: first tap arms (3 s), second tap acts
+function armConfirm(btn,action,label){btn.onclick=e=>{e.stopPropagation();
+  if(btn.dataset.armed){clearTimeout(btn._t);delete btn.dataset.armed;btn.classList.remove('armed');btn.innerHTML=btn._orig;action();return}
+  btn._orig=btn.innerHTML;btn.dataset.armed='1';btn.classList.add('armed');btn.innerHTML=label||'Confirm?';
+  btn._t=setTimeout(()=>{delete btn.dataset.armed;btn.classList.remove('armed');btn.innerHTML=btn._orig},3000)}}
+function flashWithUndo(id,on){toggleFlash(id,on);if(typeof toast==='function')toast(id+(on?' marked as flashed':' unmarked'),()=>toggleFlash(id,!on))}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+// ---------- tabs
+const tabs=[['t-plan','p-plan'],['t-list','p-list'],['t-mark','p-mark'],['t-news','p-news']];
+tabs.forEach(([t,p])=>$(t).onclick=()=>tabs.forEach(([t2,p2])=>{$(t2).setAttribute('aria-selected',t2===t);$(p2).hidden=t2!==t}));
+// mode
+let mode='time';
+$('mode').querySelectorAll('button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$('mode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  $('unit').textContent=mode==='time'?'minutes':'km';$('budget').value=mode==='time'?120:8;$('budget').step=mode==='time'?10:0.5});
+let sortBy='near';
+$('sort').querySelectorAll('button').forEach(b=>b.onclick=()=>{sortBy=b.dataset.s;$('sort').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderTargets()});
+function renderTargets(){
+  const list=candidates().map(i=>({i,d:walk(start,[i[1],i[2]])}));
+  list.sort(sortBy==='near'?(a,b)=>a.d-b.d:(a,b)=>b.i[3]-a.i[3]||a.d-b.d);
+  $('targets').innerHTML=list.slice(0,150).map(({i,d})=>`<li><span class="pts" style="color:${ptColor(i[3])}">${i[3]}</span><span>${i[0]} <span class="tag">${d.toFixed(1)} km</span>${i[4]!=='ok'?' <span class="tag">'+i[4]+'</span>':''}</span><span class="inline"><button class="btn g" data-fl="${i[0]}" aria-label="Mark ${i[0]} flashed">✓</button><a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener" aria-label="Photos of ${i[0]}">📷</a><a class="btn" href="${gmapsPoint(i[1],i[2])}" target="_blank" rel="noopener" aria-label="Navigate to ${i[0]}">↗</a></span></li>`).join('')||'<li><span></span><span class="note">Nothing left to hunt here. Nice work.</span><span></span></li>';
+  $('targets').querySelectorAll('[data-fl]').forEach(b=>armConfirm(b,()=>flashWithUndo(b.dataset.fl,true)));
+}
+
+// ---------- bulk marking
+function parseNums(t){const out=new Set();t.split(/[\s,;]+/).forEach(p=>{const m=p.match(/^(\d+)(?:-(\d+))?$/);if(!m)return;let a=+m[1],b=m[2]?+m[2]:a;if(b<a)[a,b]=[b,a];for(let n=a;n<=b&&n-a<3000;n++)out.add(n)});return out}
+function idsFor(nums){return city.inv.filter(i=>nums.has(numOf(i[0]))).map(i=>i[0])}
+// ---------- import codes across cities
+const ALLIDS=new Map();DATA.cities.forEach(c=>c.inv.forEach(i=>ALLIDS.set(i[0].toUpperCase(),[c.code,i[0]])));
+function extractIds(text){const found=new Map(),unknown=new Set();const re=/\b([A-Za-z]{2,5})[_\s-]?0*(\d{1,4})\b/g;let m;
+  while((m=re.exec(text))){const code=m[1].toUpperCase(),n=parseInt(m[2],10);
+    const cand=[code+'_'+String(n).padStart(2,'0'),code+'_'+n,code+'_'+String(n).padStart(3,'0')].find(k=>ALLIDS.has(k));
+    if(cand){const [c,id]=ALLIDS.get(cand);if(!found.has(c))found.set(c,new Set());found.get(c).add(id)}
+    else if(DATA.cities.some(c=>c.code===code))unknown.add(code+'_'+n)}
+  return {found,unknown}}
+$('impfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('imptext').value=String(r.result).slice(0,2e6);$('impmsg').textContent='File loaded: '+f.name;$('impmsg').className='save'};r.readAsText(f)};
+$('impgo').onclick=async()=>{
+  const {found,unknown}=extractIds($('imptext').value);const msg=$('impmsg');
+  if(!found.size){msg.textContent='No invader codes found. Codes look like LDN_67.';msg.className='save warn';return}
+  let total=0,parts=[];msg.textContent='Importing…';msg.className='save';
+  for(const [code,ids] of found){
+    let cur=new Set();try{(JSON.parse(localStorage.getItem('hp_fl_'+code)||'[]')).forEach(x=>cur.add(x))}catch(e){}
+    if(db){try{const s=await db.doc('flashed/'+code).get();if(s.exists&&Array.isArray(s.data().ids))s.data().ids.forEach(x=>cur.add(x))}catch(e){}}
+    const before=cur.size;ids.forEach(x=>cur.add(x));const added=cur.size-before;total+=added;
+    const name=(DATA.cities.find(c=>c.code===code)||{}).name||code;parts.push(name+' +'+added);
+    const arr=[...cur].sort();try{localStorage.setItem('hp_fl_'+code,JSON.stringify(arr))}catch(e){}
+    allFlashed[code]=new Set(arr);if(city.code===code){flashed=new Set(arr)}
+    if(db&&canWrite){try{await db.doc('flashed/'+code).set({ids:arr,city:code})}catch(e){if(e&&e.code==='invalid_argument')canWrite=false}}
+  }
+  route=null;$('result').hidden=true;refresh();
+  msg.textContent=`Imported ${total} new: ${parts.join(', ')}`+(unknown.size?` · ${unknown.size} codes not in the database`:'');msg.className='save ok';
+};
+$('bulkadd').onclick=()=>{const ids=idsFor(parseNums($('bulk').value));ids.forEach(id=>flashed.add(id));route=null;$('result').hidden=true;persist();refresh();setSave(`Marked ${ids.length} as flashed.`,'ok')};
+$('bulkrm').onclick=()=>{const ids=idsFor(parseNums($('bulk').value));ids.forEach(id=>flashed.delete(id));route=null;persist();refresh();setSave(`Unmarked ${ids.length}.`,'ok')};
+function bindClear(){const b=$('clear');if(b)b.onclick=()=>{const w=$('clearwrap');w.innerHTML='<span class="note">Clear all marks for '+city.name+'?</span> <button class="btn" id="cy">Yes, clear</button> <button class="btn" id="cn">Keep</button>';
+  $('cy').onclick=()=>{flashed=new Set();persist();refresh();w.innerHTML='<button class="btn" id="clear">Clear city…</button>';bindClear()};
+  $('cn').onclick=()=>{w.innerHTML='<button class="btn" id="clear">Clear city…</button>';bindClear()}}}
+bindClear();
+
+// ---------- planner (orienteering: greedy best-ratio insertion + 2-opt)
+// ---------- travel model (walk / walk+transit / walk+taxi)
+const TRANSIT={overhead:10,kmh:18,walkKm:0.5}, TAXI={overhead:5,kmh:20,walkKm:0};
+function travelCfg(){return {travel:($('travel').querySelector('.on')||{}).dataset?.t||'walk',maxWalk:Math.max(0.2,+$('maxwalk').value||1),v:Math.max(1,+$('speed').value||4.5)}}
+function legOf(d,cfg){const m=(cfg.travel==='walk'||d<=cfg.maxWalk)?'walk':cfg.travel;
+  if(m==='walk')return {m,min:d/cfg.v*60,wkm:d};const T=m==='transit'?TRANSIT:TAXI;return {m,min:T.overhead+d/T.kmh*60,wkm:T.walkKm}}
+const LEGICON={walk:'🚶',transit:'🚇',taxi:'🚕'}, GMODE={walk:'walking',transit:'transit',taxi:'driving'};
+function legUrl(a,b,m){return `https://www.google.com/maps/dir/?api=1&travelmode=${GMODE[m]}&origin=${a[0]},${a[1]}&destination=${b[0]},${b[1]}`}
+function plan(o={}){
+  const cfg=Object.assign(travelCfg(),o.cfg||{});const stopMin=Math.max(0,+$('stop').value||0), loop=$('loop').checked;
+  const budget=Math.max(0.1,o.budget||+$('budget').value||60);
+  const timeMode=mode==='time';
+  const cost=(a,b)=>{const L=legOf(walk(a,b),cfg);return timeMode?L.min:L.wkm};
+  const fastKmh=cfg.travel==='walk'?cfg.v:(cfg.travel==='transit'?TRANSIT.kmh:TAXI.kmh);
+  const reachKm=timeMode?budget/60*fastKmh:(cfg.travel==='walk'?budget:50);
+  let C=candidates().filter(i=>walk(start,[i[1],i[2]])<=(loop?reachKm/2:reachKm)+0.05).map(i=>({i,p:[i[1],i[2]]}));
+  const S={p:start,i:null};
+  let r=loop?[S,S]:[S];
+  const total=a=>{let s=0;for(let j=0;j<a.length-1;j++)s+=cost(a[j].p,a[j+1].p);return s};
+  let tot=0;
+  function insertAll(){
+    let improved=true;
+    while(improved&&C.length){improved=false;let best=null;
+      const n=r.length-(loop?2:1)+1;
+      for(let ci=0;ci<C.length;ci++){const c=C[ci];
+        const slots=loop?r.length-1:r.length;
+        for(let j=0;j<slots;j++){let delta;
+          if(j<r.length-1)delta=cost(r[j].p,c.p)+cost(c.p,r[j+1].p)-cost(r[j].p,r[j+1].p);else delta=cost(r[j].p,c.p);
+          const used=tot+delta+(timeMode?n*stopMin:0); if(used>budget)continue;
+          const marg=timeMode?delta+stopMin:delta+0.02;
+          const score=c.i[3]/Math.max(marg,0.01);
+          if(!best||score>best.score)best={score,ci,j,delta}}}
+      if(best){const c=C.splice(best.ci,1)[0];r.splice(best.j+1,0,c);tot+=best.delta;improved=true}}
+  }
+  function twoOpt(){let better=true,guard=0;
+    while(better&&guard++<60){better=false;const last=loop?r.length-1:r.length;
+      for(let a=1;a<last-1;a++)for(let b=a+1;b<last;b++){
+        const A=r[a-1],B=r[a],Cc=r[b],D=b+1<r.length?r[b+1]:null;
+        const before=cost(A.p,B.p)+(D?cost(Cc.p,D.p):0), after=cost(A.p,Cc.p)+(D?cost(B.p,D.p):0);
+        if(after<before-1e-6){r=r.slice(0,a).concat(r.slice(a,b+1).reverse(),r.slice(b+1));better=true}}}
+    tot=total(r)}
+  for(let pass=0;pass<4;pass++){insertAll();twoOpt()}
+  const stops=r.filter(x=>x.i).map(x=>x.i);
+  const legs=[];let wkm=0,mins=0,vkm=0;
+  for(let j=0;j<r.length-1;j++){const d=walk(r[j].p,r[j+1].p);const L=legOf(d,cfg);legs.push({a:r[j].p,b:r[j+1].p,d,m:L.m,min:L.min});wkm+=L.wkm;mins+=L.min;if(L.m!=='walk')vkm+=d}
+  route={stops,path:r.map(x=>x.p),km:wkm,vkm,minutes:mins+stops.length*stopMin,pts:stops.reduce((s,i)=>s+i[3],0),legs,cfg};
+  if(o.quiet){const rr=route;return rr}
+  renderResult(loop);
+  if(route.path.length>1){const la=route.path.map(p=>p[0]),lo=route.path.map(p=>p[1]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
+    view.lat=(a+b)/2;view.lon=(c+d)/2;const kx=(W-60)/(((d-c)||1e-3)*Math.cos(view.lat*Math.PI/180)),ky=(H-80)/((b-a)||1e-3);view.k=Math.min(kx,ky,3e6)}
+  draw();
+}
+function fmtMin(m){const h=Math.floor(m/60),mm=Math.round(m%60);return h?`${h}h ${String(mm).padStart(2,'0')}m`:`${mm}m`}
+function renderResult(loop,el){
+  el=el||$('result');el.hidden=false;$('result').hidden=false;
+  if(!route.stops.length){el.innerHTML='<p class="note">No invaders fit this budget from your start. Try a bigger budget, a faster travel option, or move the start ⚑ closer.</p>';return}
+  const legs=route.legs||[];const mixed=legs.some(l=>l.m!=='walk');
+  const walkLinks=gmapsLegs(route.path);
+  const driveLinks=route.cfg&&route.cfg.travel==='taxi'?gmapsLegs(route.path).map(u=>u.replace('travelmode=walking','travelmode=driving')):[];
+  const L0=legs[0];
+  const nV=legs.filter(l=>l.m!=='walk').length;
+  el.innerHTML=`<div class="big"><div><b>${route.stops.length}</b><span>Invaders</span></div><div><b>${route.pts}</b><span>Points</span></div><div><b>${route.km.toFixed(1)}</b><span>km walk</span></div><div><b>${fmtMin(route.minutes)}</b><span>Total</span></div></div>
+  ${mixed?`<div class="note">${nV} ride${nV>1?'s':''} (${LEGICON[route.cfg.travel]} ${route.vkm.toFixed(1)} km). Tap ↗ on each leg for live ${route.cfg.travel==='transit'?'transit':'driving'} directions.</div>`:''}
+  <button class="go" id="huntgo" style="background:var(--green);color:#062b15;box-shadow:0 4px 0 #1a7a44">▶ START HUNT MODE</button>
+  ${mixed&&L0?`<a class="btn y" style="justify-content:center" href="${legUrl(L0.a,L0.b,L0.m)}" target="_blank" rel="noopener">▶ Google Maps: first leg ${LEGICON[L0.m]}</a>`:''}
+  ${driveLinks.length?`<div class="inline">${driveLinks.map((u,j)=>`<a class="btn y" href="${u}" target="_blank" rel="noopener">🚕 Whole route by car${driveLinks.length>1?' · part '+(j+1):''}</a>`).join('')}</div>`:''}
+  <div class="inline">${walkLinks.map((u,j)=>`<a class="btn ${mixed?'':'y'}" href="${u}" target="_blank" rel="noopener">${mixed?'🗺 Whole route on map':'▶ Google Maps'}${walkLinks.length>1?' · part '+(j+1):''}</a>`).join('')}</div>
+  ${mixed?'<p class="note" style="margin:0">Google Maps can\'t chain several transit legs in one link, so use ↗ on each leg (or NAVIGATE in hunt mode) for live transit directions.</p>':''}
+  <ol class="route">${route.stops.map((i,j)=>{const L=legs[j];return `${L?`<li class="leg"><span class="num">${LEGICON[L.m]}</span><span class="note">${L.m==='walk'?(L.d*1000<1000?Math.round(L.d*100)*10+' m':L.d.toFixed(1)+' km'):L.d.toFixed(1)+' km by '+(L.m==='transit'?'transit':'taxi')} · ~${Math.round(L.min)} min</span><a class="btn" href="${legUrl(L.a,L.b,L.m)}" target="_blank" rel="noopener" aria-label="Directions">↗</a></li>`:''}<li><span class="num">${j+1}</span><span>${i[0]} <span class="pts" style="color:${ptColor(i[3])}">${i[3]}</span>${i[4]!=='ok'?' <span class="tag">'+i[4]+'</span>':''}</span><button class="btn g" data-fl="${i[0]}">✓</button></li>`}).join('')}
+  ${loop&&legs.length>route.stops.length?(()=>{const L=legs[legs.length-1];return `<li class="leg"><span class="num">${LEGICON[L.m]}</span><span class="note">back to start · ~${Math.round(L.min)} min</span><a class="btn" href="${legUrl(L.a,L.b,L.m)}" target="_blank" rel="noopener" aria-label="Directions">↗</a></li>`})():''}</ol>
+  <p class="note">Estimates: walking at your speed on straight lines × 1.3; ${route.cfg.travel==='transit'?'transit ≈ 10 min wait and walk to stops + 18 km/h':route.cfg.travel==='taxi'?'taxi ≈ 5 min pickup + 20 km/h':'all legs on foot'}. Google Maps gives the real times.${loop?'':' Route ends at the last invader.'}</p>`;
+  el.querySelectorAll('[data-fl]').forEach(b=>armConfirm(b,()=>{const id=b.dataset.fl;flashed.add(id);b.disabled=true;b.textContent='✓ done';persist();updateStats();toast(id+' marked as flashed',()=>{flashed.delete(id);b.disabled=false;b.textContent='✓';persist();updateStats();renderScore()})}));
+  const hg=el.querySelector('#huntgo');if(hg)hg.onclick=startHunt;
+}
+$('plan').onclick=runPlan;
+$('travel').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('travel').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('mwrap').hidden=b.dataset.t==='walk';try{localStorage.setItem('hp_travel',JSON.stringify({t:b.dataset.t,mw:$('maxwalk').value}))}catch(e){}});
+$('maxwalk').onchange=()=>{try{localStorage.setItem('hp_travel',JSON.stringify({t:travelCfg().travel,mw:$('maxwalk').value}))}catch(e){}};
+try{const s=JSON.parse(localStorage.getItem('hp_travel')||'null');if(s){$('maxwalk').value=s.mw||1;const b=$('travel').querySelector('[data-t="'+s.t+'"]');if(b)b.click()}}catch(e){}
+$('export').onclick=async()=>{
+  const msg=$('exportmsg');let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
+  if(!dl){msg.textContent='Export is not available in this view.';msg.className='save warn';return}
+  const ord=route?new Map(route.stops.map((s,j)=>[s[0],j+1])):new Map();
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const rows=[['name','latitude','longitude','points','status','route_order','photos'].join(',')];
+  candidates().forEach(i=>rows.push([q(i[0]),i[1],i[2],i[3],q(i[4]),ord.get(i[0])||'',q(photos(i[0]))].join(',')));
+  try{await dl.save({filename:'invaders-'+city.code+'-to-hunt.csv',data:rows.join('\n')});msg.textContent='Saved. Import it in Google My Maps.';msg.className='save ok'}
+  catch(e){msg.textContent=e&&e.code==='declined'?'Export cancelled.':'Could not export right now.';msg.className='save warn'}
+};
+$('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
+
+loadCity(sel.value);
+initDb().then(initField);
+})();
+</script>
