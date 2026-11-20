@@ -129,7 +129,8 @@ ul.news .d{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .fchip{display:inline-flex;align-items:center;gap:6px;background:rgba(10,13,28,.88);border:1px solid var(--line);border-radius:16px;padding:5px 10px;font-size:12px;color:var(--muted);cursor:pointer}
 .fchip i{width:9px;height:9px;border-radius:50%;border:2px solid var(--c)}.fchip.on{color:var(--fg);border-color:var(--c)}.fchip.on i{background:var(--c)}
 .fchip b{font-family:var(--f-mono);font-weight:500;color:var(--muted)}
-.card{overflow:auto}
+.card{overflow:auto;z-index:6;overscroll-behavior:contain}.legend{z-index:3}
+#screen:has(.card:not([hidden])) .legend,#screen:has(.card:not([hidden])) #near{display:none}
 dl.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:13px}dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;min-width:0}.mono{font-family:var(--f-mono);font-size:12px}
 .btn.armed{background:var(--yellow)!important;color:#1a1400!important;border-color:var(--yellow)!important;font-weight:600}
 .mrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
