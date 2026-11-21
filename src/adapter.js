@@ -32,14 +32,17 @@ function draw(){
   if(vk!==lastView&&view.k>1){LM.setView([view.lat,view.lon],kToZoom(view.k,view.lat));lastView=vk}
   LInv.clearLayers();LRoute.clearLayers();LStart.clearLayers();
   const order=route?new Map(route.stops.map((s,j)=>[s[0],j+1])):null;
+  const LBLC=[];
   for(const i of city.inv){const st=i[4],fl=flashed.has(i[0]);
     if(!visible(i))continue;
     const dead=st==='destroyed'||st==='hidden';
     const m=L.circleMarker([i[1],i[2]],{renderer:LR,radius:fl||dead?5:8,weight:selected&&selected[0]===i[0]?4:(st==='ok'?1.5:2),color:selected&&selected[0]===i[0]?'#ffd90f':(st==='ok'?'#0a0d1c':'#ffffff'),dashArray:st==='damaged'?'3 3':null,fillColor:dead?'#59607f':fl?'#6b7399':ptColor(i[3]),fillOpacity:fl||dead?.6:.95,interactive:false}).addTo(LInv);
     if(order&&order.has(i[0]))m.bindTooltip(String(order.get(i[0])),{permanent:true,direction:'right',className:'rnum',offset:[6,0]});
-    else if(LM.getZoom()>=17)m.bindTooltip(i[0],{permanent:true,direction:'right',className:'ilbl',offset:[7,0]});    const rc=recentCh(i[0]);if(rc){const col=CH_COL[rc.type]||'#fff';L.circleMarker([i[1],i[2]],{renderer:LR,radius:14,weight:3,color:col,fill:false,interactive:false}).addTo(LInv);
+    else if(LM.getZoom()>=14&&!dead)LBLC.push({i,m});    const rc=recentCh(i[0]);if(rc){const col=CH_COL[rc.type]||'#fff';L.circleMarker([i[1],i[2]],{renderer:LR,radius:14,weight:3,color:col,fill:false,interactive:false}).addTo(LInv);
       L.marker([i[1],i[2]],{icon:L.divIcon({className:'',html:'<div class="chb" style="background:'+col+'">'+(rc.type==='destroyed'?'✕':(rc.type==='degraded'||rc.type==='damaged')?'!':'↑')+'</div>',iconSize:[16,16],iconAnchor:[-6,22]}),interactive:false,keyboard:false}).addTo(LInv)}
   }
+  if(LBLC.length){const sz=LM.getSize();const pts=LBLC.map(o=>{const q=LM.latLngToContainerPoint([o.i[1],o.i[2]]);return {i:o.i,x:q.x,y:q.y,m:o.m}}).filter(p=>p.x>=0&&p.y>=0&&p.x<=sz.x&&p.y<=sz.y);
+    for(const p of lblPick(pts))p.m.bindTooltip(p.i[0],{permanent:true,direction:'right',className:'ilbl',offset:[7,0]})}
   if(route&&route.path.length>1){
     if(route.geo&&route.geo.length===(route.path.length-1)){route.geo.forEach((g,j)=>{const leg=route.legs&&route.legs[j];const ride=leg&&leg.m!=='walk';
       L.polyline(ride||!g?[route.path[j],route.path[j+1]]:g,ride||!g?{color:'#ff5aa8',weight:3,dashArray:'4 8',opacity:.9}:{color:'#ff5aa8',weight:5,opacity:.9}).addTo(LRoute)})}
@@ -242,4 +245,5 @@ const _rfN=refresh;refresh=function(){const r=_rfN.apply(this,arguments);if(ME)r
 screenPos=(la,lo)=>{const p=LM.latLngToContainerPoint([la,lo]);return [p.x,p.y]};
 focusInv=i=>{LM.setView([i[1],i[2]],Math.max(LM.getZoom(),18))};
 LM.on('move zoom',()=>{try{placePulse()}catch(e){}});
-let lblOn=false;LM.on('zoomend',()=>{const on=LM.getZoom()>=17;if(on!==lblOn){lblOn=on;draw()}});
+LM.on('zoomend moveend',()=>{if(LM.getZoom()>=14)draw()});
+let lblOn=false;LM.on('zoomend',()=>{const on=LM.getZoom()>=14;if(on!==lblOn){lblOn=on;draw()}});

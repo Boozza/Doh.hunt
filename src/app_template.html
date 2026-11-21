@@ -984,9 +984,15 @@ function hoverAt(x,y){const i=nearestScreen(x,y,18);if(!i){TIP.hidden=true;$('sc
 $('screen').addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons){TIP.hidden=true;return}const r=$('screen').getBoundingClientRect();hoverAt(e.clientX-r.left,e.clientY-r.top)});
 $('screen').addEventListener('pointerleave',()=>{TIP.hidden=true});
 // code labels on the canvas map when zoomed in (Claude version; Netlify uses map tooltips)
-function drawLabels(){if(!city||view.k<100000)return;ctx.save();ctx.font='600 11px "IBM Plex Mono",monospace';ctx.textBaseline='middle';let n=0;
-  for(const i of city.inv){if(!visible(i))continue;const [x,y]=px(i[1],i[2]);if(x<-20||y<-20||x>W+20||y>H+20)continue;if(++n>220)break;const t=i[0];
-    ctx.lineWidth=3;ctx.strokeStyle='rgba(10,13,28,.9)';ctx.strokeText(t,x+11,y);ctx.fillStyle=flashed.has(t)?'#8d94bf':'#eef0ff';ctx.fillText(t,x+11,y)}ctx.restore()}
+function lblPick(pts){// pts: [{i,x,y}] -> labels that don't overlap; unflashed and higher points first
+  pts.sort((a,b)=>(flashed.has(a.i[0])-flashed.has(b.i[0]))||(b.i[3]-a.i[3]));const used=[],out=[];
+  for(const p of pts){const w=p.i[0].length*7+8,r=[p.x+9,p.y-8,p.x+9+w,p.y+8];if(used.some(u=>!(r[2]<u[0]||r[0]>u[2]||r[3]<u[1]||r[1]>u[3]))||used.some(u=>Math.abs(u[4]-p.x)<10&&Math.abs(u[5]-p.y)<10))continue;used.push([...r,p.x,p.y]);out.push(p);if(out.length>=160)break}
+  return out}
+function drawLabels(){if(!city||view.k<9000)return;const pts=[];
+  for(const i of city.inv){if(!visible(i))continue;const [x,y]=px(i[1],i[2]);if(x<0||y<0||x>W||y>H)continue;pts.push({i,x,y})}
+  ctx.save();ctx.font='600 11px "IBM Plex Mono",monospace';ctx.textBaseline='middle';
+  for(const p of lblPick(pts)){const t=p.i[0];ctx.lineWidth=3;ctx.strokeStyle='rgba(10,13,28,.9)';ctx.strokeText(t,p.x+11,p.y);ctx.fillStyle=flashed.has(t)?'#8d94bf':'#eef0ff';ctx.fillText(t,p.x+11,p.y)}
+  ctx.restore()}
 
 // ---- export every city you hunt (one CSV, one My Maps layer; style by the "city" column)
 $('exportall').onclick=async()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const rows=[['name','city','latitude','longitude','points','status'].join(',')];let n=0;
