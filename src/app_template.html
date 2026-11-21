@@ -146,6 +146,13 @@ footer a{color:var(--cyan)}
 .wx{display:grid;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
 .wxrow{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;align-items:baseline}.wxrow b{min-width:88px}
 #sc-sort{margin-left:auto}
+.srch{position:absolute;left:10px;right:64px;top:10px;z-index:8;background:var(--panel);border:2px solid var(--cyan,#22e3ff);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.srch input{width:100%;font-size:16px}.srch ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px;max-height:240px;overflow:auto}
+.srch li{padding:7px 8px;border-radius:6px;cursor:pointer}.srch li:hover{background:rgba(34,227,255,.12)}
+.pulse{position:absolute;width:0;height:0;z-index:4;pointer-events:none}.pulse i{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border:4px solid #ffd90f;border-radius:50%;animation:pulse 1.5s ease-out infinite;box-shadow:0 0 12px #ffd90f}
+.pulse i:nth-child(2){animation-delay:.5s}.pulse i:nth-child(3){animation-delay:1s}
+@keyframes pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(3.4);opacity:0}}
+.itip{position:absolute;z-index:7;transform:translate(-50%,-100%);background:rgba(10,13,28,.95);border:1px solid var(--yellow);border-radius:6px;padding:3px 7px;font-size:12px;white-space:nowrap;pointer-events:none}
 </style>
 
 <div class="wrap">
@@ -738,6 +745,7 @@ function draw(){
   for(const i of city.inv){const c=recentCh(i[0]);if(!c||!visible(i))continue;const [x,y]=px(i[1],i[2]);if(x<-20||y<-20||x>W+20||y>H+20)continue;
     const col=CH_COL[c.type]||'#fff';ctx.strokeStyle='#0a0d1c';ctx.lineWidth=5;ctx.beginPath();ctx.arc(x,y,r0+7,0,7);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,r0+7,0,7);ctx.stroke();
     const g=c.type==='destroyed'?'✕':(c.type==='degraded'||c.type==='damaged')?'!':'↑';ctx.font='bold 11px "IBM Plex Mono",monospace';const bx=x+r0+6,by=y-r0-6;ctx.fillStyle=col;ctx.beginPath();ctx.arc(bx,by,7,0,7);ctx.fill();ctx.fillStyle='#0a0d1c';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(g,bx,by+0.5);ctx.textAlign='start';ctx.textBaseline='alphabetic'}
+  drawLabels();try{placePulse()}catch(e){}
   mcDraw();
   // start flag
   const [sx,sy]=px(start[0],start[1]);ctx.fillStyle='#ffd90f';ctx.fillRect(sx-1.5,sy-22,3,22);ctx.beginPath();ctx.moveTo(sx+1.5,sy-22);ctx.lineTo(sx+16,sy-16);ctx.lineTo(sx+1.5,sy-10);ctx.fill();
@@ -941,6 +949,43 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+
+// ---- search an invader by code + highlight it; hover tooltip; code labels when zoomed in
+let screenPos=(la,lo)=>px(la,lo);
+let focusInv=i=>{view.lat=i[1];view.lon=i[2];view.k=Math.max(view.k,115000);draw()};
+const normId=t=>String(t).toUpperCase().replace(/[\s_\-]+/g,'').replace(/([A-Z]+)0*(\d+)/,'$1$2');
+let ALLINV=null;function allInv(){if(!ALLINV){ALLINV=[];DATA.cities.concat([SPACE]).forEach(c=>c.inv.forEach(i=>ALLINV.push({i,c,n:normId(i[0])})))}return ALLINV}
+function findInv(q){const n=normId(q);if(!n)return[];const cur=city&&city.code;
+  if(/^\d+$/.test(n))return allInv().filter(x=>x.c.code===cur&&x.n.replace(/^[A-Z]+/,'').startsWith(n)).slice(0,8);
+  const ex=[],st=[],co=[];for(const x of allInv()){if(x.n===n)ex.push(x);else if(x.n.startsWith(n))st.push(x);else if(n.length>2&&x.n.includes(n))co.push(x)}
+  return ex.concat(st.sort((a,b)=>(a.c.code===cur?0:1)-(b.c.code===cur?0:1)||a.n.length-b.n.length),co).slice(0,8)}
+const PULSE=document.createElement('div');PULSE.className='pulse';PULSE.hidden=true;PULSE.innerHTML='<i></i><i></i><i></i>';$('screen').appendChild(PULSE);
+let PULSEINV=null,pulseT=0;
+function placePulse(){if(!PULSEINV||PULSE.hidden)return;const [x,y]=screenPos(PULSEINV[1],PULSEINV[2]);PULSE.style.left=x+'px';PULSE.style.top=y+'px'}
+function goInv(x){$('srchbox').hidden=true;$('srchin').blur();if(!city||city.code!==x.c.code){sel.value=x.c.code;try{localStorage.setItem('hp_city',x.c.code)}catch(e){};loadCity(x.c.code)}
+  const i=city.inv.find(v=>v[0]===x.i[0])||x.i;if(!visible(i)&&FILTER){const k=catOf(i);if(k&&!FILTER[k]){FILTER[k]=true;try{renderFilters()}catch(e){}}}
+  focusInv(i);showCard(i);PULSEINV=i;PULSE.hidden=false;placePulse();clearTimeout(pulseT);pulseT=setTimeout(()=>{PULSE.hidden=true},5000);
+  $('screen').scrollIntoView({behavior:'smooth',block:'center'})}
+{const b=document.createElement('button');b.id='srchbtn';b.title='Find an invader';b.setAttribute('aria-label','Find an invader');b.textContent='🔍';$('zin').parentElement.appendChild(b);
+ const box=document.createElement('div');box.id='srchbox';box.className='srch';box.hidden=true;
+ box.innerHTML='<input id="srchin" placeholder="Find invader – e.g. ROM_10, rom10 or 10" autocomplete="off" autocapitalize="characters" aria-label="Invader code"><ul id="srchres"></ul>';$('screen').appendChild(box);
+ const inp=$('srchin'),res=$('srchres');let hits=[];
+ const show=()=>{hits=findInv(inp.value);res.innerHTML=hits.map((x,k)=>`<li data-k="${k}"><b>${x.i[0]}</b> <span class="note">${escapeHtml(x.c.name)} · ${x.i[3]} pts · ${({ok:'up',damaged:'damaged',unknown:'unknown',destroyed:'destroyed',hidden:'hidden'})[x.i[4]]||x.i[4]}${flashedOf(x.c.code).has(x.i[0])?' · ✓ flashed':''}</span></li>`).join('')||(inp.value.trim()?'<li class="note">No invader with that code</li>':'');
+   res.querySelectorAll('li[data-k]').forEach(li=>li.onclick=()=>goInv(hits[+li.dataset.k]))};
+ inp.addEventListener('input',show);
+ inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&hits[0]){e.preventDefault();goInv(hits[0])}if(e.key==='Escape'){box.hidden=true}});
+ b.onclick=()=>{box.hidden=!box.hidden;if(!box.hidden){inp.value='';res.innerHTML='';setTimeout(()=>inp.focus(),30)}}}
+// hover tooltip (mouse / trackpad)
+const TIP=document.createElement('div');TIP.className='itip';TIP.hidden=true;$('screen').appendChild(TIP);
+function nearestScreen(x,y,maxd){if(!city)return null;let b=null,bd=maxd*maxd;for(const i of city.inv){if(!visible(i)||!(i[1]||i[2]))continue;const [u,v]=screenPos(i[1],i[2]);const d=(u-x)*(u-x)+(v-y)*(v-y);if(d<bd){bd=d;b=i}}return b}
+function hoverAt(x,y){const i=nearestScreen(x,y,18);if(!i){TIP.hidden=true;$('screen').style.cursor='';return}const [u,v]=screenPos(i[1],i[2]);
+  TIP.innerHTML=`<b>${i[0]}</b> · ${i[3]} pts${flashed.has(i[0])?' · ✓':''}`;TIP.style.left=u+'px';TIP.style.top=(v-16)+'px';TIP.hidden=false;$('screen').style.cursor='pointer'}
+$('screen').addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons){TIP.hidden=true;return}const r=$('screen').getBoundingClientRect();hoverAt(e.clientX-r.left,e.clientY-r.top)});
+$('screen').addEventListener('pointerleave',()=>{TIP.hidden=true});
+// code labels on the canvas map when zoomed in (Claude version; Netlify uses map tooltips)
+function drawLabels(){if(!city||view.k<100000)return;ctx.save();ctx.font='600 11px "IBM Plex Mono",monospace';ctx.textBaseline='middle';let n=0;
+  for(const i of city.inv){if(!visible(i))continue;const [x,y]=px(i[1],i[2]);if(x<-20||y<-20||x>W+20||y>H+20)continue;if(++n>220)break;const t=i[0];
+    ctx.lineWidth=3;ctx.strokeStyle='rgba(10,13,28,.9)';ctx.strokeText(t,x+11,y);ctx.fillStyle=flashed.has(t)?'#8d94bf':'#eef0ff';ctx.fillText(t,x+11,y)}ctx.restore()}
 
 // ---- export every city you hunt (one CSV, one My Maps layer; style by the "city" column)
 $('exportall').onclick=async()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const rows=[['name','city','latitude','longitude','points','status'].join(',')];let n=0;
