@@ -259,3 +259,85 @@ pickPhoto=async function(id,after){const inp=document.createElement('input');inp
     if(PHOTOS[id]&&PHOTOS[id].url&&PHOTOS[id].url.startsWith('blob:'))URL.revokeObjectURL(PHOTOS[id].url);
     PHOTOS[id]={code:id,url:URL.createObjectURL(blob),date};toast('Photo saved for '+id+' (on this device)');renderGallery();after&&after()}catch(e){toast('Photo failed – try again')}};
   inp.click()};
+
+// ================= v33 LIVE GUIDANCE (street route on the map, turn hints, re-routing) =================
+const LNav=L.layerGroup().addTo(LM);
+let NAV=null;
+const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+const navBar=document.createElement('div');navBar.id='navbar';navBar.className='navbar';navBar.hidden=true;
+navBar.innerHTML='<div class="nb-turn"><span class="nb-ic" id="nb-ic">⬆</span><span id="nb-txt"></span></div><div class="nb-sub"><b id="nb-id"></b><span id="nb-rem"></span><span class="sp"></span><button class="btn g" id="nb-fl" hidden>✓ Flashed</button><button class="btn" id="nb-skip" hidden title="Skip to the next stop">Skip ›</button><a class="btn" id="nb-ext" target="_blank" rel="noopener" title="Open in Google Maps">↗</a><button class="btn" id="nb-x" aria-label="Stop guidance">✕</button></div>';
+$('screen').appendChild(navBar);
+const fmtM=m=>m<1000?Math.round(m/10)*10+' m':(m/1000).toFixed(1)+' km';
+const MANI={left:'⬅','slight left':'↖','sharp left':'↙',right:'➡','slight right':'↗','sharp right':'↘',straight:'⬆',uturn:'↩'};
+function stepTxt(s){const m=s.maneuver||{},t=m.type,mod=m.modifier||'',on=s.name?' onto '+s.name:'';
+  if(t==='arrive')return ['🎯','Keep going – the invader is there'];
+  if(t==='depart')return ['⬆','Start walking'+(s.name?' on '+s.name:'')];
+  if(t==='roundabout'||t==='rotary'||t==='roundabout turn')return ['🔄','Go round the roundabout'+on];
+  const verb=mod==='uturn'?'Turn around':mod==='slight left'?'Bear left':mod==='slight right'?'Bear right':mod.includes('left')?'Turn left':mod.includes('right')?'Turn right':'Continue';
+  return [MANI[mod]||'⬆',verb+on]}
+function xy(p,ref){return [(p[1]-ref[1])*111320*Math.cos(ref[0]*Math.PI/180),(p[0]-ref[0])*111320]}
+function projLine(p,line){let best=1e9,bj=0;for(let j=0;j<line.length-1;j++){const a=xy(line[j],p),b=xy(line[j+1],p),dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy;let u=L2?-(a[0]*dx+a[1]*dy)/L2:0;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*dx,a[1]+u*dy);if(d<best){best=d;bj=j}}return {d:best,j:bj}}
+async function navRoute(){if(!NAV||!ME||NAV.busy)return;const nv=NAV;nv.busy=true;nv.t=Date.now();
+  try{const u=OSRM+'/route/v1/foot/'+ME[1].toFixed(6)+','+ME[0].toFixed(6)+';'+nv.dest[1].toFixed(6)+','+nv.dest[0].toFixed(6)+'?overview=full&geometries=geojson&steps=true';
+    const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),12000);const j=await fetch(u,{signal:ctl.signal}).then(r=>r.json());clearTimeout(tm);
+    if(j.code!=='Ok'||!j.routes.length)throw 0;const r=j.routes[0];const line=r.geometry.coordinates.map(c=>[c[1],c[0]]);
+    const cum=new Array(line.length).fill(0);for(let v=line.length-2;v>=0;v--)cum[v]=cum[v+1]+hav(line[v],line[v+1])*1000;
+    let from=0;const steps=r.legs[0].steps.map(s=>{const loc=[s.maneuver.location[1],s.maneuver.location[0]];let bv=from,bd=1e9;for(let v=from;v<line.length;v++){const d=Math.abs(line[v][0]-loc[0])+Math.abs(line[v][1]-loc[1]);if(d<bd){bd=d;bv=v}}from=bv;return {v:bv,tx:stepTxt(s)}});
+    Object.assign(nv,{line,cum,steps,ok:true})}
+  catch(e){Object.assign(nv,{line:[ME.slice(),nv.dest],cum:[hav(ME,nv.dest)*1000,0],steps:[],ok:false})}
+  nv.busy=false;if(nv===NAV){drawNav();updNav()}}
+function drawNav(){LNav.clearLayers();if(!NAV)return;
+  if(NAV.line){L.polyline(NAV.line,{color:'#0a0d1c',weight:9,opacity:.7,interactive:false}).addTo(LNav);L.polyline(NAV.line,{color:'#22e3ff',weight:5,opacity:.95,dashArray:NAV.ok?null:'6 8',interactive:false}).addTo(LNav)}
+  L.circleMarker(NAV.dest,{radius:16,color:'#22e3ff',weight:3,fill:false,interactive:false}).addTo(LNav)}
+function updNav(){if(!NAV)return;navBar.hidden=false;$('nb-id').textContent=NAV.id;
+  $('nb-ext').href='https://www.google.com/maps/dir/?api=1&travelmode=walking&destination='+NAV.dest[0]+','+NAV.dest[1];
+  $('nb-skip').hidden=!(NAV.hunt&&HUNT);
+  if(!ME){$('nb-ic').textContent='📡';$('nb-txt').textContent='Waiting for your location…';$('nb-rem').textContent='';$('nb-fl').hidden=true;return}
+  const dDest=hav(ME,NAV.dest)*1000;$('nb-fl').hidden=dDest>60||flashed.has(NAV.id);
+  if(!NAV.line){if(!NAV.busy)navRoute();$('nb-ic').textContent='⏳';$('nb-txt').textContent='Finding a walking route…';return}
+  const pr=projLine(ME,NAV.line);
+  if(NAV.ok&&pr.d>40&&dDest>40&&Date.now()-NAV.t>12000){$('nb-ic').textContent='↻';$('nb-txt').textContent='Off route – finding a new way…';navRoute();return}
+  const rem=NAV.ok?hav(ME,NAV.line[pr.j+1])*1000+NAV.cum[pr.j+1]:dDest*1.3;
+  const v=travelCfg().v||4.5;$('nb-rem').textContent=' · '+fmtM(rem)+' · ~'+Math.max(1,Math.round(rem/1000/v*60))+' min';
+  navBar.classList.toggle('hot',dDest<=40);
+  if(dDest<=30){$('nb-ic').textContent='🎯';$('nb-txt').textContent='You\'re there (~'+Math.round(dDest)+' m) – look up and around!';return}
+  if(!NAV.ok){const b=bearing(ME,NAV.dest);$('nb-ic').innerHTML='<span style="display:inline-block;transform:rotate('+(HEADING==null?b:b-HEADING)+'deg)">▲</span>';$('nb-txt').textContent='Head this way – street routing is offline';return}
+  const k=NAV.steps.findIndex((s,n)=>n>0&&s.v>pr.j);
+  if(k<0){$('nb-ic').textContent='🎯';$('nb-txt').textContent='Almost there – '+fmtM(dDest);return}
+  const s=NAV.steps[k],dk=Math.max(0,rem-NAV.cum[s.v]);$('nb-ic').textContent=s.tx[0];
+  $('nb-txt').textContent=(dk<25?'Now: ':'In '+fmtM(dk)+': ')+s.tx[1];
+  if(dk<25&&NAV.lastBuzz!==k){NAV.lastBuzz=k;if(navigator.vibrate)navigator.vibrate(120)}}
+function startNav(i,fromHunt){if(!i)return;if(!navigator.geolocation){toast('No GPS on this device – use 🧭 Navigate ↗ instead');return}
+  if(watchId===null)gpsBtn.click();
+  NAV={id:i[0],dest:[i[1],i[2]],line:null,steps:[],t:0,busy:false,follow:true,hunt:!!fromHunt,fit:true};
+  selected=null;$('card').hidden=true;if(!$('hunt').hidden){$('hunt').hidden=true;$('resume').hidden=false}
+  LNav.clearLayers();drawNav();updNav();wake();if(ME)navRoute();try{$('screen').scrollIntoView({behavior:'smooth',block:'end'})}catch(e){}toast('Guiding you to '+i[0]+' – drag the map to look around, ◎ to follow again')}
+function stopNav(){NAV=null;LNav.clearLayers();navBar.hidden=true;navBar.classList.remove('hot');try{renderNear()}catch(e){}}
+function navNextStop(){if(HUNT&&HUNT.idx<HUNT.stops.length){const n=invById(HUNT.stops[HUNT.idx]);if(n){startNav(n,true);return true}}return false}
+$('nb-x').onclick=stopNav;
+armConfirm($('nb-fl'),()=>{if(!NAV)return;const id=NAV.id;
+  if(NAV.hunt&&HUNT&&HUNT.stops[HUNT.idx]===id){huntFlash(id);if(!navNextStop()){stopNav()}}else{flashWithUndo(id,true);stopNav()}});
+$('nb-skip').onclick=()=>{if(!HUNT)return;HUNT.skipped.push(HUNT.stops[HUNT.idx]);HUNT.idx++;saveHunt();if(!navNextStop()){stopNav();renderHunt()}};
+LM.on('dragstart',()=>{if(NAV)NAV.follow=false});
+gpsBtn.addEventListener('click',()=>{if(NAV){NAV.follow=true;if(ME)LM.panTo(ME)}});
+const _onFixNav=onFix;onFix=function(){_onFixNav();if(!NAV)return;if(!NAV.line&&!NAV.busy){navRoute().then(()=>{if(NAV&&NAV.fit&&NAV.line&&ME){NAV.fit=false;LM.fitBounds(NAV.line.concat([ME]),{padding:[60,60],maxZoom:18})}})}else updNav();
+  if(NAV&&NAV.follow&&!NAV.fit)LM.panTo(ME,{animate:true})};
+// card: in-app guidance + Apple Maps on iPhone/iPad
+const _ceNav=cardExtras;cardExtras=function(i){_ceNav(i);const a=$('c-nav');if(!a)return;
+  const g=document.createElement('button');g.className='btn g';g.id='c-guide';g.textContent='🧭 Guide me';g.title='Walking route on this map, with turn hints';g.onclick=()=>startNav(i,!!(HUNT&&HUNT.stops[HUNT.idx]===i[0]));a.before(g);
+  if(IOS){const ap=document.createElement('a');ap.className='btn';ap.target='_blank';ap.rel='noopener';ap.href=`https://maps.apple.com/?daddr=${i[1]},${i[2]}&dirflg=w`;ap.textContent='Apple Maps ↗';a.after(ap)}};
+// hunt mode: guide the current stop on the map
+const _rhNav=renderHunt;renderHunt=function(){const r=_rhNav.apply(this,arguments);const nav=document.querySelector('#hunt .h-nav');
+  if(nav&&HUNT&&HUNT.idx<HUNT.stops.length){const b=document.createElement('button');b.className='go h-nav';b.style.background='var(--cyan)';b.textContent='🧭 GUIDE ON MAP';b.onclick=()=>navNextStop();nav.before(b)}
+  if(NAV&&NAV.hunt&&HUNT&&HUNT.stops[HUNT.idx]!==NAV.id&&$('hunt').hidden)navNextStop();
+  if(!HUNT&&NAV&&NAV.hunt)stopNav();return r};
+const _lcNav=loadCity;loadCity=function(){stopNav();return _lcNav.apply(this,arguments)};
+// one tap: hunt nearby = plan from your live location with your Plan settings, start the hunt, guide to stop 1
+{const hb=document.createElement('button');hb.id='huntnear';hb.textContent='🎯';hb.title='Hunt nearby: route from where you are, start guiding';hb.setAttribute('aria-label','Hunt nearby');gpsBtn.after(hb);
+ hb.onclick=async()=>{if(!city)return;if(HUNT){$('resume').click();return}
+  if(watchId===null)gpsBtn.click();toast('Getting your location…');const fix=await getFix();if(!fix){toast('I need your location for a hunt nearby');return}
+  const [lo0,la0,lo1,la1]=city.bbox;if(fix[0]<la0-0.2||fix[0]>la1+0.2||fix[1]<lo0-0.3||fix[1]>lo1+0.3){toast('You are not in '+city.name+' – pick your city first');return}
+  startSrc='gps';try{localStorage.setItem('hp_src_'+city.code,'gps')}catch(e){};start=fix.slice();hb.disabled=true;
+  try{await runPlan()}catch(e){}hb.disabled=false;
+  if(!route||!route.stops.length){toast('Nothing open within your Plan budget here – raise it in the Plan tab');return}
+  startHunt();navNextStop();toast('Hunt started: '+HUNT.stops.length+' stops · '+route.pts+' pts')}}

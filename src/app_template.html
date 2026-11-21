@@ -792,7 +792,7 @@ function showCard(i){
   <dt>Position</dt><dd class="mono">${i[1].toFixed(5)}, ${i[2].toFixed(5)}</dd>
   ${i[5]&&!ch?`<dt>Note</dt><dd>${escapeHtml(i[5])}</dd>`:''}</dl>
   <div class="row">${cat==='dead'&&!fl?'':`<button class="btn ${fl?'':'g'}" id="c-fl">${fl?'Unmark':'✓ Flashed'}</button>`}
-  <a class="btn y" href="${gmapsPoint(i[1],i[2])}" target="_blank" rel="noopener">Navigate</a>
+  <a class="btn y" id="c-nav" href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${i[1]},${i[2]}" target="_blank" rel="noopener" title="Walking directions from where you are (Google Maps)">🧭 Navigate ↗</a>
   <a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Photos ↗</a>
   <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener" title="Satellite view; drag the yellow figure onto a blue street line for real Street View">Satellite ↗</a>
   <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener" title="Close-up photo on invader-spotter.art (opens their site)">🔎 Close-up ↗</a>
