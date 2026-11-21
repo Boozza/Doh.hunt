@@ -157,6 +157,35 @@ footer a{color:var(--cyan)}
 #screen:has(#srchbox:not([hidden])) .filters{visibility:hidden}
 .cthumb{width:84px;height:84px;object-fit:cover;border-radius:8px;border:2px solid var(--line);justify-self:end;margin-top:-4px;cursor:zoom-in;transition:all .2s}
 .cthumb.big{width:100%;height:auto;max-height:60vh;object-fit:contain;cursor:zoom-out}
+
+/* ---- v34 Arcade+ : neon edges, pixel numbers, faint CRT scanlines */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;background:repeating-linear-gradient(0deg,rgba(0,0,0,.13) 0 1px,transparent 1px 3px)}
+.logo{text-shadow:2px 2px 0 #ff2a8c,0 0 10px rgba(255,217,15,.4)}
+.stat{border:2px solid var(--sc,var(--line));border-radius:4px;box-shadow:0 0 10px color-mix(in srgb,var(--sc,transparent) 35%,transparent)}
+.stat b{font-family:var(--f-display);font-size:17px;line-height:1.3;color:var(--sc,var(--fg))}
+.stats .stat:nth-child(1){--sc:var(--cyan)}.stats .stat:nth-child(2){--sc:var(--green)}.stats .stat:nth-child(3){--sc:var(--yellow)}.stats .stat:nth-child(4){--sc:var(--pink)}.stats .stat:nth-child(5){--sc:var(--orange)}
+.card{border:3px solid var(--yellow);border-radius:4px;box-shadow:6px 6px 0 #ff2a8c,0 8px 24px rgba(0,0,0,.45)}
+.card h3{font-size:14px;text-shadow:0 0 8px rgba(255,217,15,.5)}
+.tabs button[aria-selected="true"]{text-shadow:0 0 8px rgba(255,217,15,.6)}
+.screen{border-radius:6px;box-shadow:0 0 0 1px #000,0 0 18px rgba(34,227,255,.12)}
+/* ---- v34 album */
+.alb-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.alb-head h3{margin:2px 0 0;font-family:var(--f-display);font-size:15px;color:var(--yellow)}
+.alb-head b{font-family:var(--f-display);font-size:13px;color:var(--cyan)}
+.alb-bar{height:8px;background:var(--panel2);border:1px solid var(--line);margin:8px 0 4px}.alb-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--yellow));box-shadow:0 0 8px rgba(255,90,168,.6)}
+.alb-stamps{display:flex;gap:10px;overflow-x:auto;padding:8px 2px 10px}
+.alb-stamps button{flex:0 0 auto;width:60px;height:60px;border-radius:50%;border:2px dashed var(--sc);color:var(--sc);background:none;display:grid;place-content:center;cursor:pointer;font-family:var(--f-mono);line-height:1.2;transform:rotate(var(--r))}
+.alb-stamps button b{font-size:12px}.alb-stamps button span{font-size:9px}
+.alb-stamps button.cur{border-style:solid;box-shadow:0 0 10px color-mix(in srgb,var(--sc) 60%,transparent)}
+.alb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin:10px 0;max-height:520px;overflow:auto}
+.alb-grid button{background:none;border:0;padding:0;cursor:pointer;text-align:left;color:inherit}
+.alb-slot{aspect-ratio:1/1;display:grid;place-items:center;position:relative;overflow:hidden}
+.alb-slot.got{border:2px solid var(--pc);box-shadow:0 0 8px color-mix(in srgb,var(--pc) 45%,transparent);background:color-mix(in srgb,var(--pc) 12%,var(--panel2))}
+.alb-slot.got .tick{font-family:var(--f-display);font-size:24px;color:var(--pc)}
+.alb-slot img{width:100%;height:100%;object-fit:cover;display:block}
+.alb-slot.gap{border:2px dashed var(--line);font-family:var(--f-display);font-size:16px;color:var(--muted)}
+.alb-slot.gap.dmg{border-color:var(--orange)}
+.alb-cap{font-family:var(--f-mono);font-size:11px;display:flex;justify-content:space-between;margin-top:3px}.alb-cap span:last-child{color:var(--muted)}
 </style>
 
 <div class="wrap">
@@ -194,6 +223,7 @@ footer a{color:var(--cyan)}
         <button role="tab" id="t-list" aria-selected="false">TARGETS</button>
         <button role="tab" id="t-mark" aria-selected="false">MARK</button>
         <button role="tab" id="t-news" aria-selected="false">NEWS<span id="nbadge" class="badge" hidden></span></button>
+        <button role="tab" id="t-album" aria-selected="false">ALBUM</button>
       </div>
 
       <div class="tabbody" id="p-plan">
@@ -255,6 +285,14 @@ footer a{color:var(--cyan)}
         <div class="inline"><div class="seg" id="nfilter"><button data-f="mine" class="on">My cities</button><button data-f="all">Everywhere</button></div><label class="check" style="font-size:13px"><input type="checkbox" id="nopps"> New targets only</label></div>
         <ul class="list news" id="newslist"></ul>
         <p class="note" style="margin:0">From invader-spotter, updated each morning by your daily watch. <b style="color:var(--green)">NEW TARGET</b> = back on the wall in a city of yours and not flashed yet.</p>
+      </div>
+      <div class="tabbody" id="p-album" hidden>
+        <div class="alb-head"><div><span class="lbl">MY INVASION ALBUM</span><h3 id="alb-city"></h3></div><b id="alb-n"></b></div>
+        <div class="alb-bar"><i id="alb-bar"></i></div>
+        <div class="alb-stamps" id="alb-stamps" aria-label="My cities"></div>
+        <div class="seg" id="alb-f"><button data-f="all" class="on">All</button><button data-f="got">Flashed</button><button data-f="gap">Missing</button></div>
+        <div class="alb-grid" id="alb-grid"></div>
+        <p class="note" style="margin:0">Your own photos fill the slots (📷 in an invader's card). Tap any slot to see it on the map. Destroyed invaders you never flashed are left out.</p>
       </div>
       <div class="tabbody" id="p-mark" hidden>
         <p class="note">Mark what you already flashed in the app, so the planner skips it. Type the invader numbers for this city, ranges allowed.</p>
@@ -826,7 +864,7 @@ function flashWithUndo(id,on){toggleFlash(id,on);if(typeof toast==='function')to
 function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 // ---------- tabs
-const tabs=[['t-plan','p-plan'],['t-list','p-list'],['t-mark','p-mark'],['t-news','p-news']];
+const tabs=[['t-plan','p-plan'],['t-list','p-list'],['t-mark','p-mark'],['t-news','p-news'],['t-album','p-album']];
 tabs.forEach(([t,p])=>$(t).onclick=()=>tabs.forEach(([t2,p2])=>{$(t2).setAttribute('aria-selected',t2===t);$(p2).hidden=t2!==t}));
 // mode
 let mode='time';
@@ -967,6 +1005,26 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+// ================= v34 ALBUM =================
+let ALBF='all';const STAMPC=['var(--pink)','var(--cyan)','var(--green)','var(--yellow)','var(--orange)'];
+function renderAlbum(){if(!city||$('p-album').hidden)return;
+  const slots=city.inv.filter(i=>flashed.has(i[0])||!(i[4]==='destroyed'||i[4]==='hidden')).sort((a,b)=>{const na=+(/\d+$/.exec(a[0])||[0])[0],nb=+(/\d+$/.exec(b[0])||[0])[0];return na-nb});
+  const got=slots.filter(i=>flashed.has(i[0])).length;
+  $('alb-city').textContent=city.name;$('alb-n').textContent=got+' / '+slots.length;$('alb-bar').style.width=(slots.length?100*got/slots.length:0)+'%';
+  const mine=DATA.cities.filter(c=>c.code===city.code||c.mine!=null||flashedOf(c.code).size).map(c=>({c,n:flashedOf(c.code).size}));
+  $('alb-stamps').innerHTML=mine.map((m,k)=>`<button data-c="${m.c.code}" class="${m.c.code===city.code?'cur':''}" style="--sc:${STAMPC[k%STAMPC.length]};--r:${((k*37)%11)-5}deg" title="${escapeHtml(m.c.name)}"><b>${m.c.code}</b><span>${m.n}</span></button>`).join('');
+  $('alb-stamps').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.c!==city.code){sel.value=b.dataset.c;loadCity(b.dataset.c)}renderAlbum()});
+  const show=slots.filter(i=>ALBF==='all'||(ALBF==='got')===flashed.has(i[0]));
+  $('alb-grid').innerHTML=show.map(i=>{const g=flashed.has(i[0]),ph=PHOTOS[i[0]];const pc=ptColor(i[3]);
+    const inner=g?(ph?`<img src="${blobUrl(ph)}" alt="Your photo of ${i[0]}" loading="lazy">`:`<span class="tick">✓</span>`):'?';
+    return `<button data-id="${i[0]}" aria-label="${i[0]}, ${i[3]} points, ${g?'flashed':'not flashed yet'}"><div class="alb-slot ${g?'got':'gap'}${!g&&i[4]==='damaged'?' dmg':''}" style="--pc:${pc}">${inner}</div><div class="alb-cap"><span>${i[0].replace(/^[A-Z]+_/,'#')}</span><span>${i[3]}</span></div></button>`}).join('')||'<p class="note">Nothing here yet.</p>';
+  $('alb-grid').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const i=city.inv.find(x=>x[0]===b.dataset.id);if(!i)return;showCard(i);try{focusInv(i)}catch(e){};$('screen').scrollIntoView({behavior:'smooth',block:'center'})});
+}
+$('alb-f').querySelectorAll('button').forEach(b=>b.onclick=()=>{ALBF=b.dataset.f;$('alb-f').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderAlbum()});
+$('t-album').addEventListener('click',()=>setTimeout(renderAlbum,0));
+{const _rfA=refresh;refresh=function(){const r=_rfA.apply(this,arguments);try{renderAlbum()}catch(e){}return r};
+ const _rgA=renderGallery;renderGallery=function(){const r=_rgA.apply(this,arguments);try{renderAlbum()}catch(e){}return r}}
+
 
 // ---- search an invader by code + highlight it; hover tooltip; code labels when zoomed in
 let screenPos=(la,lo)=>px(la,lo);
