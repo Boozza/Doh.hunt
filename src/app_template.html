@@ -397,11 +397,15 @@ let db=null, unsub=null, writing=false, pendingWrite=false, canWrite=true;
 
 // ---------- city select
 const sel=$('city');
-const mine=DATA.cities.filter(c=>c.mine!=null), others=DATA.cities.filter(c=>c.mine==null);
+// a city is "mine" when the official gallery lists it OR you have flashed at least one invader there
+const isMine=c=>{if(c.mine!=null)return true;try{return flashedOf(c.code).size>0}catch(e){return false}};
 function opt(c){const o=document.createElement('option');o.value=c.code;o.textContent=c.name+' ('+c.inv.length+')';return o;}
-const g1=document.createElement('optgroup');g1.label='My cities';mine.forEach(c=>g1.appendChild(opt(c)));
-const g2=document.createElement('optgroup');g2.label='All invaded cities';others.forEach(c=>g2.appendChild(opt(c)));
-sel.append(g1,g2);
+let MINEKEY='';
+function buildCitySel(){const mine=DATA.cities.filter(isMine),others=DATA.cities.filter(c=>!isMine(c));const key=mine.map(c=>c.code).join(',');if(key===MINEKEY)return;MINEKEY=key;
+  const v=sel.value;sel.innerHTML='';const g1=document.createElement('optgroup');g1.label='My cities';mine.forEach(c=>g1.appendChild(opt(c)));
+  const g2=document.createElement('optgroup');g2.label='All invaded cities';others.forEach(c=>g2.appendChild(opt(c)));sel.append(g1,g2);if(v)sel.value=v}
+const mine=DATA.cities.filter(c=>c.mine!=null);
+buildCitySel();
 $('src').textContent=DATA.source;
 let saved=null; try{saved=localStorage.getItem('hp_city')}catch(e){}
 sel.value=saved&&DATA.cities.some(c=>c.code===saved)?saved:'LDN';
@@ -653,7 +657,7 @@ function initField(){
 const NEWS={changes:{},items:[]};let nf='mine';
 const CITYBY=new Map(DATA.cities.map(c=>[c.code,c]));const INVBY=new Map();DATA.cities.forEach(c=>c.inv.forEach(i=>INVBY.set(i[0],[c,i])));
 function renderNews(){
-  const mineCodes=new Set(DATA.cities.filter(c=>c.mine!=null).map(c=>c.code));const opps=$('nopps').checked;
+  const mineCodes=new Set(DATA.cities.filter(isMine).map(c=>c.code));const opps=$('nopps').checked;
   let rows=Object.entries(NEWS.changes).map(([id,v])=>{const hit=INVBY.get(id);const code=id.split('_')[0];const c=hit?hit[0]:CITYBY.get(code);
     const f=flashedOf(code);const opp=(v.type==='reactivated'||v.type==='restored')&&mineCodes.has(code)&&!f.has(id);
     return {date:v.date||'',id,type:v.type,city:c?c.name:code,code,opp,mine:f.has(id),has:!!hit}});
@@ -1060,6 +1064,7 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+{const _rfM=refresh;refresh=function(){const r=_rfM.apply(this,arguments);try{buildCitySel()}catch(e){}return r}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('card').hidden&&!document.querySelector('.thmenu:not([hidden])')){selected=null;$('card').hidden=true;draw()}});
 // ================= v36 PHOTO IMPORT (by location) + FULL BACKUP / RESTORE =================
 // storePhoto/removePhoto: Claude version keeps photos in the page's asset store (synced); Netlify overrides with on-device storage.
