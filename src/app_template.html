@@ -501,7 +501,7 @@ let ASSETS=null;
 async function pickPhoto(id,after){
   if(!ASSETS){try{ASSETS=await window.claude.use('assets')}catch(e){}}
   if(!ASSETS){toast('Photo upload is not available here.');return}
-  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=async()=>{const f=inp.files[0];if(!f)return;toast('Uploading '+id+'…');
     try{const blob=await shrink(f,1600);const r=await ASSETS.upload(blob);const hit=INVBY.get(id);
       const doc={id:r.id,url:r.url,code:id,city:hit?hit[0].code:'',date:new Date().toISOString().slice(0,10)};PHOTOS[id]=doc;

@@ -253,7 +253,7 @@ const PDB=new Promise(res=>{try{const r=indexedDB.open('doh-photos',1);r.onupgra
 async function pAll(){const d=await PDB;if(!d)return {};return new Promise(res=>{const out={};try{const rq=d.transaction('p').objectStore('p').openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out[c.key]=c.value;c.continue()}else res(out)};rq.onerror=()=>res(out)}catch(e){res(out)}})}
 async function pPut(k,v){const d=await PDB;if(!d)return false;return new Promise(res=>{try{const tx=d.transaction('p','readwrite');tx.objectStore('p').put(v,k);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false)}catch(e){res(false)}})}
 pAll().then(all=>{Object.entries(all).forEach(([id,v])=>{if(v&&v.blob)PHOTOS[id]={code:id,url:URL.createObjectURL(v.blob),date:v.date||''}});try{renderGallery()}catch(e){}});
-pickPhoto=async function(id,after){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+pickPhoto=async function(id,after){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=async()=>{const f=inp.files[0];if(!f)return;try{const blob=await shrink(f,1400);const date=new Date().toISOString().slice(0,10);
     if(!(await pPut(id,{blob,date}))){toast('Could not save the photo on this device');return}
     if(PHOTOS[id]&&PHOTOS[id].url&&PHOTOS[id].url.startsWith('blob:'))URL.revokeObjectURL(PHOTOS[id].url);
