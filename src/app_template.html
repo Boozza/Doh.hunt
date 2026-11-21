@@ -228,6 +228,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 .toast{z-index:2000}
 .thbtn{color:var(--yellow);border-color:var(--yellow);padding:7px 9px;line-height:0}.thbtn .pxi{display:block;filter:drop-shadow(1px 1px 0 #ff2a8c)}.thbtn[aria-expanded="true"]{background:var(--yellow);color:#1a1400}
 :root[data-theme="light"] .thbtn .pxi,:root[data-theme="field"] .thbtn .pxi,:root[data-theme="calm"] .thbtn .pxi{filter:none}
+.cclose{position:absolute;top:6px;right:6px;width:34px;height:34px;border-radius:50%;border:2px solid var(--yellow);background:var(--panel);color:var(--yellow);font:700 16px/1 var(--f-body);display:grid;place-items:center;cursor:pointer;z-index:2;box-shadow:2px 2px 0 #ff2a8c}
+.cclose:hover{background:var(--yellow);color:#1a1400}
+.card h3{padding-right:42px}
+:root[data-theme="light"] .cclose,:root[data-theme="calm"] .cclose,:root[data-theme="field"] .cclose{box-shadow:none}
+:root[data-theme="field"] .cclose{width:44px;height:44px;font-size:20px}
 </style>
 
 <div class="wrap">
@@ -898,7 +903,7 @@ function showCard(i){
   <a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Photos ↗</a>
   <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener" title="Satellite view; drag the yellow figure onto a blue street line for real Street View">Satellite ↗</a>
   <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener" title="Close-up photo on invader-spotter.art (opens their site)">🔎 Close-up ↗</a>
-  <button class="btn" id="c-start">Start here</button><button class="btn" id="c-x" aria-label="Close">✕</button></div>`;
+  <button class="btn" id="c-start">Start here</button></div><button class="cclose" id="c-x" aria-label="Close card" title="Close (Esc)">✕</button>`;
   c.hidden=false;cardExtras(i);const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)';
   const f=$('c-fl');if(f)armConfirm(f,()=>flashWithUndo(i[0],!fl),fl?'Tap again to unmark':'Tap again to confirm');
   $('c-start').onclick=()=>{startSrc='pin';try{localStorage.setItem('hp_src_'+city.code,'pin')}catch(e){};start=[i[1],i[2]];try{localStorage.setItem('hp_start_'+city.code,JSON.stringify(start))}catch(e){};route=null;$('result').hidden=true;refresh()};
@@ -1055,6 +1060,7 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('card').hidden&&!document.querySelector('.thmenu:not([hidden])')){selected=null;$('card').hidden=true;draw()}});
 // ================= v36 PHOTO IMPORT (by location) + FULL BACKUP / RESTORE =================
 // storePhoto/removePhoto: Claude version keeps photos in the page's asset store (synced); Netlify overrides with on-device storage.
 async function storePhoto(id,blob,date){if(!ASSETS){try{ASSETS=await window.claude.use('assets')}catch(e){}}if(!ASSETS)throw new Error('Photo storage is not available here');
