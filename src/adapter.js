@@ -75,7 +75,7 @@ $('export').onclick=()=>{const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const r
 // sessions + backup in localStorage
 const _close=renderHuntEnd;renderHuntEnd=function(){_close();const done=$('h-done'),x=$('h-x');const wrap=fn=>()=>{try{const l=JSON.parse(localStorage.getItem('hp_sessions')||'[]');if(HUNT&&HUNT.got.length){l.unshift(Object.assign({},HUNT));localStorage.setItem('hp_sessions',JSON.stringify(l.slice(0,30)))}}catch(e){};fn()};if(done){const f=done.onclick;done.onclick=wrap(f)}if(x){const f=x.onclick;x.onclick=wrap(f)}};
 try{SESSIONS=JSON.parse(localStorage.getItem('hp_sessions')||'[]')}catch(e){}
-document.querySelectorAll('#gallery,#gal-n').forEach(e=>{const p=e.closest('.grid2>div');if(p)p.hidden=true});
+// (gallery shown: photos are stored on this device)
 
 // ---- start from live location
 function getFix(){return new Promise(res=>{if(ME)return res(ME);if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res([p.coords.latitude,p.coords.longitude]),()=>res(null),{enableHighAccuracy:true,timeout:8000,maximumAge:30000})})}
@@ -247,3 +247,15 @@ focusInv=i=>{LM.setView([i[1],i[2]],Math.max(LM.getZoom(),18))};
 LM.on('move zoom',()=>{try{placePulse()}catch(e){}});
 LM.on('zoomend moveend',()=>{if(LM.getZoom()>=14)draw()});
 let lblOn=false;LM.on('zoomend',()=>{const on=LM.getZoom()>=14;if(on!==lblOn){lblOn=on;draw()}});
+
+// ---- my photos, stored on this device (IndexedDB) – the Claude version keeps them in its own storage
+const PDB=new Promise(res=>{try{const r=indexedDB.open('doh-photos',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)}catch(e){res(null)}});
+async function pAll(){const d=await PDB;if(!d)return {};return new Promise(res=>{const out={};try{const rq=d.transaction('p').objectStore('p').openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out[c.key]=c.value;c.continue()}else res(out)};rq.onerror=()=>res(out)}catch(e){res(out)}})}
+async function pPut(k,v){const d=await PDB;if(!d)return false;return new Promise(res=>{try{const tx=d.transaction('p','readwrite');tx.objectStore('p').put(v,k);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false)}catch(e){res(false)}})}
+pAll().then(all=>{Object.entries(all).forEach(([id,v])=>{if(v&&v.blob)PHOTOS[id]={code:id,url:URL.createObjectURL(v.blob),date:v.date||''}});try{renderGallery()}catch(e){}});
+pickPhoto=async function(id,after){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+  inp.onchange=async()=>{const f=inp.files[0];if(!f)return;try{const blob=await shrink(f,1400);const date=new Date().toISOString().slice(0,10);
+    if(!(await pPut(id,{blob,date}))){toast('Could not save the photo on this device');return}
+    if(PHOTOS[id]&&PHOTOS[id].url&&PHOTOS[id].url.startsWith('blob:'))URL.revokeObjectURL(PHOTOS[id].url);
+    PHOTOS[id]={code:id,url:URL.createObjectURL(blob),date};toast('Photo saved for '+id+' (on this device)');renderGallery();after&&after()}catch(e){toast('Photo failed – try again')}};
+  inp.click()};

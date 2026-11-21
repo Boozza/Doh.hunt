@@ -154,6 +154,8 @@ footer a{color:var(--cyan)}
 @keyframes pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(3.4);opacity:0}}
 .itip{position:absolute;z-index:610;transform:translate(-50%,-100%);background:rgba(10,13,28,.95);border:1px solid var(--yellow);border-radius:6px;padding:3px 7px;font-size:12px;white-space:nowrap;pointer-events:none}
 #screen:has(#srchbox:not([hidden])) .filters{visibility:hidden}
+.cthumb{width:84px;height:84px;object-fit:cover;border-radius:8px;border:2px solid var(--line);justify-self:end;margin-top:-4px;cursor:zoom-in;transition:all .2s}
+.cthumb.big{width:100%;height:auto;max-height:60vh;object-fit:contain;cursor:zoom-out}
 </style>
 
 <div class="wrap">
@@ -515,7 +517,8 @@ function renderGallery(){
   g.querySelectorAll('.gph').forEach(b=>b.onclick=()=>{const h=INVBY.get(b.dataset.id);if(!h)return;if(city.code!==h[0].code){sel.value=h[0].code;loadCity(h[0].code)}view.lat=h[1][1];view.lon=h[1][2];view.k=Math.max(view.k,40000);showCard(h[1]);window.scrollTo({top:0,behavior:'smooth'})});
 }
 function cardExtras(i){const c=$('card');const ph=PHOTOS[i[0]];const d=document.createElement('div');d.className='row';
-  d.innerHTML=(ph?`<img src="${blobUrl(ph)}" alt="Your photo of ${i[0]}" style="width:100%;border-radius:6px">`:'')+`<button class="btn" id="c-ph">📷 ${ph?'Replace my photo':'Add my photo'}</button>`;
+  if(ph){const t=document.createElement('img');t.className='cthumb';t.src=blobUrl(ph);t.alt='Your photo of '+i[0];t.title='Tap to enlarge';t.onclick=()=>t.classList.toggle('big');const h=c.querySelector('h3');(h||c.firstChild).after(t)}
+  d.innerHTML=`<button class="btn" id="c-ph">📷 ${ph?'Replace my photo':'Add my photo'}</button>`;
   c.appendChild(d);$('c-ph').onclick=()=>pickPhoto(i[0],()=>showCard(i));}
 // ---------- sessions list
 function renderSessions(){const el=$('sessions');if(!SESSIONS.length){el.innerHTML='<p class="note" style="margin:0">Finish a hunt in hunt mode to log it here and make a Story card.</p>';return}

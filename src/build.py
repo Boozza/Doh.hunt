@@ -26,7 +26,7 @@ s=s.replace("</style>",""".leaflet-container{background:#141c3e;font-family:var(
 .rnum:before{display:none}
 .flag{font-size:22px;color:#ffd90f;text-shadow:0 0 3px #000}
 .maptools{z-index:500}.legend,.hint{z-index:500}.card{z-index:503}
-#c-ph,#h-photo,.mic{display:none!important}
+.mic{display:none!important}
 .near{position:absolute;left:50%;transform:translateX(-50%);bottom:56px;z-index:502;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);background:rgba(10,13,28,.92);border:2px solid var(--line);border-radius:10px;padding:6px 10px;font-size:14px;white-space:nowrap}
 .near.hot{border-color:var(--green);box-shadow:0 0 0 3px rgba(69,240,138,.35)}.near .arrow{font-size:22px;transition:transform .15s}
 #near-cmp.on{outline:2px solid var(--yellow)}
