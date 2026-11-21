@@ -965,7 +965,7 @@ let PULSEINV=null,pulseT=0;
 function placePulse(){if(!PULSEINV||PULSE.hidden)return;const [x,y]=screenPos(PULSEINV[1],PULSEINV[2]);PULSE.style.left=x+'px';PULSE.style.top=y+'px'}
 function goInv(x){$('srchbox').hidden=true;$('srchin').blur();if(!city||city.code!==x.c.code){sel.value=x.c.code;try{localStorage.setItem('hp_city',x.c.code)}catch(e){};loadCity(x.c.code)}
   const i=city.inv.find(v=>v[0]===x.i[0])||x.i;if(!visible(i)&&FILTER){const k=catOf(i);if(k&&!FILTER[k]){FILTER[k]=true;try{renderFilters()}catch(e){}}}
-  focusInv(i);showCard(i);PULSEINV=i;PULSE.hidden=false;placePulse();clearTimeout(pulseT);pulseT=setTimeout(()=>{PULSE.hidden=true},5000);
+  $('card').hidden=true;selected=i;focusInv(i);PULSEINV=i;PULSE.hidden=false;placePulse();clearTimeout(pulseT);pulseT=setTimeout(()=>{PULSE.hidden=true},5000);
   $('screen').scrollIntoView({behavior:'smooth',block:'center'})}
 {const b=document.createElement('button');b.id='srchbtn';b.title='Find an invader';b.setAttribute('aria-label','Find an invader');b.textContent='🔍';$('zin').parentElement.appendChild(b);
  const box=document.createElement('div');box.id='srchbox';box.className='srch';box.hidden=true;
