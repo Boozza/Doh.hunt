@@ -225,6 +225,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 .thsw{display:flex;border-radius:5px;overflow:hidden;border:1px solid rgba(128,128,128,.5);flex:0 0 auto}.thsw i{width:14px;height:22px}
 .thopt small{display:block;color:var(--muted);font-size:11px}
 .thmenu .check{font-size:13px;margin-top:4px}
+.toast{z-index:2000}
 </style>
 
 <div class="wrap">
@@ -598,8 +599,14 @@ function renderGallery(){
 }
 function cardExtras(i){const c=$('card');const ph=PHOTOS[i[0]];const d=document.createElement('div');d.className='row';
   if(ph){const t=document.createElement('img');t.className='cthumb';t.src=blobUrl(ph);t.alt='Your photo of '+i[0];t.title='Tap to enlarge';t.onclick=()=>t.classList.toggle('big');const h=c.querySelector('h3');(h||c.firstChild).after(t)}
-  d.innerHTML=`<button class="btn" id="c-ph">📷 ${ph?'Replace my photo':'Add my photo'}</button>`;
-  c.appendChild(d);$('c-ph').onclick=()=>pickPhoto(i[0],()=>showCard(i));}
+  d.innerHTML=`<button class="btn" id="c-ph">📷 ${ph?'Replace my photo':'Add my photo'}</button>${ph?'<button class="btn" id="c-phx" title="Remove this photo from your album">🗑 Remove photo</button>':''}`;
+  c.appendChild(d);$('c-ph').onclick=()=>pickPhoto(i[0],()=>showCard(i));
+  if($('c-phx'))armConfirm($('c-phx'),()=>removePhotoUndo(i[0],()=>{if(selected&&selected[0]===i[0])showCard(i)}),'Tap again to remove');}
+// remove a photo, with Undo (the photo is kept in memory for a few seconds and put back if asked)
+async function removePhotoUndo(id,after){const p=PHOTOS[id];if(!p)return;let blob=null;try{blob=await fetch(blobUrl(p)).then(r=>r.ok?r.blob():null)}catch(e){}
+  try{await removePhoto(id)}catch(e){toast('Could not remove the photo – try again');return}
+  try{renderGallery()}catch(e){};after&&after();
+  toast('Photo removed from '+id,blob?async()=>{try{await storePhoto(id,blob,p.date);renderGallery();after&&after();toast('Photo put back')}catch(e){toast('Could not put it back')}}:null)}
 // ---------- sessions list
 function renderSessions(){const el=$('sessions');if(!SESSIONS.length){el.innerHTML='<p class="note" style="margin:0">Finish a hunt in hunt mode to log it here and make a Story card.</p>';return}
   el.innerHTML=SESSIONS.slice(0,10).map((s,k)=>`<li><span class="num">${s.date.slice(5)}</span><span>${s.cityName} · <b>+${s.got.length}</b> · +${s.pts||0} pts · ${s.km||0} km</span><button class="btn y" data-k="${k}">⬇ Card</button></li>`).join('');
@@ -1051,7 +1058,7 @@ $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 async function storePhoto(id,blob,date){if(!ASSETS){try{ASSETS=await window.claude.use('assets')}catch(e){}}if(!ASSETS)throw new Error('Photo storage is not available here');
   const r=await ASSETS.upload(blob);const hit=INVBY.get(id);const doc={id:r.id,url:r.url,code:id,city:hit?hit[0].code:'',date:date||TODAY()};PHOTOS[id]=doc;
   if(db&&canWrite)await db.doc('photos/'+id).set(doc);return doc}
-async function removePhoto(id){const p=PHOTOS[id];delete PHOTOS[id];try{if(db&&canWrite)await db.doc('photos/'+id).delete()}catch(e){}try{if(p&&p.id&&ASSETS)await ASSETS.delete(p.id)}catch(e){}}
+async function removePhoto(id){const p=PHOTOS[id];delete PHOTOS[id];if(!ASSETS){try{ASSETS=await window.claude.use('assets')}catch(e){}}try{if(db&&canWrite)await db.doc('photos/'+id).delete()}catch(e){}try{if(p&&p.id&&ASSETS)await ASSETS.delete(p.id)}catch(e){}}
 async function loadExifr(){if(window.exifr)return window.exifr;await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js';s.onload=res;s.onerror=()=>rej(new Error('exif reader did not load'));document.head.appendChild(s)});return window.exifr}
 function invGrid(){const G=new Map();DATA.cities.forEach(c=>c.inv.forEach(i=>{if(!i[1]&&!i[2])return;const k=Math.floor(i[1]*1000)+':'+Math.floor(i[2]*1000);if(!G.has(k))G.set(k,[]);G.get(k).push(i)}));return G}
 function nearestInv(G,la,lo,R){let best=null,bd=R;const a=Math.floor(la*1000),b=Math.floor(lo*1000);
