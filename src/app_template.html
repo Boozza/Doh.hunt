@@ -104,6 +104,7 @@ ul.news .d{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .chip.degraded{background:rgba(255,154,60,.15);color:var(--orange)}
 .chip.new{background:rgba(34,227,255,.15);color:var(--cyan)}
 .opp{color:var(--green);font-weight:600;font-size:11px}
+.opp.unseen{color:var(--pink)}
 .hunt{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;max-width:640px;margin:0 auto}
 .h-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--f-display);font-size:11px;color:var(--cyan)}
 .h-bar{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}.h-bar i{display:block;height:100%;background:var(--green)}
@@ -572,12 +573,25 @@ function renderNews(){
     `<li data-id="${r.id}"><span class="d">${r.date.slice(5)}</span><span><b>${r.id}</b> <span class="chip ${r.type}">${r.type}</span> <span class="note">${r.city}</span>${r.opp?' <span class="opp">NEW TARGET</span>':''}${r.mine?' <span class="tag">flashed</span>':''}</span><span>›</span></li>`).join('')||'<li><span></span><span class="note">No changes yet.</span><span></span></li>';
   $('newslist').querySelectorAll('li[data-id]').forEach(li=>li.onclick=()=>{const hit=INVBY.get(li.dataset.id);if(!hit)return;const [c,i]=hit;if(!city||city.code!==c.code){sel.value=c.code;loadCity(c.code)}
     view.lat=i[1];view.lon=i[2];view.k=Math.max(view.k,40000);showCard(i);window.scrollTo({top:0,behavior:'smooth'})});
-  let seen='';try{seen=localStorage.getItem('hp_news_seen')||''}catch(e){}
-  const fresh=rows.filter(r=>r.date>seen&&(r.opp||r.item)).length;const b=$('nbadge');b.textContent=fresh;b.hidden=!fresh||$('t-news').getAttribute('aria-selected')==='true';
+  NEWSROWS=rows;const fresh=rows.filter(r=>!newsSeen(r)&&(r.opp||r.item)).length;const b=$('nbadge');b.textContent=fresh;b.hidden=!fresh||$('t-news').getAttribute('aria-selected')==='true';
+  $('newslist').querySelectorAll('li').forEach((li,k)=>{const r=rows[k];if(r&&(!newsSeen(r)||NEWSVIEW.has(newsKey(r)))&&(r.opp||r.item)){const s=li.children[1];if(s&&!s.querySelector('.unseen'))s.insertAdjacentHTML('afterbegin','<span class="opp unseen">NEW</span> ')}});
 }
+// "seen" is remembered per news line (not by date), so a new version or a re-sent list never brings old lines back as new.
+// Claude version: also synced across your devices through the page's database.
+let NEWSROWS=[];const NEWSVIEW=new Set();
+const newsKey=r=>r.item?'n|'+r.date+'|'+String(r.text||'').slice(0,60):'c|'+r.id+'|'+r.type+'|'+r.date;
+let SEEN=new Set();try{SEEN=new Set(JSON.parse(localStorage.getItem('hp_news_seen2')||'[]'))}catch(e){}
+let SEENOLD='';try{SEENOLD=localStorage.getItem('hp_news_seen')||''}catch(e){}
+const newsSeen=r=>SEEN.has(newsKey(r))||(SEENOLD&&r.date<=SEENOLD);
+let seenDbOn=false,seenTimer=0;
+function seenSave(){const arr=[...SEEN].slice(-800);try{localStorage.setItem('hp_news_seen2',JSON.stringify(arr))}catch(e){}
+  clearTimeout(seenTimer);seenTimer=setTimeout(()=>{if(db&&canWrite)db.doc('prefs/newsseen').set({ids:arr}).catch(()=>{})},800)}
+function seenSync(){if(seenDbOn||!db)return;seenDbOn=true;db.doc('prefs/newsseen').onSnapshot(s=>{const v=s.exists?s.data():null;if(!v||!Array.isArray(v.ids))return;let add=0;v.ids.forEach(k=>{if(!SEEN.has(k)){SEEN.add(k);add++}});if(add){try{localStorage.setItem('hp_news_seen2',JSON.stringify([...SEEN].slice(-800)))}catch(e){};renderNews()}},()=>{})}
+function markNewsSeen(){NEWSROWS.forEach(r=>{const k=newsKey(r);if(!newsSeen(r)){SEEN.add(k);NEWSVIEW.add(k)}});seenSave()}
 $('nfilter').querySelectorAll('button').forEach(b=>b.onclick=()=>{nf=b.dataset.f;$('nfilter').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderNews()});
 $('nopps').onchange=renderNews;
-$('t-news').addEventListener('click',()=>{const ds=Object.values(NEWS.changes).map(v=>v.date||'').concat(NEWS.items.map(n=>n.date||'')).sort();try{localStorage.setItem('hp_news_seen',ds[ds.length-1]||'')}catch(e){};$('nbadge').hidden=true});
+$('t-news').addEventListener('click',()=>{seenSync();renderNews();setTimeout(()=>{markNewsSeen();$('nbadge').hidden=true},50)});
+setInterval(()=>{if(db&&!seenDbOn){seenSync()}},3000);
 // ---------- score
 const SPACE={code:'SPACE',name:'Space',inv:[['SPACE_02',0,0,100,'ok',''],['SPACE_01',0,0,0,'hidden','']]};
 let allFlashed={}; // code -> Set
