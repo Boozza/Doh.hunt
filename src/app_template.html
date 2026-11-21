@@ -795,7 +795,7 @@ function showCard(i){
   <a class="btn y" href="${gmapsPoint(i[1],i[2])}" target="_blank" rel="noopener">Navigate</a>
   <a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Photos ↗</a>
   <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener" title="Satellite view; drag the yellow figure onto a blue street line for real Street View">Satellite ↗</a>
-  <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener">spotter ↗</a>
+  <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener" title="Close-up photo on invader-spotter.art (opens their site)">🔎 Close-up ↗</a>
   <button class="btn" id="c-start">Start here</button><button class="btn" id="c-x" aria-label="Close">✕</button></div>`;
   c.hidden=false;cardExtras(i);const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)';
   const f=$('c-fl');if(f)armConfirm(f,()=>flashWithUndo(i[0],!fl),fl?'Tap again to unmark':'Tap again to confirm');
@@ -1044,7 +1044,9 @@ $('bkup').onclick=async()=>{const all=[];DATA.cities.concat([SPACE]).forEach(c=>
 bkNote();
 // ---- info links
 const svUrl=(la,lo)=>`https://www.google.com/maps/@?api=1&map_action=map&center=${la},${lo}&zoom=20&basemap=satellite`;
-const spotUrl=id=>'https://www.google.com/search?q='+encodeURIComponent('"'+id+'" invader-spotter');
+const PADW={};function spotUrl(id){const m=/^([A-Z]+)_(\d+)$/.exec(id);if(!m)return 'https://www.google.com/search?q='+encodeURIComponent('"'+id+'" invader-spotter');
+  const pre=m[1];if(PADW[pre]==null){let mx=0;DATA.cities.concat([SPACE]).forEach(c=>c.inv.forEach(i=>{const k=/^([A-Z]+)_(\d+)$/.exec(i[0]);if(k&&k[1]===pre)mx=Math.max(mx,+k[2])}));PADW[pre]=Math.max(2,String(mx).length)}
+  return `https://www.invader-spotter.art/grosplan/${pre}/${pre}_${String(+m[2]).padStart(PADW[pre],'0')}-grosplan.png`}
 const INFO_LINKS=[['invader-spotter: news','https://www.invader-spotter.art/news.php'],['invader-spotter: cities','https://www.invader-spotter.art/villes.php'],['invader-spotter: stats','https://www.invader-spotter.art/stats.php'],['space-invaders.com (official)','https://space-invaders.com'],['FlashInvaders app','https://apps.apple.com/app/id895180919'],['Reddit: Flash Invaders','https://www.reddit.com/search/?q=flash%20invaders&sort=new']];
 {const d=document.createElement('div');d.className='links';d.innerHTML='<span class="lbl">Info sources</span><div class="inline">'+INFO_LINKS.map(([t,u])=>`<a class="btn" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')+'</div>';$('newslist').after(d)}
 // ---- city progress card (Story 1080×1920, text kept inside Instagram's safe area: y 260–1530)
