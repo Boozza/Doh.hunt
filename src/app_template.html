@@ -129,7 +129,7 @@ ul.news .d{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .fchip{display:inline-flex;align-items:center;gap:6px;background:rgba(10,13,28,.88);border:1px solid var(--line);border-radius:16px;padding:5px 10px;font-size:12px;color:var(--muted);cursor:pointer}
 .fchip i{width:9px;height:9px;border-radius:50%;border:2px solid var(--c)}.fchip.on{color:var(--fg);border-color:var(--c)}.fchip.on i{background:var(--c)}
 .fchip b{font-family:var(--f-mono);font-weight:500;color:var(--muted)}
-.card{overflow:auto;z-index:6;overscroll-behavior:contain}.legend{z-index:3}
+.card{overflow:auto;z-index:6;overscroll-behavior:contain;background:color-mix(in srgb,var(--panel) 78%,transparent);-webkit-backdrop-filter:blur(7px) saturate(1.1);backdrop-filter:blur(7px) saturate(1.1)}.legend{z-index:3}
 #screen:has(.card:not([hidden])) .legend,#screen:has(.card:not([hidden])) #near{display:none}
 dl.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:13px}dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;min-width:0}.mono{font-family:var(--f-mono);font-size:12px}
 .btn.armed{background:var(--yellow)!important;color:#1a1400!important;border-color:var(--yellow)!important;font-weight:600}
@@ -984,7 +984,7 @@ const TIP=document.createElement('div');TIP.className='itip';TIP.hidden=true;$('
 function nearestScreen(x,y,maxd){if(!city)return null;let b=null,bd=maxd*maxd;for(const i of city.inv){if(!visible(i)||!(i[1]||i[2]))continue;const [u,v]=screenPos(i[1],i[2]);const d=(u-x)*(u-x)+(v-y)*(v-y);if(d<bd){bd=d;b=i}}return b}
 function hoverAt(x,y){const i=nearestScreen(x,y,18);if(!i){TIP.hidden=true;$('screen').style.cursor='';return}const [u,v]=screenPos(i[1],i[2]);
   TIP.innerHTML=`<b>${i[0]}</b> · ${i[3]} pts${flashed.has(i[0])?' · ✓':''}`;TIP.style.left=u+'px';TIP.style.top=(v-16)+'px';TIP.hidden=false;$('screen').style.cursor='pointer'}
-$('screen').addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons){TIP.hidden=true;return}const r=$('screen').getBoundingClientRect();hoverAt(e.clientX-r.left,e.clientY-r.top)});
+$('screen').addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||e.buttons||(e.target.closest&&e.target.closest('#card,.srch,.maptools,.filters,.legend,#near'))){TIP.hidden=true;return}const r=$('screen').getBoundingClientRect();hoverAt(e.clientX-r.left,e.clientY-r.top)});
 $('screen').addEventListener('pointerleave',()=>{TIP.hidden=true});
 // code labels on the canvas map when zoomed in (Claude version; Netlify uses map tooltips)
 function lblPick(pts){// pts: [{i,x,y}] -> labels that don't overlap; unflashed and higher points first
