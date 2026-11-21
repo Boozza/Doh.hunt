@@ -1060,10 +1060,12 @@ let LASTIMP=null;
 function impShow(html){const el=$('alb-impres');el.hidden=false;el.innerHTML=html}
 async function importPhotos(files){files=[...files].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|heic|heif|png)$/i.test(f.name));if(!files.length)return;
   let ex;try{impShow('Loading the photo reader…');ex=await loadExifr()}catch(e){impShow('Could not load the photo reader – check your connection and try again.');return}
-  const G=invGrid(),R=40,best=new Map();let withLoc=0,noLoc=0,far=0;
+  const G=invGrid(),R=40,best=new Map();let withLoc=0,noLoc=0,far=0;const noLocNames=[];
   for(let k=0;k<files.length;k++){const f=files[k];if(k%5===0)impShow(`Reading locations… ${k+1} / ${files.length}`);
     let g=null,dt='';try{g=await ex.gps(f)}catch(e){}
-    if(!g||!isFinite(g.latitude)||!isFinite(g.longitude)||(!g.latitude&&!g.longitude)){noLoc++;continue}withLoc++;
+    if(!g||!isFinite(g.latitude)){try{const o=await ex.parse(f,{gps:true,xmp:true,iptc:false,icc:false,mergeOutput:true});if(o){const xn=v=>{if(typeof v==='number')return v;const m=/^(\d+),([\d.]+)([NSEW])$/.exec(String(v||''));return m?(+m[1]+m[2]/60)*(/[SW]/.test(m[3])?-1:1):NaN};
+      const la=isFinite(o.latitude)?o.latitude:xn(o.GPSLatitude),lo=isFinite(o.longitude)?o.longitude:xn(o.GPSLongitude);if(isFinite(la)&&isFinite(lo))g={latitude:la,longitude:lo}}}catch(e){}}
+    if(!g||!isFinite(g.latitude)||!isFinite(g.longitude)||(!g.latitude&&!g.longitude)){noLoc++;noLocNames.push(f.name);continue}withLoc++;
     const n=nearestInv(G,g.latitude,g.longitude,R);if(!n){far++;continue}
     try{const o=await ex.parse(f,['DateTimeOriginal']);const d=o&&o.DateTimeOriginal;if(d instanceof Date&&!isNaN(d))dt=d.toISOString().slice(0,10)}catch(e){}
     const cur=best.get(n.i[0]);if(!cur||n.d<cur.d)best.set(n.i[0],{i:n.i,f,d:n.d,dt})}
@@ -1076,7 +1078,7 @@ async function importPhotos(files){files=[...files].filter(f=>/^image\//.test(f.
   impShow(`<b>${ok.length} photo${ok.length===1?'':'s'} added to your album.</b><br>Scanned ${files.length} · ${withLoc} with location${noLoc?` · ${noLoc} without location`:''} · ${far} not near any invader${had.length?` · ${had.length} matched an invader that already has your photo`:''}${failed.length?` · ${failed.length} could not be read`:''}.
     ${ok.length?`<div class="impl">${ok.slice(0,60).map(m=>`<div><img src="${blobUrl(PHOTOS[m.i[0]])}" alt="${m.i[0]}">${m.i[0]}<br>${Math.round(m.d)} m</div>`).join('')}</div>`:''}
     <div class="inline" style="flex-wrap:wrap;gap:6px">${unfl.length?`<button class="btn g" id="imp-fl">✓ Mark ${unfl.length} of these as flashed</button>`:''}${ok.length?`<button class="btn" id="imp-undo">Undo this import</button>`:''}<button class="btn" id="imp-x">Close</button></div>
-    ${noLoc&&!withLoc?'<p class="note" style="margin:6px 0 0">None of these photos carried a location. On iPhone: Settings › Privacy › Location Services › Camera must be on when you take photos; in the photo picker, tap Options and keep Location on.</p>':''}
+    ${noLoc?`<p class="note" style="margin:6px 0 0">Without location: ${noLocNames.slice(0,8).map(escapeHtml).join(', ')}${noLoc>8?'…':''}. The phone may have sent a copy without its location (iCloud “Optimise Storage”, an edited copy, or Location switched off in the picker’s Options). Tip: add those from the invader’s card with 📷, or from a Mac/PC copy of the original.</p>`:''}${noLoc&&!withLoc?'<p class="note" style="margin:6px 0 0">None of these photos carried a location. On iPhone: Settings › Privacy › Location Services › Camera must be on when you take photos; in the photo picker, tap Options and keep Location on.</p>':''}
     <p class="note" style="margin:6px 0 0">Matched by where each photo was taken: the nearest invader within ${R} m. Check the list – two invaders close together can swap.</p>`);
   if($('imp-fl'))$('imp-fl').onclick=()=>{const by={};unfl.forEach(m=>{const c=(INVBY.get(m.i[0])||[{code:''}])[0].code;(by[c]=by[c]||[]).push(m.i[0])});Object.entries(by).forEach(([c,ids])=>bulkFlash(c,ids));toast('Marked '+unfl.length+' as flashed');$('imp-fl').remove()};
   if($('imp-undo'))$('imp-undo').onclick=async()=>{const ids=LASTIMP||[];for(const id of ids)await removePhoto(id);LASTIMP=null;renderGallery();impShow('Import undone: '+ids.length+' photos removed.')};
