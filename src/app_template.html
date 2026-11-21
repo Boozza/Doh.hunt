@@ -186,12 +186,49 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 .alb-slot.gap{border:2px dashed var(--line);font-family:var(--f-display);font-size:16px;color:var(--muted)}
 .alb-slot.gap.dmg{border-color:var(--orange)}
 .alb-cap{font-family:var(--f-mono);font-size:11px;display:flex;justify-content:space-between;margin-top:3px}.alb-cap span:last-child{color:var(--muted)}
+
+/* ---- v35 themes: html[data-theme] swaps the tokens; Arcade+ is the default */
+:root[data-theme="calm"] body::after,:root[data-theme="field"] body::after,:root[data-theme="light"] body::after{display:none}
+:root[data-theme="calm"] .logo{text-shadow:3px 3px 0 #5a3e00}
+:root[data-theme="calm"] .stat,:root[data-theme="field"] .stat,:root[data-theme="light"] .stat{box-shadow:none}
+:root[data-theme="calm"] .card h3,:root[data-theme="calm"] .tabs button[aria-selected="true"],:root[data-theme="field"] .card h3,:root[data-theme="light"] .card h3,:root[data-theme="light"] .tabs button[aria-selected="true"],:root[data-theme="field"] .tabs button[aria-selected="true"]{text-shadow:none}
+:root[data-theme="calm"] .card{box-shadow:4px 4px 0 rgba(255,42,140,.55),0 8px 24px rgba(0,0,0,.45)}
+:root[data-theme="calm"] .screen,:root[data-theme="field"] .screen,:root[data-theme="light"] .screen{box-shadow:none}
+:root[data-theme="field"]{--bg:#000;--panel:#0d0d0d;--panel2:#1a1a1a;--line:#6b6b6b;--fg:#fff;--muted:#d6d6d6;--yellow:#ffe600;--pink:#ff7ab8;--cyan:#5ff0ff;--green:#5dff9d;--f-display:"IBM Plex Sans",system-ui,sans-serif}
+:root[data-theme="field"] body{font-size:17px}
+:root[data-theme="field"] .logo{text-shadow:none}
+:root[data-theme="field"] .logo,:root[data-theme="field"] .tabs button,:root[data-theme="field"] .card h3,:root[data-theme="field"] .stat b,:root[data-theme="field"] .alb-head h3{font-weight:800;letter-spacing:0}
+:root[data-theme="field"] .tabs button{font-size:13px}
+:root[data-theme="field"] .stat b{font-size:24px}
+:root[data-theme="field"] .card h3{font-size:20px}
+:root[data-theme="field"] .btn{min-height:46px;font-size:15px;padding:9px 14px;border-width:2px}
+:root[data-theme="field"] .card{box-shadow:0 0 0 2px #000,0 8px 24px rgba(0,0,0,.6);background:#000}
+:root[data-theme="field"] .navbar{border-width:3px;border-color:var(--yellow)}:root[data-theme="field"] .nb-turn{font-size:20px}:root[data-theme="field"] .nb-ic{font-size:34px}
+:root[data-theme="field"] .h-big{font-size:22px;min-height:76px}
+:root[data-theme="light"]{--bg:#eef1f4;--panel:#ffffff;--panel2:#f1f3f6;--line:#d0d7df;--fg:#15191e;--muted:#56606d;--yellow:#9a6200;--pink:#c2185b;--cyan:#0b6fbf;--green:#17824a;--orange:#b35400;--red:#c62828;--water:#cfe3f5;--land:#eef1f4;--grid:#e0e5ea;--f-display:"IBM Plex Sans",system-ui,sans-serif;color-scheme:light}
+:root[data-theme="light"] .logo,:root[data-theme="light"] .tabs button,:root[data-theme="light"] .card h3,:root[data-theme="light"] .stat b,:root[data-theme="light"] .alb-head h3,:root[data-theme="light"] .alb-head b{font-weight:700;letter-spacing:0}
+:root[data-theme="light"] .logo{text-shadow:none}:root[data-theme="light"] .tabs button{font-size:12px}:root[data-theme="light"] .stat b{font-size:22px}:root[data-theme="light"] .card h3{font-size:16px}
+:root[data-theme="light"] .stat{border-width:1px;border-radius:10px;border-color:var(--line)}
+:root[data-theme="light"] .card{border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(20,30,50,.18);background:color-mix(in srgb,#fff 92%,transparent)}
+:root[data-theme="light"] .seg button.on,:root[data-theme="light"] .hint,:root[data-theme="light"] .toast,:root[data-theme="light"] .btn.armed{color:#fff!important}
+:root[data-theme="light"] .toast .btn{background:#fff;color:var(--yellow);border-color:#fff}
+:root[data-theme="light"] .maptools button,:root[data-theme="light"] .chipbtn,:root[data-theme="light"] .legend,:root[data-theme="light"] .fchip,:root[data-theme="light"] .itip,:root[data-theme="light"] .near,:root[data-theme="light"] .navbar,:root[data-theme="light"] .gph span{background:rgba(255,255,255,.94);color:var(--fg)}
+:root[data-theme="light"] .screen{background:#eef1f4;border-width:1px;border-radius:12px}
+:root[data-theme="light"] .alb-bar i{box-shadow:none}:root[data-theme="light"] .alb-slot.got{box-shadow:none}
+/* theme picker */
+.thmenu{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:1200;width:min(290px,calc(100vw - 32px));background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:6px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.thmenu .lbl{margin:0 2px 2px}
+.thopt{display:flex;align-items:center;gap:10px;width:100%;background:var(--panel2);border:2px solid transparent;border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--fg);text-align:left;font-size:14px}
+.thopt.on{border-color:var(--yellow)}
+.thsw{display:flex;border-radius:5px;overflow:hidden;border:1px solid rgba(128,128,128,.5);flex:0 0 auto}.thsw i{width:14px;height:22px}
+.thopt small{display:block;color:var(--muted);font-size:11px}
+.thmenu .check{font-size:13px;margin-top:4px}
 </style>
 
 <div class="wrap">
   <header>
     <div class="logo">D'OH! HUNT PLANNER<small>@DOH.INVADERS · ROUTE MACHINE · <span id="appver">v__VER__</span></small></div>
-    <div class="citysel"><button class="btn mic" id="mic-top" title="Say an invader number to mark it flashed">🎤</button><button class="btn y" id="resume" hidden>▶ Resume hunt</button><label for="city">CITY</label><select id="city"></select></div>
+    <div class="citysel"><button class="btn" id="thbtn" title="Look / theme" aria-label="Choose a look" aria-expanded="false">🎨</button><button class="btn mic" id="mic-top" title="Say an invader number to mark it flashed">🎤</button><button class="btn y" id="resume" hidden>▶ Resume hunt</button><label for="city">CITY</label><select id="city"></select></div>
   </header>
 
   <section class="stats" aria-label="City stats">
@@ -1005,6 +1042,38 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+// ================= v35 THEMES =================
+const THEMES=[{id:'arcade',name:'Arcade+',d:'Neon, pixel numbers, scanlines',sw:['#0a0d1c','#ffd90f','#ff5aa8','#22e3ff']},
+ {id:'calm',name:'Arcade calm',d:'Same colours, no glow or scanlines',sw:['#0a0d1c','#ffd90f','#45f08a','#8d94bf']},
+ {id:'field',name:'Field',d:'Black & yellow, big text – for sunlight',sw:['#000000','#ffe600','#ffffff','#000000']},
+ {id:'light',name:'Light',d:'Clean maps look',sw:['#eef1f4','#ffffff','#0b6fbf','#17824a']}];
+let THEME='arcade',TAUTO=true,THEFF='',thDbOn=false,thTimer=0;
+try{const v=localStorage.getItem('hp_theme');if(THEMES.some(x=>x.id===v))THEME=v;TAUTO=localStorage.getItem('hp_theme_auto')!=='0'}catch(e){}
+const themeEff=()=>(TAUTO&&HUNT)?'field':THEME;
+function applyTheme(){const e=themeEff();if(e===THEFF)return;const first=!THEFF;THEFF=e;
+  if(e==='arcade')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=e;
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=e==='light'?'#eef1f4':e==='field'?'#000000':'#0a0d1c';
+  if(!first&&typeof themeMap==='function')try{themeMap(e)}catch(x){}
+  try{draw()}catch(x){}}
+function saveTheme(){try{localStorage.setItem('hp_theme',THEME);localStorage.setItem('hp_theme_auto',TAUTO?'1':'0')}catch(e){}
+  clearTimeout(thTimer);thTimer=setTimeout(()=>{if(db&&canWrite)db.doc('prefs/theme').set({theme:THEME,auto:TAUTO}).catch(()=>{})},600)}
+function themeSync(){if(thDbOn||!db)return;thDbOn=true;db.doc('prefs/theme').onSnapshot(s=>{const v=s.exists?s.data():null;if(!v)return;let ch=false;
+  if(THEMES.some(x=>x.id===v.theme)&&v.theme!==THEME){THEME=v.theme;ch=true}if(typeof v.auto==='boolean'&&v.auto!==TAUTO){TAUTO=v.auto;ch=true}
+  if(ch){try{localStorage.setItem('hp_theme',THEME);localStorage.setItem('hp_theme_auto',TAUTO?'1':'0')}catch(e){};applyTheme();renderThemeMenu()}},()=>{})}
+setInterval(()=>{if(db&&!thDbOn)themeSync()},3000);
+const thMenu=document.createElement('div');thMenu.className='thmenu';thMenu.id='thmenu';thMenu.hidden=true;document.body.appendChild(thMenu);thMenu.addEventListener('click',e=>e.stopPropagation());
+function renderThemeMenu(){if(thMenu.hidden)return;
+  thMenu.innerHTML='<span class="lbl">LOOK</span>'+THEMES.map(x=>`<button class="thopt${x.id===THEME?' on':''}" data-th="${x.id}" aria-pressed="${x.id===THEME}"><span class="thsw" aria-hidden="true">${x.sw.map(c=>`<i style="background:${c}"></i>`).join('')}</span><span>${x.name}<small>${x.d}</small></span></button>`).join('')+
+  `<label class="check"><input type="checkbox" id="th-auto" ${TAUTO?'checked':''}> Switch to Field while hunting</label><p class="note" style="margin:0">${typeof themeMap==='function'?'The map style follows the look until you pick one yourself (🗺). ':''}Story cards keep the arcade style.</p>`;
+  thMenu.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{THEME=b.dataset.th;saveTheme();applyTheme();renderThemeMenu()});
+  $('th-auto').onchange=e=>{TAUTO=e.target.checked;saveTheme();applyTheme()}}
+$('thbtn').onclick=e=>{e.stopPropagation();thMenu.hidden=!thMenu.hidden;$('thbtn').setAttribute('aria-expanded',String(!thMenu.hidden));renderThemeMenu()};
+document.addEventListener('click',e=>{if(!thMenu.hidden&&!thMenu.contains(e.target)&&e.target!==$('thbtn')){thMenu.hidden=true;$('thbtn').setAttribute('aria-expanded','false')}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!thMenu.hidden){thMenu.hidden=true;$('thbtn').setAttribute('aria-expanded','false')}});
+{const _rfT=refresh;refresh=function(){const r=_rfT.apply(this,arguments);applyTheme();return r};
+ const _rhT=renderHunt;renderHunt=function(){const r=_rhT.apply(this,arguments);applyTheme();return r}}
+applyTheme();
+
 // ================= v34 ALBUM =================
 let ALBF='all';const STAMPC=['var(--pink)','var(--cyan)','var(--green)','var(--yellow)','var(--orange)'];
 function renderAlbum(){if(!city||$('p-album').hidden)return;

@@ -31,6 +31,7 @@ s=s.replace("</style>",""".leaflet-container{background:#141c3e;font-family:var(
 .near.hot{border-color:var(--green);box-shadow:0 0 0 3px rgba(69,240,138,.35)}.near .arrow{font-size:22px;transition:transform .15s}
 #near-cmp.on{outline:2px solid var(--yellow)}
 .hunt{z-index:1000}
+:root[data-theme="light"] .leaflet-container{background:#eef1f4}:root[data-theme="light"] .leaflet-tooltip.ilbl{background:rgba(255,255,255,.9);color:#15191e}:root[data-theme="light"] .rnum{background:#fff;color:#15191e}
 .navbar{position:absolute;left:50%;transform:translateX(-50%);bottom:52px;z-index:504;width:min(560px,calc(100% - 20px));background:rgba(10,13,28,.95);border:2px solid var(--cyan);border-radius:12px;padding:8px 10px;display:grid;gap:6px;box-shadow:0 4px 18px #000a}
 .navbar.hot{border-color:var(--green);box-shadow:0 0 0 3px rgba(69,240,138,.35)}
 .nb-turn{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;line-height:1.25}.nb-ic{font-size:26px;min-width:30px;text-align:center}

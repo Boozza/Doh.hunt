@@ -194,9 +194,12 @@ const _sd=showDay;showDay=function(d){_sd(d);ensureGeo(route)};
 const _rr=renderResult;renderResult=function(loop,el){_rr(loop,el);const host=el||$('result');if(RM&&RM.city===city.code&&route&&route.stops&&route.stops.length){const n=document.createElement('div');n.className='note';n.textContent='🛣 Walking distances follow real streets (OpenStreetMap).';host.appendChild(n)}};
 
 // ================= v22 STANDALONE EXTRAS =================
+var themeMap=null;
 // basemap switch
 {const b=document.createElement('button');b.id='basebtn';b.title='Map style';b.setAttribute('aria-label','Map style');const lab=()=>b.textContent=BASE==='dark'?'🌙':BASE==='hot'?'H':'🗺';lab();gpsBtn.after(b);
- b.onclick=()=>{const ks=Object.keys(BASES);setBase(ks[(ks.indexOf(BASE)+1)%ks.length]);lab();toast('Map: '+BASES[BASE][2])}}
+ b.onclick=()=>{const ks=Object.keys(BASES);setBase(ks[(ks.indexOf(BASE)+1)%ks.length]);lab();try{localStorage.setItem('hp_base_manual','1')}catch(e){};toast('Map: '+BASES[BASE][2])};
+ function themeMapF(e){let man=false;try{man=localStorage.getItem('hp_base_manual')==='1'}catch(x){}if(man)return;const k=(e==='light'||e==='field')?'osm':'dark';if(BASES[k]&&k!==BASE){setBase(k);lab()}}
+ themeMap=themeMapF}
 // offline: service worker caches the app, data and every map tile you have viewed
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 window.addEventListener('offline',()=>toast('Offline – using the saved app, data and map tiles'));
