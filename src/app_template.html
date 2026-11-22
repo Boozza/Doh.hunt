@@ -324,6 +324,12 @@ html[data-theme=light]{--glass-dim:1.08}
 html.mf .panel,html.mf .card,html.mf .hunt,html.mf .thmenu,html.mf .world,html.mf .wfloat,html.mf .filters,html.mf .legend,html.mf #sb-panel{text-shadow:0 1px 2px rgba(0,0,0,.55)}
 html.mf[data-theme=light] .panel,html.mf[data-theme=light] .card,html.mf[data-theme=light] .hunt,html.mf[data-theme=light] .thmenu,html.mf[data-theme=light] .world,html.mf[data-theme=light] .filters,html.mf[data-theme=light] .legend{text-shadow:0 1px 1px rgba(255,255,255,.7)}
 html.mf .panel .note,html.mf .panel .lbl,html.mf .panel small,html.mf .card .note{color:color-mix(in srgb,var(--muted) 65%,var(--text))}
+
+html.mf .screen{bottom:calc(-1 * var(--vfix,0px))}
+html.mf .panel{bottom:calc(-1 * var(--vfix,0px));height:calc(var(--sheet-h) + var(--vfix,0px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--vfix,0px))}
+html.mf .hunt{bottom:calc(-1 * var(--vfix,0px));padding-bottom:calc(20px + env(safe-area-inset-bottom,0px) + var(--vfix,0px))}
+html.mf .panel .list,html.mf .panel ol.route{max-height:none;overflow:visible}
+html.mf #p-news{padding-bottom:10px}
 </style>
 
 <div class="wrap">
@@ -527,14 +533,15 @@ const MF={on:true,st:'peek'};try{MF.on=localStorage.getItem('hp_layout')!=='clas
   $('mf-pill').onclick=()=>{const t=$('t-score');if(t)t.click();setSheet('half')};
   $('mf-go').onclick=()=>{if(route&&!$('result').hidden){const g=$('huntgo');if(g){g.click();return}}const t=$('t-plan');if(t)t.click();$('plan').click()};
   const sab=document.createElement('div');sab.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';document.body.appendChild(sab);
-  const H={peek:()=>Math.round(162+sab.offsetHeight),half:()=>Math.round(innerHeight*.52),full:()=>{const c=document.querySelector('header .citysel');const t=c?c.getBoundingClientRect().bottom+8:70;return Math.round(innerHeight-t)}};
+  const H={peek:()=>{const t=P.querySelector('.tabs');return Math.round(h.offsetHeight+q.offsetHeight+(t?t.offsetHeight:44)+2+sab.offsetHeight)},half:()=>Math.round(innerHeight*.52),full:()=>{const c=document.querySelector('header .citysel');const t=c?c.getBoundingClientRect().bottom+8:70;return Math.round(innerHeight-t)}};
   window.setSheet=function(st){MF.st=st;document.documentElement.classList.toggle('mf-full',MF.on&&st==='full');if(!MF.on)return;document.documentElement.style.setProperty('--sheet-h',H[st]()+'px');h.setAttribute('aria-expanded',String(st!=='peek'))};
   h.onclick=()=>{if(h._drag)return;setSheet(MF.st==='peek'?'half':MF.st==='half'?'full':'peek')};
   let y0=0,hs=0;h.addEventListener('pointerdown',e=>{y0=e.clientY;hs=P.getBoundingClientRect().height;h._drag=false;h.setPointerCapture(e.pointerId);P.style.transition='none'});
   h.addEventListener('pointermove',e=>{if(!h.hasPointerCapture(e.pointerId))return;const d=y0-e.clientY;if(Math.abs(d)>6)h._drag=true;if(h._drag)document.documentElement.style.setProperty('--sheet-h',Math.max(H.peek(),Math.min(H.full(),hs+d))+'px')});
   h.addEventListener('pointerup',e=>{P.style.transition='';if(!h._drag)return;const cur=P.getBoundingClientRect().height;const best=['peek','half','full'].reduce((a,b)=>Math.abs(H[b]()-cur)<Math.abs(H[a]()-cur)?b:a);setSheet(best);setTimeout(()=>h._drag=false,0)});
   document.querySelectorAll('.tabs [role=tab]').forEach(t=>t.addEventListener('click',()=>{const big=['t-album','t-news','t-score','t-list','t-mark'].includes(t.id);setSheet(big?'full':(MF.st==='peek'?'half':MF.st))}));
-  addEventListener('resize',()=>setSheet(MF.st));
+  function vfix(){let g=0;try{const sa=navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;if(sa){g=Math.round(screen.height-innerHeight);if(g<0||g>120)g=0}}catch(e){}document.documentElement.style.setProperty('--vfix',g+'px')}
+  vfix();addEventListener('resize',()=>{vfix();setSheet(MF.st)});addEventListener('orientationchange',()=>setTimeout(()=>{vfix();setSheet(MF.st)},300));
 })();
 function mfPill(){const l=$('s-left'),p=$('s-pts'),f=$('s-flashed'),a=$('s-active');if(!l||!$('mf-ptxt'))return;
   $('mf-ptxt').innerHTML=`${l.textContent} LEFT · ${p.textContent} PTS<small>${f.textContent} flashed of ${a.textContent} still up</small>`;
