@@ -288,7 +288,7 @@ html.mf .panel{position:fixed;z-index:900;left:0;right:0;bottom:0;height:var(--s
 html.mf .panel .tabbody{flex:1;overflow:auto;overscroll-behavior:contain}
 html.mf .panel .tabs{background:transparent;flex:none}
 .mfhandle,.mfquick{display:none}
-html.mf .mfhandle{display:block;flex:none;width:100%;height:22px;border:0;background:transparent;cursor:grab;touch-action:none;padding:0}
+html.mf .mfhandle{position:relative;display:block;flex:none;width:100%;height:22px;border:0;background:transparent;cursor:grab;touch-action:none;padding:0}
 html.mf .mfhandle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--muted);opacity:.6;margin:0 auto}
 html.mf .mfquick{display:flex;flex:none;gap:8px;align-items:center;padding:0 12px 8px}
 .mfpill{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:46px;padding:0 10px;border:2px solid var(--glass-b);border-radius:12px;background:transparent;color:var(--text);cursor:pointer;font:700 13px/1.1 var(--px,monospace);white-space:nowrap;overflow:hidden}
@@ -330,6 +330,7 @@ html.mf .panel{bottom:calc(-1 * var(--vfix,0px));height:calc(var(--sheet-h) + va
 html.mf .hunt{bottom:calc(-1 * var(--vfix,0px));padding-bottom:calc(20px + env(safe-area-inset-bottom,0px) + var(--vfix,0px))}
 html.mf .panel .list,html.mf .panel ol.route{max-height:none;overflow:visible}
 html.mf #p-news{padding-bottom:10px}
+.mfver{position:absolute;right:14px;top:4px;font:400 10px/1 var(--f-mono,monospace);color:var(--muted);letter-spacing:.5px}
 </style>
 
 <div class="wrap">
@@ -523,7 +524,7 @@ sel.addEventListener('change',()=>{try{localStorage.setItem('hp_city',sel.value)
 /* ---- v42 · map-first layout ---- */
 const MF={on:true,st:'peek'};try{MF.on=localStorage.getItem('hp_layout')!=='classic'}catch(e){}
 (function mfBuild(){const P=document.querySelector('.panel');if(!P)return;
-  const h=document.createElement('button');h.className='mfhandle';h.id='mf-handle';h.setAttribute('aria-label','Expand or collapse the panel');h.innerHTML='<i></i>';
+  const h=document.createElement('button');h.className='mfhandle';h.id='mf-handle';h.setAttribute('aria-label','Expand or collapse the panel');h.innerHTML='<i></i><span class="mfver">'+(($('appver')||{}).textContent||'')+'</span>';
   const q=document.createElement('div');q.className='mfquick';q.innerHTML='<button class="mfpill" id="mf-pill" aria-label="Score"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="10.5" stroke="var(--line)" stroke-width="5" fill="none"/><circle id="mf-ring" cx="14" cy="14" r="10.5" stroke="var(--cyan)" stroke-width="5" fill="none" stroke-dasharray="0 66" transform="rotate(-90 14 14)"/></svg><span id="mf-ptxt">–</span></button><button class="mfgo" id="mf-go">PLAN ▶</button>';
   P.prepend(q);P.prepend(h);
   const ft=document.createElement('button');ft.id='mf-filt';ft.title='Filters & legend';ft.setAttribute('aria-label','Show filters and legend');ft.setAttribute('aria-expanded','false');
@@ -1325,7 +1326,7 @@ function themeSync(){if(thDbOn||!db)return;thDbOn=true;db.doc('prefs/theme').onS
 setInterval(()=>{if(db&&!thDbOn)themeSync()},3000);
 const thMenu=document.createElement('div');thMenu.className='thmenu';thMenu.id='thmenu';thMenu.hidden=true;document.body.appendChild(thMenu);thMenu.addEventListener('click',e=>e.stopPropagation());
 function renderThemeMenu(){if(thMenu.hidden)return;
-  thMenu.innerHTML='<span class="lbl">LOOK</span>'+THEMES.map(x=>`<button class="thopt${x.id===THEME?' on':''}" data-th="${x.id}" aria-pressed="${x.id===THEME}"><span class="thsw" aria-hidden="true">${x.sw.map(c=>`<i style="background:${c}"></i>`).join('')}</span><span>${x.name}<small>${x.d}</small></span></button>`).join('')+
+  thMenu.innerHTML='<span class="lbl">LOOK <span style="float:right;opacity:.7">'+(($('appver')||{}).textContent||'')+'</span></span>'+THEMES.map(x=>`<button class="thopt${x.id===THEME?' on':''}" data-th="${x.id}" aria-pressed="${x.id===THEME}"><span class="thsw" aria-hidden="true">${x.sw.map(c=>`<i style="background:${c}"></i>`).join('')}</span><span>${x.name}<small>${x.d}</small></span></button>`).join('')+
   `<label class="check"><input type="checkbox" id="th-auto" ${TAUTO?'checked':''}> Switch to Field while hunting</label><label class="check"><input type="checkbox" id="th-mf" ${MF.on?'checked':''}> Full-screen map (panels slide over it)</label><p class="note" style="margin:0">${typeof themeMap==='function'?'The map style follows the look until you pick one yourself (🗺). ':''}Story cards keep the arcade style.</p>`;
   thMenu.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{THEME=b.dataset.th;saveTheme();applyTheme();renderThemeMenu()});
   $('th-auto').onchange=e=>{TAUTO=e.target.checked;saveTheme();applyTheme()};
