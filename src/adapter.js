@@ -402,6 +402,7 @@ async function sbFlush(){if(!SB.uid||SB.busy)return;const d=sbDirty(),ks=Object.
 /* apply server values locally without pushing them back */
 function sbApplyFlashed(code,ids){if(!Array.isArray(ids))return;SB.applying=true;try{localStorage.setItem('hp_fl_'+code,JSON.stringify(ids))}catch(e){}SB.applying=false;
   const s=new Set(ids);allFlashed[code]=s;if(city&&city.code===code){flashed=new Set(ids);route=null;$('result').hidden=true;try{refresh();if(selected&&!$('card').hidden)showCard(selected)}catch(e){}}else{try{renderScore()}catch(e){}}}
+tripChanged=function(t){try{localStorage.setItem('hp_trip',JSON.stringify(t))}catch(e){}if(typeof SB!=='undefined'&&SB.uid)sbUp('trip',t).catch(()=>{})};
 function sbApplyTrip(t){try{localStorage.setItem('hp_trip',JSON.stringify(t))}catch(e){}try{setTrip(t)}catch(e){}}
 function sbApplyFixes(f){if(!f)return;const loc=sbLS('hp_fixes',{});let ch=false;Object.entries(f).forEach(([id,v])=>{if(JSON.stringify(loc[id])!==JSON.stringify(v)){loc[id]=v;ch=true}});
   if(!ch)return;SB.applying=true;try{localStorage.setItem('hp_fixes',JSON.stringify(loc))}catch(e){}SB.applying=false;applyFixes(f,true)}

@@ -744,7 +744,8 @@ let HOTEL=null,startSrc='pin',hotelMode=false;
 function loadHotel(){HOTEL=null;try{HOTEL=JSON.parse(localStorage.getItem('hp_hotel_'+city.code)||'null')}catch(e){}
   let s=null;try{s=localStorage.getItem('hp_src_'+city.code)}catch(e){}
   startSrc=s||(HOTEL?'hotel':'pin');if(startSrc==='hotel'&&!HOTEL)startSrc='pin';applyStart();renderHotel()}
-function saveHotel(h){HOTEL=h;try{h?localStorage.setItem('hp_hotel_'+city.code,JSON.stringify(h)):localStorage.removeItem('hp_hotel_'+city.code)}catch(e){}
+function tripChanged(t){if(db&&canWrite)db.doc('meta/trip').set(t).catch(()=>{})}
+function saveHotel(h){HOTEL=h;try{if(h&&TRIP&&city&&TRIP.city===city.code){const o=TRIP.hotel||{};if(Math.abs((o.lat||0)-h.lat)>1e-5||Math.abs((o.lon||0)-h.lon)>1e-5){TRIP.hotel={lat:h.lat,lon:h.lon,name:h.name||'Hotel'};tripChanged(TRIP);setTimeout(()=>{try{renderTrip()}catch(e){}},0)}}}catch(e){}try{h?localStorage.setItem('hp_hotel_'+city.code,JSON.stringify(h)):localStorage.removeItem('hp_hotel_'+city.code)}catch(e){}
   if(db&&canWrite){try{h?db.doc('hotels/'+city.code).set(h):db.doc('hotels/'+city.code).delete()}catch(e){}}
   setSrc(h?'hotel':'pin')}
 function setSrc(s){startSrc=s;try{localStorage.setItem('hp_src_'+city.code,s)}catch(e){};applyStart();route=null;$('result').hidden=true;refresh()}
@@ -766,7 +767,7 @@ function renderStartNote(){renderHotel();$('startnote').innerHTML=`<b>Start:</b>
 const MC_TIER={L:['#ffd90f','Luxury'],P:['#ff5aa8','Premium'],S:['#3ee0ff','Select']};
 let MCD={},mcOn=false,mcSel=null;try{MCD=JSON.parse(localStorage.getItem('hp_mc')||'{}')}catch(e){}
 // hotels added by hand (not tagged as hotels on OpenStreetMap) – always merged into the Marriott list
-const MC_EXTRA={MUN:[{b:'Element',lat:48.179726,lon:11.632214,n:'Element by Marriott Munich Unterföhring',t:'S',addr:'Münchner Straße 12-16, 85774 Unterföhring'}]};
+const MC_EXTRA={MUN:[{b:'Element',lat:48.179726,lon:11.632214,n:'Element by Marriott Munich Unterföhring',t:'S',addr:'Münchner Straße 12-16, 85774 Unterföhring'},{b:'Moxy',lat:48.3524688,lon:11.8314911,n:'Moxy Munich Airport',t:'S',addr:'Eichenstraße 1, 85445 Oberding-Schwaig'}]};
 function mcMerge(){for(const [code,list] of Object.entries(MC_EXTRA)){const d=MCD[code]||(MCD[code]={updated:'',hotels:[]});d.hotels=d.hotels||[];for(const x of list)if(!d.hotels.some(h=>h.n===x.n))d.hotels.push(x)}}
 mcMerge();
 function mcHav(a,b,c,d){const x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,h=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))}
@@ -1007,7 +1008,7 @@ bindClear();
 const TRANSIT={overhead:10,kmh:18,walkKm:0.5}, TAXI={overhead:5,kmh:20,walkKm:0};
 function travelCfg(){return {travel:($('travel').querySelector('.on')||{}).dataset?.t||'walk',maxWalk:Math.max(0.2,+$('maxwalk').value||1),v:Math.max(1,+$('speed').value||4.5)}}
 function legOf(d,cfg){const m=(cfg.travel==='walk'||d<=cfg.maxWalk)?'walk':cfg.travel;
-  if(m==='walk')return {m,min:d/cfg.v*60,wkm:d};const T=m==='transit'?TRANSIT:TAXI;return {m,min:T.overhead+d/T.kmh*60,wkm:T.walkKm}}
+  if(m==='walk')return {m,min:d/cfg.v*60,wkm:d};const T=m==='transit'?TRANSIT:TAXI;const kmh=m==='transit'&&d>8?30:T.kmh;return {m,min:T.overhead+d/kmh*60,wkm:T.walkKm}}
 const LEGICON={walk:pxi('walk',14),transit:pxi('bus',14),taxi:pxi('taxi',14)}, GMODE={walk:'walking',transit:'transit',taxi:'driving'};
 function legUrl(a,b,m){return `https://www.google.com/maps/dir/?api=1&travelmode=${GMODE[m]}&origin=${a[0]},${a[1]}&destination=${b[0]},${b[1]}`}
 function plan(o={}){
