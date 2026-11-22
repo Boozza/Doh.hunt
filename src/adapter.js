@@ -367,7 +367,7 @@ function sbMark(k){const d=sbDirty();d[k]=1;sbSet('hp_sb_dirty',d);clearTimeout(
   if(k.startsWith('hp_fl_'))sbMark('flashed/'+k.slice(6));else if(k==='hp_fixes')sbMark('fixes')}})();
 function sbLoad(){if(window.supabase)return Promise.resolve(window.supabase);return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=()=>res(window.supabase);s.onerror=()=>rej(new Error('Could not load sync library'));document.head.appendChild(s)})}
 function sbUI(){const b=$('sb-btn');if(b){const st=SB.uid?(SB.state==='sync'?'sync':SB.state==='err'?'err':'ok'):'off';b.dataset.st=st;
-    b.title=SB.uid?('Signed in as '+SB.email+(st==='err'?' – last sync failed':st==='sync'?' – syncing…':' – synced')):'Sign in to sync your devices';b.setAttribute('aria-label',b.title)}
+    b.title=SB.uid?('Sync now ('+SB.email+(st==='err'?' – last sync failed':st==='sync'?' – syncing…':' – synced')+')'):'Sign in to sync your devices';b.setAttribute('aria-label',b.title)}
   const p=$('sb-panel');if(!p||p.hidden)return;
   const msg='<div id="sb-msg" class="muted" style="min-height:1em"></div>';
   if(SB.uid)p.innerHTML=`<b>☁ Account</b><div>Signed in as <b>${escapeHtml(SB.email)}</b></div><div class="muted">Flashed, location fixes and photos sync between your devices.${SB.last?' Last sync '+escapeHtml(SB.last)+'.':''}${SB.state==='err'?' Last attempt failed.':''}</div>
@@ -448,10 +448,12 @@ async function sbInit(){try{const lib=await sbLoad();SB.c=lib.createClient(SB.ur
 (function sbMount(){const th=$('thbtn');if(!th)return;const CL=['...XXX.....','..XXXXX.XX.','.XXXXXXXXXX','XXXXXXXXXXX','XXXXXXXXXXX','.XXXXXXXXX.'];
   const b=document.createElement('button');b.className='btn thbtn sbbtn';b.id='sb-btn';b.setAttribute('aria-expanded','false');
   b.innerHTML='<svg class="pxi" viewBox="0 0 11 9" width="22" height="18" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor">'+CL.map((r,y)=>[...r].map((c,x)=>c==='X'?`<rect x="${x}" y="${y+1}" width="1" height="1"/>`:'').join('')).join('')+'</svg><i class="sbdot"></i>';
-  th.parentNode.insertBefore(b,th);
+  const cv=document.createElement('button');cv.className='btn thbtn sbcar';cv.id='sb-acct';cv.title='Account';cv.setAttribute('aria-label','Account and sign-in');cv.setAttribute('aria-expanded','false');cv.textContent='▾';
+  th.parentNode.insertBefore(b,th);th.parentNode.insertBefore(cv,th);
   const p=document.createElement('div');p.id='sb-panel';p.className='thmenu sbpanel';p.hidden=true;document.body.appendChild(p);
   p.addEventListener('click',e=>e.stopPropagation());
-  b.onclick=e=>{e.stopPropagation();p.hidden=!p.hidden;b.setAttribute('aria-expanded',String(!p.hidden));sbUI();if(!p.hidden){const f=$('sb-mail');if(f&&!f.value)f.focus()}};
-  document.addEventListener('click',()=>{if(!p.hidden){p.hidden=true;b.setAttribute('aria-expanded','false')}});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!p.hidden){p.hidden=true;b.setAttribute('aria-expanded','false')}});
+  const tog=e=>{e.stopPropagation();p.hidden=!p.hidden;cv.setAttribute('aria-expanded',String(!p.hidden));sbUI();if(!p.hidden){const f=$('sb-mail');if(f&&!f.value)f.focus()}};
+  cv.onclick=tog;b.onclick=e=>{if(!SB.uid){tog(e);return}e.stopPropagation();sbFull(true)};
+  const shut=()=>{if(!p.hidden){p.hidden=true;cv.setAttribute('aria-expanded','false')}};document.addEventListener('click',shut);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')shut()});
   sbUI();sbInit()})();
