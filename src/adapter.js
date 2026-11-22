@@ -119,13 +119,14 @@ function huntScore(h){let n1=0,p1=0,n3=0;for(const i of city.inv){const st=i[4];
 async function overpass(q){const eps=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter'];let err;
   for(const u of eps){try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});if(r.ok)return await r.json();err=r.status}catch(e){err=e}}throw err}
 async function loadMarriott(force){const c=city;if(!c||!c.bbox)return [];const key='hp_mar_'+c.code;
-  if(!force){try{const v=JSON.parse(localStorage.getItem(key)||'null');if(v&&Date.now()-v.t<30*864e5)return v.h}catch(e){}}
+  if(!force){try{const v=JSON.parse(localStorage.getItem(key)||'null');if(v&&Date.now()-v.t<30*864e5)return withExtra(v.h)}catch(e){}}
   const [lo0,la0,lo1,la1]=c.bbox,pad=.03,bb=[la0-pad,lo0-pad,la1+pad,lo1+pad].map(x=>x.toFixed(4)).join(',');
   const q=`[out:json][timeout:50];(nwr["tourism"~"^(hotel|apartment|guest_house)$"]["brand"~"${BRAND_RX}",i](${bb});nwr["tourism"="hotel"]["operator"~"Marriott",i](${bb});nwr["tourism"="hotel"]["name"~"${NAME_RX}",i](${bb}););out center tags;`;
-  const j=await overpass(q);const seen=new Set(),h=[];
+  let j;try{j=await overpass(q)}catch(e){const x=withExtra([]);if(x.length)return x;throw e}const seen=new Set(),h=[];
   for(const e of j.elements||[]){const t=e.tags||{},lat=e.lat??(e.center&&e.center.lat),lon=e.lon??(e.center&&e.center.lon);if(lat==null||!t.name||!brandMatch(t))continue;const k=t.name.toLowerCase();if(seen.has(k))continue;seen.add(k);const b=brandOf(t);
     h.push({name:t.name,lat,lon,brand:b[0],tier:b[2],addr:[t['addr:street'],t['addr:housenumber']].filter(Boolean).join(' '),web:t.website||t['contact:website']||''})}
-  try{localStorage.setItem(key,JSON.stringify({t:Date.now(),h}))}catch(e){}return h}
+  try{localStorage.setItem(key,JSON.stringify({t:Date.now(),h}))}catch(e){}return withExtra(h)}
+function withExtra(h){const x=(typeof MC_EXTRA!=='undefined'&&city&&MC_EXTRA[city.code])||[];for(const e of x)if(!h.some(k=>k.name===e.n))h.push({name:e.n,lat:e.lat,lon:e.lon,brand:e.b,tier:e.t,addr:e.addr||'',web:''});return h}
 function gmaps(h){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(h.name+' '+city.name)}
 function setBaseFrom(h){saveHotel({lat:h.lat,lon:h.lon,name:h.name});toast(h.name+' is now your base');renderMar()}
 function marPopup(h,s){return `<div style="min-width:200px;font:13px/1.35 var(--f-body);color:#111"><b>${escapeHtml(h.name)}</b><br><span style="color:#555">${escapeHtml(h.brand)} · ${MTIER[h.tier][1]}</span><br>👾 <b>${s.n1}</b> to hunt within 1 km (${s.p1} pts)<br>🚕 ${s.n3} within 2.5 km<div style="display:flex;gap:6px;margin-top:8px"><button class="mpb y" data-mset="1">Set as my base</button><a class="mpb" href="${gmaps(h)}" target="_blank" rel="noopener">Maps</a></div></div>`}

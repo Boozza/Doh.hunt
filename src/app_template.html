@@ -244,6 +244,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 #gallery>:not(.gph){grid-column:1/-1}
 @container (max-width:420px){#p-score .bar{display:none}#p-score table.sc td{font-size:13px}}
 .pxg{vertical-align:-2px;flex:none}.legend span{display:inline-flex;align-items:center;gap:3px}.legend svg{filter:drop-shadow(1px 1px 0 rgba(0,0,0,.8))}
+/* v37.1 info card always above the map chips; chips step aside while it is open */
+.card{z-index:540}
+#screen:has(.card:not([hidden])) .filters{visibility:hidden}
 </style>
 
 <div class="wrap">
@@ -762,6 +765,10 @@ function renderStartNote(){renderHotel();$('startnote').innerHTML=`<b>Start:</b>
 // ---------- Marriott layer (data from db: marriott/<CITY>, filled by Claude from OpenStreetMap)
 const MC_TIER={L:['#ffd90f','Luxury'],P:['#ff5aa8','Premium'],S:['#3ee0ff','Select']};
 let MCD={},mcOn=false,mcSel=null;try{MCD=JSON.parse(localStorage.getItem('hp_mc')||'{}')}catch(e){}
+// hotels added by hand (not tagged as hotels on OpenStreetMap) – always merged into the Marriott list
+const MC_EXTRA={MUN:[{b:'Element',lat:48.179726,lon:11.632214,n:'Element by Marriott Munich Unterföhring',t:'S',addr:'Münchner Straße 12-16, 85774 Unterföhring'}]};
+function mcMerge(){for(const [code,list] of Object.entries(MC_EXTRA)){const d=MCD[code]||(MCD[code]={updated:'',hotels:[]});d.hotels=d.hotels||[];for(const x of list)if(!d.hotels.some(h=>h.n===x.n))d.hotels.push(x)}}
+mcMerge();
 function mcHav(a,b,c,d){const x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,h=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))}
 function mcScore(h){let n1=0,p1=0,n3=0;for(const i of city.inv){const st=i[4];if(st==='destroyed'||st==='hidden'||flashed.has(i[0]))continue;const d=mcHav(h.lat,h.lon,i[1],i[2]);if(d<=1){n1++;p1+=i[3]}if(d<=2.5)n3++}return {n1,p1,n3}}
 function mcRows(){const d=MCD[city.code];if(!d||!d.hotels)return null;return d.hotels.map(h=>({h,s:mcScore(h)})).sort((a,b)=>b.s.n1-a.s.n1||b.s.p1-a.s.p1||b.s.n3-a.s.n3)}
@@ -796,7 +803,7 @@ async function initDb(){
   subscribe();
   db.collection('flashed').onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();if(v&&Array.isArray(v.ids)){allFlashed[d.id]=new Set(v.ids);try{localStorage.setItem('hp_fl_'+d.id,JSON.stringify(v.ids))}catch(e){}}});renderScore()},()=>{});
   db.collection('hotels').onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();try{localStorage.setItem('hp_hotel_'+d.id,JSON.stringify(v))}catch(e){}});if(city){const had=!!HOTEL;loadHotel();if(!had&&HOTEL)refresh()}},()=>{});
-  db.collection('marriott').onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();if(v&&Array.isArray(v.hotels))MCD[d.id]={updated:v.updated,hotels:v.hotels}});try{localStorage.setItem('hp_mc',JSON.stringify(MCD))}catch(e){};if(city){mcRender();draw()}},()=>{});
+  db.collection('marriott').onSnapshot(s=>{s.docs.forEach(d=>{const v=d.data();if(v&&Array.isArray(v.hotels))MCD[d.id]={updated:v.updated,hotels:v.hotels}});mcMerge();try{localStorage.setItem('hp_mc',JSON.stringify(MCD))}catch(e){};if(city){mcRender();draw()}},()=>{});
   db.doc('meta/adjust').onSnapshot(s=>{const v=s.exists?s.data():null;ADJ=(v&&v.pts)||{};const n=$('adjnote');if(v&&v.note){n.textContent='* '+v.note;n.hidden=false}else n.hidden=true;renderScore()},()=>{});
   db.doc('meta/status').onSnapshot(snap=>{const d=snap.exists?snap.data():null;if(!d||!d.changes)return;
     const MAP={destroyed:'destroyed',degraded:'damaged',damaged:'damaged',restored:'ok',reactivated:'ok',ok:'ok'};
