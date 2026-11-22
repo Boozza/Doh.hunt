@@ -302,6 +302,13 @@ html.mf .wfloat{top:calc(62px + env(safe-area-inset-top,0px));position:fixed}
  html.mf .mfhandle{display:none}html.mf .maptools{right:404px}html.mf .card{right:404px;left:12px;bottom:12px;max-width:420px;margin:0}html.mf .legend{bottom:12px;right:404px}html.mf .filters{right:460px}
  html.mf header{right:404px}html.mf #resume:not([hidden]){bottom:16px}
  html.mf .hunt{left:12px;right:auto;bottom:12px;width:min(520px,calc(100vw - 430px));max-height:calc(100vh - 90px);margin:0;border-radius:14px;border-bottom:1px solid var(--glass-b)}}
+
+html.mf .srch{position:fixed;z-index:970;top:calc(60px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));right:64px;background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25)}
+html.mf .world{top:calc(58px + env(safe-area-inset-top,0px));z-index:930;border-top:1px solid var(--glass-b);border-radius:14px 14px 0 0;padding-top:4px}
+html.mf .wfloat{top:auto;bottom:calc(var(--sheet-h) + 12px)}
+html.mf #wbtn[aria-pressed=true]{background:var(--cyan);color:#06121a;border-color:var(--cyan)}
+html.mf.mf-full .maptools,html.mf.mf-full .legend,html.mf:has(#world:not([hidden])) .maptools{display:none}
+details.fold>summary{cursor:pointer;color:var(--muted);font-size:12px;list-style:none;padding:2px 0}details.fold>summary::-webkit-details-marker{display:none}details.fold>summary::before{content:'▸ '}details.fold[open]>summary::before{content:'▾ '}
 </style>
 
 <div class="wrap">
@@ -389,9 +396,9 @@ html.mf .wfloat{top:calc(62px + env(safe-area-inset-top,0px));position:fixed}
 
       <div class="tabbody" id="p-list" hidden>
         <div class="result" style="gap:8px">
-          <span class="lbl">See them on a real Google map</span>
-          <p class="note" style="margin:0">Export what's left in this city, then import it in <a href="https://www.google.com/maps/d/" target="_blank" rel="noopener" style="color:var(--cyan)">Google My Maps</a>: Create a new map → Import → pick the file → choose <b>latitude/longitude</b> for position and <b>name</b> for the title. Style by the <b>points</b> column for colors. The map then shows in the Google Maps app under Saved → Maps.</p>
-          <div class="inline"><button class="btn y" id="export">⬇ Export CSV for Google My Maps</button><button class="btn" id="exportall">🌍 All my cities (one file)</button><span class="save" id="exportmsg"></span></div>
+          <details class="fold"><summary>See them on a real Google map (export)</summary>
+          <p class="note" style="margin:6px 0">Export what's left in this city, then import it in <a href="https://www.google.com/maps/d/" target="_blank" rel="noopener" style="color:var(--cyan)">Google My Maps</a>: Create a new map → Import → pick the file → choose <b>latitude/longitude</b> for position and <b>name</b> for the title. Style by the <b>points</b> column for colors. The map then shows in the Google Maps app under Saved → Maps.</p>
+          <div class="inline"><button class="btn y" id="export">⬇ Export CSV for Google My Maps</button><button class="btn" id="exportall">🌍 All my cities (one file)</button><span class="save" id="exportmsg"></span></div></details>
         </div>
         <div class="inline"><span class="lbl">Sort</span>
           <div class="seg" id="sort"><button data-s="near" class="on">Nearest to start</button><button data-s="pts">Points</button></div>
@@ -402,7 +409,7 @@ html.mf .wfloat{top:calc(62px + env(safe-area-inset-top,0px));position:fixed}
       <div class="tabbody" id="p-news" hidden>
         <div class="inline"><div class="seg" id="nfilter"><button data-f="mine" class="on">My cities</button><button data-f="all">Everywhere</button></div><label class="check" style="font-size:13px"><input type="checkbox" id="nopps"> New targets only</label></div>
         <ul class="list news" id="newslist"></ul>
-        <p class="note" style="margin:0">From invader-spotter, updated each morning by your daily watch. <b style="color:var(--green)">NEW TARGET</b> = back on the wall in a city of yours and not flashed yet.</p>
+        <details class="fold"><summary>About this feed</summary><p class="note" style="margin:4px 0 0">From invader-spotter, updated each morning by your daily watch. <b style="color:var(--green)">NEW TARGET</b> = back on the wall in a city of yours and not flashed yet.</p></details>
       </div>
       <div class="tabbody" id="p-album" hidden>
         <div class="alb-head"><div><span class="lbl">MY INVASION ALBUM</span><h3 id="alb-city"></h3></div><b id="alb-n"></b></div>
@@ -505,13 +512,13 @@ const MF={on:true,st:'peek'};try{MF.on=localStorage.getItem('hp_layout')!=='clas
   $('mf-pill').onclick=()=>{const t=$('t-score');if(t)t.click();setSheet('half')};
   $('mf-go').onclick=()=>{if(route&&!$('result').hidden){const g=$('huntgo');if(g){g.click();return}}const t=$('t-plan');if(t)t.click();$('plan').click()};
   const sab=document.createElement('div');sab.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';document.body.appendChild(sab);
-  const H={peek:()=>Math.round(162+sab.offsetHeight),half:()=>Math.round(innerHeight*.52),full:()=>Math.round(innerHeight-70)};
-  window.setSheet=function(st){MF.st=st;if(!MF.on)return;document.documentElement.style.setProperty('--sheet-h',H[st]()+'px');h.setAttribute('aria-expanded',String(st!=='peek'))};
+  const H={peek:()=>Math.round(162+sab.offsetHeight),half:()=>Math.round(innerHeight*.52),full:()=>{const c=document.querySelector('header .citysel');const t=c?c.getBoundingClientRect().bottom+8:70;return Math.round(innerHeight-t)}};
+  window.setSheet=function(st){MF.st=st;document.documentElement.classList.toggle('mf-full',MF.on&&st==='full');if(!MF.on)return;document.documentElement.style.setProperty('--sheet-h',H[st]()+'px');h.setAttribute('aria-expanded',String(st!=='peek'))};
   h.onclick=()=>{if(h._drag)return;setSheet(MF.st==='peek'?'half':MF.st==='half'?'full':'peek')};
   let y0=0,hs=0;h.addEventListener('pointerdown',e=>{y0=e.clientY;hs=P.getBoundingClientRect().height;h._drag=false;h.setPointerCapture(e.pointerId);P.style.transition='none'});
   h.addEventListener('pointermove',e=>{if(!h.hasPointerCapture(e.pointerId))return;const d=y0-e.clientY;if(Math.abs(d)>6)h._drag=true;if(h._drag)document.documentElement.style.setProperty('--sheet-h',Math.max(H.peek(),Math.min(H.full(),hs+d))+'px')});
   h.addEventListener('pointerup',e=>{P.style.transition='';if(!h._drag)return;const cur=P.getBoundingClientRect().height;const best=['peek','half','full'].reduce((a,b)=>Math.abs(H[b]()-cur)<Math.abs(H[a]()-cur)?b:a);setSheet(best);setTimeout(()=>h._drag=false,0)});
-  document.querySelectorAll('.tabs [role=tab]').forEach(t=>t.addEventListener('click',()=>{if(MF.st==='peek')setSheet('half')}));
+  document.querySelectorAll('.tabs [role=tab]').forEach(t=>t.addEventListener('click',()=>{const big=['t-album','t-news','t-score','t-list','t-mark'].includes(t.id);setSheet(big?'full':(MF.st==='peek'?'half':MF.st))}));
   addEventListener('resize',()=>setSheet(MF.st));
 })();
 function mfPill(){const l=$('s-left'),p=$('s-pts'),f=$('s-flashed'),a=$('s-active');if(!l||!$('mf-ptxt'))return;
@@ -537,9 +544,9 @@ function renderWorldGrid(){const W=worldStats();$('w-sum').textContent=worldSumm
       <div class="wl"><small>${w.fl} flashed · ${w.alive} active</small></div></button>`}).join('')||'<div class="note">Nothing here.</div>';
   $('w-grid').querySelectorAll('.wt').forEach(b=>b.onclick=()=>goCity(b.dataset.c));
   $('w-f').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===WF))}
-function showWorldGrid(){$('world').hidden=false;renderWorldGrid();setTimeout(()=>{const f=$('w-grid').querySelector('.wt');if(f)f.focus()},0)}
-function hideWorldGrid(){$('world').hidden=true}
-let openWorld=showWorldGrid;
+function showWorldGrid(){$('world').hidden=false;$('wbtn').setAttribute('aria-pressed','true');renderWorldGrid();setTimeout(()=>{const f=$('w-grid').querySelector('.wt');if(f)f.focus()},0)}
+function hideWorldGrid(){$('world').hidden=true;if(typeof worldIsOn!=='function'||!worldIsOn())$('wbtn').setAttribute('aria-pressed','false')}
+let openWorld=()=>{if(!$('world').hidden)hideWorldGrid();else showWorldGrid()};let worldIsOn=null;
 let goCity=function(code){hideWorldGrid();if(!DATA.cities.find(c=>c.code===code))return;sel.value=code;sel.dispatchEvent(new Event('change'))};
 $('wbtn').onclick=()=>openWorld();$('w-x').onclick=hideWorldGrid;
 $('w-f').onclick=e=>{const b=e.target.closest('button');if(!b)return;WF=b.dataset.f;renderWorldGrid()};
@@ -1423,7 +1430,7 @@ const PADW={};function spotUrl(id){const m=/^([A-Z]+)_(\d+)$/.exec(id);if(!m)ret
   const pre=m[1];if(PADW[pre]==null){let mx=0;DATA.cities.concat([SPACE]).forEach(c=>c.inv.forEach(i=>{const k=/^([A-Z]+)_(\d+)$/.exec(i[0]);if(k&&k[1]===pre)mx=Math.max(mx,+k[2])}));PADW[pre]=Math.max(2,String(mx).length)}
   return `https://www.invader-spotter.art/grosplan/${pre}/${pre}_${String(+m[2]).padStart(PADW[pre],'0')}-grosplan.png`}
 const INFO_LINKS=[['invader-spotter: news','https://www.invader-spotter.art/news.php'],['invader-spotter: cities','https://www.invader-spotter.art/villes.php'],['invader-spotter: stats','https://www.invader-spotter.art/stats.php'],['space-invaders.com (official)','https://space-invaders.com'],['FlashInvaders app','https://apps.apple.com/app/id895180919'],['Reddit: Flash Invaders','https://www.reddit.com/search/?q=flash%20invaders&sort=new']];
-{const d=document.createElement('div');d.className='links';d.innerHTML='<span class="lbl">Info sources</span><div class="inline">'+INFO_LINKS.map(([t,u])=>`<a class="btn" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')+'</div>';$('newslist').after(d)}
+{const d=document.createElement('details');d.className='links fold';d.innerHTML='<summary>Info sources</summary><div class="inline" style="margin-top:6px">'+INFO_LINKS.map(([t,u])=>`<a class="btn" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')+'</div>';$('newslist').after(d)}
 // ---- city progress card (Story 1080×1920, text kept inside Instagram's safe area: y 260–1530)
 function cityRow(code){const c=code==='SPACE'?SPACE:CITYBY.get(code)||DATA.cities.find(x=>x.code===code);if(!c)return null;const f=flashedOf(c.code);
   const up=c.inv.filter(i=>i[4]==='ok'||i[4]==='damaged'||i[4]==='unknown');const mine=c.inv.filter(i=>f.has(i[0]));const left=up.filter(i=>!f.has(i[0]));

@@ -477,10 +477,11 @@ function renderWorldMap(){if(!worldOn)return;WLay.clearLayers();const W=worldSta
       const m=L.marker([lat,lon],{icon:wBubble(left,'cl'+(anyMine?' mine':''),alive?got/alive:0,grp.length+' cities'),title:grp.map(g=>g.w.c.code).join(', ')});
       m.on('click',()=>{const b=L.latLngBounds(grp.map(g=>[g.w.lat,g.w.lon]));LM.fitBounds(b.pad(.4),{maxZoom:Math.max(z+2,6)})});WLay.addLayer(m)}})}
 function worldLayers(on){[LInv,LRoute,LStart,LMar,LNav].forEach(g=>{try{on?LM.removeLayer(g):LM.addLayer(g)}catch(e){}})}
-openWorld=function(){if(worldOn){showWorldGrid();return}worldOn=true;wPrev=[LM.getCenter(),LM.getZoom()];$('card').hidden=true;worldLayers(true);LM.addLayer(WLay);
+worldIsOn=()=>worldOn;
+openWorld=function(){if(worldOn){hideWorldGrid();closeWorld(true);return}worldOn=true;$('wbtn').setAttribute('aria-pressed','true');wPrev=[LM.getCenter(),LM.getZoom()];$('card').hidden=true;worldLayers(true);LM.addLayer(WLay);
   const W=worldStats();wFloat=document.createElement('div');wFloat.className='wfloat';wFloat.innerHTML=`<b style="color:var(--yellow)">WORLD</b><span>${escapeHtml(worldSummary(W))}</span><button class="btn" id="wf-list">☰ List</button><button class="btn" id="wf-x" aria-label="Back to city">✕</button>`;
-  $('screen').appendChild(wFloat);$('wf-list').onclick=showWorldGrid;$('wf-x').onclick=()=>closeWorld(true);
+  $('screen').appendChild(wFloat);$('wf-list').onclick=()=>{$('world').hidden?showWorldGrid():hideWorldGrid()};$('wf-x').onclick=()=>closeWorld(true);
   const mine=W.filter(w=>w.mine);if(mine.length){LM.fitBounds(L.latLngBounds(mine.map(w=>[w.lat,w.lon])).pad(.25),{maxZoom:4})}else LM.setView([35,10],2);setTimeout(renderWorldMap,50)};
-function closeWorld(back){if(!worldOn)return;worldOn=false;LM.removeLayer(WLay);worldLayers(false);if(wFloat){wFloat.remove();wFloat=null}if(back&&wPrev)LM.setView(wPrev[0],wPrev[1])}
+function closeWorld(back){if(!worldOn)return;worldOn=false;$('wbtn').setAttribute('aria-pressed','false');LM.removeLayer(WLay);worldLayers(false);if(wFloat){wFloat.remove();wFloat=null}if(back&&wPrev)LM.setView(wPrev[0],wPrev[1])}
 LM.on('zoomend',()=>{if(worldOn)renderWorldMap()});
 const _goCity=goCity;goCity=function(code){const same=city&&city.code===code;closeWorld(false);_goCity(code);if(same)try{fitCity()}catch(e){}};
