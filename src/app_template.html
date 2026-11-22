@@ -325,7 +325,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
           <div class="inline" id="mwrap" hidden><label for="maxwalk" class="note">Walk legs up to</label><input id="maxwalk" type="number" min="0.2" max="5" step="0.1" value="1" style="width:80px"><span class="note">km, longer hops ride</span></div>
         </div>
         <div class="field"><label for="days">Days (trip planner: one route per day from the same start)</label><input id="days" type="number" min="1" max="7" value="1" style="width:96px"></div>
-        <label class="check"><input type="checkbox" id="loop" checked> Loop back to start</label>
+        <label class="check"><input type="checkbox" id="loop" checked> Loop back to start</label><label class="check" id="endhotel-l"><input type="checkbox" id="endhotel"> Finish at my hotel</label>
         <label class="check"><input type="checkbox" id="dmg" checked> Include damaged pieces</label>
         <button class="go" id="plan">PLAN MY HUNT</button>
         <div class="result" id="result" hidden></div>
@@ -1011,15 +1011,16 @@ function legOf(d,cfg){const m=(cfg.travel==='walk'||d<=cfg.maxWalk)?'walk':cfg.t
 const LEGICON={walk:pxi('walk',14),transit:pxi('bus',14),taxi:pxi('taxi',14)}, GMODE={walk:'walking',transit:'transit',taxi:'driving'};
 function legUrl(a,b,m){return `https://www.google.com/maps/dir/?api=1&travelmode=${GMODE[m]}&origin=${a[0]},${a[1]}&destination=${b[0]},${b[1]}`}
 function plan(o={}){
-  const cfg=Object.assign(travelCfg(),o.cfg||{});const stopMin=Math.max(0,+$('stop').value||0), loop=$('loop').checked;
+  const cfg=Object.assign(travelCfg(),o.cfg||{});const stopMin=Math.max(0,+$('stop').value||0), loopChk=$('loop').checked;
+  const endHotel=!loopChk&&$('endhotel').checked&&HOTEL;const endPt=loopChk?start:(endHotel?[HOTEL.lat,HOTEL.lon]:null);const loop=!!endPt;
   const budget=Math.max(0.1,o.budget||+$('budget').value||60);
   const timeMode=mode==='time';
   const cost=(a,b)=>{const L=legOf(walk(a,b),cfg);return timeMode?L.min:L.wkm};
   const fastKmh=cfg.travel==='walk'?cfg.v:(cfg.travel==='transit'?TRANSIT.kmh:TAXI.kmh);
   const reachKm=timeMode?budget/60*fastKmh:(cfg.travel==='walk'?budget:50);
-  let C=candidates().filter(i=>walk(start,[i[1],i[2]])<=(loop?reachKm/2:reachKm)+0.05).map(i=>({i,p:[i[1],i[2]]}));
+  let C=candidates().filter(i=>{const q=[i[1],i[2]];return endPt?walk(start,q)+walk(q,endPt)<=reachKm+0.05:walk(start,q)<=reachKm+0.05}).map(i=>({i,p:[i[1],i[2]]}));
   const S={p:start,i:null};
-  let r=loop?[S,S]:[S];
+  let r=endPt?[S,{p:endPt,i:null}]:[S];
   const total=a=>{let s=0;for(let j=0;j<a.length-1;j++)s+=cost(a[j].p,a[j+1].p);return s};
   let tot=0;
   function insertAll(){
@@ -1049,13 +1050,13 @@ function plan(o={}){
   for(let j=0;j<r.length-1;j++){const d=walk(r[j].p,r[j+1].p);const L=legOf(d,cfg);legs.push({a:r[j].p,b:r[j+1].p,d,m:L.m,min:L.min});wkm+=L.wkm;mins+=L.min;if(L.m!=='walk')vkm+=d}
   route={stops,path:r.map(x=>x.p),km:wkm,vkm,minutes:mins+stops.length*stopMin,pts:stops.reduce((s,i)=>s+i[3],0),legs,cfg};
   if(o.quiet){const rr=route;return rr}
-  renderResult(loop);
+  renderResult(loop,undefined,endHotel?'hotel':'start');
   if(route.path.length>1){const la=route.path.map(p=>p[0]),lo=route.path.map(p=>p[1]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
     view.lat=(a+b)/2;view.lon=(c+d)/2;const kx=(W-60)/(((d-c)||1e-3)*Math.cos(view.lat*Math.PI/180)),ky=(H-80)/((b-a)||1e-3);view.k=Math.min(kx,ky,3e6)}
   draw();
 }
 function fmtMin(m){const h=Math.floor(m/60),mm=Math.round(m%60);return h?`${h}h ${String(mm).padStart(2,'0')}m`:`${mm}m`}
-function renderResult(loop,el){
+function renderResult(loop,el,endKind){
   el=el||$('result');el.hidden=false;$('result').hidden=false;
   if(!route.stops.length){el.innerHTML='<p class="note">No invaders fit this budget from your start. Try a bigger budget, a faster travel option, or move the start ⚑ closer.</p>';return}
   const legs=route.legs||[];const mixed=legs.some(l=>l.m!=='walk');
@@ -1071,7 +1072,7 @@ function renderResult(loop,el){
   <div class="inline">${walkLinks.map((u,j)=>`<a class="btn ${mixed?'':'y'}" href="${u}" target="_blank" rel="noopener">${mixed?'🗺 Whole route on map':'▶ Google Maps'}${walkLinks.length>1?' · part '+(j+1):''}</a>`).join('')}</div>
   ${mixed?'<p class="note" style="margin:0">Google Maps can\'t chain several transit legs in one link, so use ↗ on each leg (or NAVIGATE in hunt mode) for live transit directions.</p>':''}
   <ol class="route">${route.stops.map((i,j)=>{const L=legs[j];return `${L?`<li class="leg"><span class="num">${LEGICON[L.m]}</span><span class="note">${L.m==='walk'?(L.d*1000<1000?Math.round(L.d*100)*10+' m':L.d.toFixed(1)+' km'):L.d.toFixed(1)+' km by '+(L.m==='transit'?'transit':'taxi')} · ~${Math.round(L.min)} min</span><a class="btn" href="${legUrl(L.a,L.b,L.m)}" target="_blank" rel="noopener" aria-label="Directions">↗</a></li>`:''}<li><span class="num">${j+1}</span><span>${i[0]} <span class="pts" style="color:${ptColor(i[3])}">${i[3]}</span>${i[4]!=='ok'?' <span class="tag">'+i[4]+'</span>':''}</span><button class="btn g" data-fl="${i[0]}">✓</button></li>`}).join('')}
-  ${loop&&legs.length>route.stops.length?(()=>{const L=legs[legs.length-1];return `<li class="leg"><span class="num">${LEGICON[L.m]}</span><span class="note">back to start · ~${Math.round(L.min)} min</span><a class="btn" href="${legUrl(L.a,L.b,L.m)}" target="_blank" rel="noopener" aria-label="Directions">↗</a></li>`})():''}</ol>
+  ${loop&&legs.length>route.stops.length?(()=>{const L=legs[legs.length-1];return `<li class="leg"><span class="num">${LEGICON[L.m]}</span><span class="note">${endKind==='hotel'?'to your hotel':'back to start'} · ~${Math.round(L.min)} min</span><a class="btn" href="${legUrl(L.a,L.b,L.m)}" target="_blank" rel="noopener" aria-label="Directions">↗</a></li>`})():''}</ol>
   <p class="note">Estimates: walking at your speed on straight lines × 1.3; ${route.cfg.travel==='transit'?'transit ≈ 10 min wait and walk to stops + 18 km/h':route.cfg.travel==='taxi'?'taxi ≈ 5 min pickup + 20 km/h':'all legs on foot'}. Google Maps gives the real times.${loop?'':' Route ends at the last invader.'}</p>`;
   el.querySelectorAll('[data-fl]').forEach(b=>armConfirm(b,()=>{const id=b.dataset.fl;flashed.add(id);b.disabled=true;b.textContent='✓ done';persist();updateStats();toast(id+' marked as flashed',()=>{flashed.delete(id);b.disabled=false;b.textContent='✓';persist();updateStats();renderScore()})}));
   const hg=el.querySelector('#huntgo');if(hg)hg.onclick=startHunt;
@@ -1093,6 +1094,8 @@ $('export').onclick=async()=>{
 $('dmg').onchange=()=>{route=null;$('result').hidden=true;refresh()};
 
 /*EXTRAS*/
+$('loop').addEventListener('change',()=>{if($('loop').checked)$('endhotel').checked=false});
+$('endhotel').addEventListener('change',()=>{if($('endhotel').checked){if(!HOTEL){$('endhotel').checked=false;toast('Set your hotel first (Hotel / base above)');return}$('loop').checked=false}});
 {const _rfM=refresh;refresh=function(){const r=_rfM.apply(this,arguments);try{buildCitySel()}catch(e){}return r}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('card').hidden&&!document.querySelector('.thmenu:not([hidden])')){selected=null;$('card').hidden=true;draw()}});
 // ================= v36 PHOTO IMPORT (by location) + FULL BACKUP / RESTORE =================
@@ -1365,13 +1368,14 @@ function renderWx(){const el=$('wx');if(!WX||!WX.days||!WX.days.length||!city||W
 function tripCity(){if(!TRIP||!TRIP.city)return null;return DATA.cities.find(c=>c.code===TRIP.city)||DATA.cities.find(c=>c.name.toLowerCase()===String(TRIP.city).toLowerCase())||null}
 function renderTrip(){const el=$('tripbar');const c=tripCity();if(!c||!TRIP.end||TRIP.end<TODAY()){el.hidden=true;return}
   const n=Math.max(1,Math.round((Date.parse(TRIP.end)-Date.parse(TRIP.start))/864e5)+1);
-  el.hidden=false;el.innerHTML=`<span>✈ <b>${escapeHtml(c.name)}</b> · ${fmtD(TRIP.start)} – ${fmtD(TRIP.end)} (${n} day${n>1?'s':''})${TRIP.hotel&&TRIP.hotel.name?' · '+pxi('hotel',13)+' '+escapeHtml(TRIP.hotel.name):''}</span><button class="btn y" id="trip-go">${city&&city.code===c.code?'Plan this trip':'Switch &amp; plan'}</button>`;
+  const hd=Math.max(1,Math.min(7,+TRIP.huntDays||n));el.hidden=false;el.innerHTML=`<span>✈ <b>${escapeHtml(c.name)}</b> · ${fmtD(TRIP.start)} – ${fmtD(TRIP.end)} (${hd} hunting day${hd>1?'s':''})${TRIP.hotel&&TRIP.hotel.name?' · '+pxi('hotel',13)+' '+escapeHtml(TRIP.hotel.name):''}</span><button class="btn y" id="trip-go">${city&&city.code===c.code?'Plan this trip':'Switch &amp; plan'}</button><button class="btn" id="trip-x" title="Remove this trip" aria-label="Remove this trip">✕</button>`;
+  $('trip-x').onclick=()=>{const k=TRIP.city+'|'+TRIP.start;try{localStorage.setItem('hp_trip_off',k)}catch(e){};if(db&&canWrite)db.doc('meta/trip').set({city:null,updated:TODAY()}).catch(()=>{});setTrip(null);toast('Trip removed')};
   $('trip-go').onclick=()=>{if(!city||city.code!==c.code){sel.value=c.code;try{localStorage.setItem('hp_city',c.code)}catch(e){};loadCity(c.code)}
-    $('days').value=Math.min(7,n);const h=TRIP.hotel;if(h&&h.lat&&h.lon&&!HOTEL)saveHotel({lat:h.lat,lon:h.lon,name:h.name||'Hotel'});
+    $('days').value=Math.max(1,Math.min(7,+TRIP.huntDays||n));const h=TRIP.hotel;if(h&&h.lat&&h.lon&&!HOTEL)saveHotel({lat:h.lat,lon:h.lon,name:h.name||'Hotel'});if(TRIP.endAtHotel&&HOTEL){$('loop').checked=false;$('endhotel').checked=true}if(TRIP.startAt&&TRIP.startAt.lat){try{localStorage.setItem('hp_start_'+c.code,JSON.stringify([TRIP.startAt.lat,TRIP.startAt.lon]))}catch(e){};start=[TRIP.startAt.lat,TRIP.startAt.lon];setSrc('pin');try{renderStartNote()}catch(e){}}if(TRIP.travel){const b=document.querySelector('#travel [data-t="'+TRIP.travel+'"]');if(b)b.click()}
     if(TRIP.days&&TRIP.days.length){WX={city:c.code,days:TRIP.days,src:'trip forecast'};renderWx()}
-    $('plan').scrollIntoView({behavior:'smooth',block:'center'});toast('Trip loaded: '+n+' day'+(n>1?'s':'')+' in '+c.name)};
+    $('plan').scrollIntoView({behavior:'smooth',block:'center'});toast('Trip loaded: '+$('days').value+' hunting day'+($('days').value>1?'s':'')+' in '+c.name+(TRIP.startAt&&TRIP.startAt.name?' · start '+TRIP.startAt.name:''))};
   if(city&&city.code===c.code&&TRIP.days&&TRIP.days.length&&(!WX||WX.city!==c.code)){WX={city:c.code,days:TRIP.days,src:'trip forecast'};renderWx()}}
-function setTrip(t){TRIP=t&&t.city?t:null;renderTrip()}
+function setTrip(t){let off='';try{off=localStorage.getItem('hp_trip_off')||''}catch(e){};TRIP=t&&t.city&&off!==(t.city+'|'+t.start)?t:null;renderTrip()}
 const _loadCityX=loadCity;loadCity=function(code){const r=_loadCityX.apply(this,arguments);try{renderTrip();renderWx();const cs=$('cc-city');if(cs&&[...cs.options].some(o=>o.value===code))cs.value=code}catch(e){}return r};
 // ---- detailed streets (Claude version; data embedded at build time)
 function drawStreets(lw){const S=city&&city.streets;if(!S)return false;const z=view.k;
