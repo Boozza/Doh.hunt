@@ -233,6 +233,16 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 .card h3{padding-right:42px}
 :root[data-theme="light"] .cclose,:root[data-theme="calm"] .cclose,:root[data-theme="field"] .cclose{box-shadow:none}
 :root[data-theme="field"] .cclose{width:44px;height:44px;font-size:20px}
+
+/* ---- v36.7 High score lives in its own SCORE tab; layout adapts to the panel width */
+.tabs{overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;padding:12px 8px}
+#p-score{container-type:inline-size}
+#p-score .grid2{grid-template-columns:1fr}
+@container (min-width:640px){#p-score .grid2{grid-template-columns:1fr 1fr}}
+@container (max-width:600px){#p-score table.sc{min-width:0}#p-score table.sc :is(th,td):nth-child(3),#p-score table.sc :is(th,td):nth-child(7){display:none}#p-score table.sc td,#p-score table.sc th{padding:6px 5px}}
+#gallery>:not(.gph){grid-column:1/-1}
+@container (max-width:420px){#p-score .bar{display:none}#p-score table.sc td{font-size:13px}}
 </style>
 
 <div class="wrap">
@@ -271,6 +281,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
         <button role="tab" id="t-mark" aria-selected="false">MARK</button>
         <button role="tab" id="t-news" aria-selected="false">NEWS<span id="nbadge" class="badge" hidden></span></button>
         <button role="tab" id="t-album" aria-selected="false">ALBUM</button>
+        <button role="tab" id="t-score" aria-selected="false">SCORE</button>
       </div>
 
       <div class="tabbody" id="p-plan">
@@ -361,18 +372,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
         </div>
         <div class="save" id="save">Loading saved marks…</div>
       </div>
+      <div class="tabbody" id="p-score" role="tabpanel" aria-labelledby="sc-h" hidden>
+        <div class="sc-head"><h2 id="sc-h">HIGH SCORE</h2><span class="note" id="sc-note"></span></div>
+        <div class="stats" id="sc-tot"></div>
+        <div class="grid2"><div><span class="lbl">Recent hunts</span><ol class="route" id="sessions" style="margin-top:6px"></ol><span class="save" id="sc-msg"></span></div>
+        <div><span class="lbl">My hunt photos <span id="gal-n"></span></span><div class="gallery" id="gallery"></div></div></div>
+        <div class="tblwrap"><table class="sc"><thead><tr><th>City</th><th>Flashed</th><th>On record</th><th>Still up</th><th>% of up</th><th>My pts</th><th>City bonus</th><th>Pts left</th></tr></thead><tbody id="sc-body"></tbody><tfoot id="sc-foot"></tfoot></table></div>
+        <p class="note" style="margin:0" id="adjnote" hidden></p>
+        <p class="note" style="margin:0">Score = invader points + 100 bonus for each city where you flashed at least one. Points come from the community database. Some pieces have 0 points there (new or unverified), so a small gap from the official app is possible. Tap a city to open it.</p>
+      </div>
     </div>
   </div>
 
-  <section class="panel score" aria-labelledby="sc-h">
-    <div class="sc-head"><h2 id="sc-h">HIGH SCORE</h2><span class="note" id="sc-note"></span></div>
-    <div class="stats" id="sc-tot"></div>
-    <div class="grid2"><div><span class="lbl">Recent hunts</span><ol class="route" id="sessions" style="margin-top:6px"></ol><span class="save" id="sc-msg"></span></div>
-    <div><span class="lbl">My hunt photos <span id="gal-n"></span></span><div class="gallery" id="gallery"></div></div></div>
-    <div class="tblwrap"><table class="sc"><thead><tr><th>City</th><th>Flashed</th><th>On record</th><th>Still up</th><th>% of up</th><th>My pts</th><th>City bonus</th><th>Pts left</th></tr></thead><tbody id="sc-body"></tbody><tfoot id="sc-foot"></tfoot></table></div>
-    <p class="note" style="margin:0" id="adjnote" hidden></p>
-    <p class="note" style="margin:0">Score = invader points + 100 bonus for each city where you flashed at least one. Points come from the community database. Some pieces have 0 points there (new or unverified), so a small gap from the official app is possible. Tap a city to open it.</p>
-  </section>
   <div class="hunt" id="hunt" hidden role="dialog" aria-label="Hunt mode"></div>
   <div class="toast" id="toast" hidden role="status"></div>
   <footer>App version <b>v__VER__</b> (__VERDATE__, __FLAVOR__) · Invader data: community database (<span id="src"></span>). Pieces get destroyed and restored all the time, so check the Flash Invaders app before you go. Navigation opens Google Maps.</footer>
@@ -923,7 +934,7 @@ function flashWithUndo(id,on){toggleFlash(id,on);if(typeof toast==='function')to
 function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 // ---------- tabs
-const tabs=[['t-plan','p-plan'],['t-list','p-list'],['t-mark','p-mark'],['t-news','p-news'],['t-album','p-album']];
+const tabs=[['t-plan','p-plan'],['t-list','p-list'],['t-mark','p-mark'],['t-news','p-news'],['t-album','p-album'],['t-score','p-score']];
 tabs.forEach(([t,p])=>$(t).onclick=()=>tabs.forEach(([t2,p2])=>{$(t2).setAttribute('aria-selected',t2===t);$(p2).hidden=t2!==t}));
 // mode
 let mode='time';
