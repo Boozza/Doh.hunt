@@ -353,3 +353,85 @@ const _lcNav=loadCity;loadCity=function(){stopNav();return _lcNav.apply(this,arg
   try{await runPlan()}catch(e){}hb.disabled=false;
   if(!route||!route.stops.length){toast('Nothing open within your Plan budget here – raise it in the Plan tab');return}
   startHunt();navNextStop();toast('Hunt started: '+HUNT.stops.length+' stops · '+route.pts+' pts')}}
+
+/* ---- v39 · Supabase cloud sync (Netlify only) ---- */
+const SB={url:'https://rngabsumhzvckouwcufd.supabase.co',key:'sb_publishable_DbpG5P-HmkvJeznh-OGOdw_TeSqkoFr',c:null,uid:null,email:'',applying:false,state:'off',last:'',ch:null,timer:null,busy:false};
+const sbLS=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+const sbSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+function sbDirty(){return sbLS('hp_sb_dirty',{})}
+function sbMark(k){const d=sbDirty();d[k]=1;sbSet('hp_sb_dirty',d);clearTimeout(SB.timer);SB.timer=setTimeout(sbFlush,800)}
+/* every local write of flashed/fixes goes through localStorage – catch it there */
+(function(){const _set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){
+  const watch=this===window.localStorage&&!SB.applying&&typeof k==='string'&&(k.startsWith('hp_fl_')||k==='hp_fixes');let old=null;if(watch)try{old=this.getItem(k)}catch(e){}
+  _set.call(this,k,v);if(!watch||old===String(v))return;try{if(!this.getItem('hp_sb_on'))return}catch(e){return}
+  if(k.startsWith('hp_fl_'))sbMark('flashed/'+k.slice(6));else if(k==='hp_fixes')sbMark('fixes')}})();
+function sbLoad(){if(window.supabase)return Promise.resolve(window.supabase);return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=()=>res(window.supabase);s.onerror=()=>rej(new Error('Could not load sync library'));document.head.appendChild(s)})}
+function sbUI(){const b=$('sb-btn');if(b){b.textContent=SB.uid?(SB.state==='sync'?'☁ Syncing…':SB.state==='err'?'☁ Sync problem':'☁ Synced'):'☁ Sync devices';b.classList.toggle('y',!SB.uid)}
+  const p=$('sb-panel');if(!p||p.hidden)return;
+  if(SB.uid)p.innerHTML=`<div>Signed in as <b>${escapeHtml(SB.email)}</b>. Flashed, location fixes and photos sync between your devices.</div><div class="muted" style="margin:4px 0">${SB.last?'Last sync '+escapeHtml(SB.last):''}${SB.state==='err'?' · last attempt failed':''}</div><div class="inline" style="gap:6px;flex-wrap:wrap"><button class="btn y" id="sb-now">Sync now</button><button class="btn" id="sb-out">Sign out</button><button class="btn" id="sb-x">Close</button></div>`;
+  else p.innerHTML=`<div>Sign in with your email to sync between your Mac and phone. Use the same email on every device.</div><div class="inline" style="gap:6px;margin-top:6px;flex-wrap:wrap"><input id="sb-mail" type="email" placeholder="you@example.com" autocomplete="email" style="flex:1;min-width:180px"><button class="btn y" id="sb-send">Email me a link</button></div><div class="inline" style="gap:6px;margin-top:6px;flex-wrap:wrap"><input id="sb-code" inputmode="numeric" placeholder="or code from the email" style="flex:1;min-width:140px"><button class="btn" id="sb-ver">Use code</button><button class="btn" id="sb-x">Close</button></div><div id="sb-msg" class="muted" style="margin-top:4px"></div>`;
+  const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};on('sb-x',()=>{p.hidden=true});
+  on('sb-now',()=>sbFull(true));on('sb-out',async()=>{try{await SB.c.auth.signOut()}catch(e){}try{localStorage.removeItem('hp_sb_on');localStorage.removeItem('hp_sb_dirty')}catch(e){}});
+  on('sb-send',async()=>{const m=($('sb-mail').value||'').trim();if(!/.+@.+\..+/.test(m)){$('sb-msg').textContent='Enter your email';return}
+    sbSet('hp_sb_mail',m);$('sb-msg').textContent='Sending…';try{const {error}=await SB.c.auth.signInWithOtp({email:m,options:{emailRedirectTo:location.origin+location.pathname}});
+    $('sb-msg').textContent=error?('Failed: '+error.message):'Check your email and tap the link (open it on this device).'}catch(e){$('sb-msg').textContent='Failed: '+(e.message||e)}});
+  on('sb-ver',async()=>{const m=($('sb-mail').value||sbLS('hp_sb_mail','')||'').trim(),t=($('sb-code').value||'').trim();if(!m||!t){$('sb-msg').textContent='Enter email and code';return}
+    try{const {error}=await SB.c.auth.verifyOtp({email:m,token:t,type:'email'});if(error)$('sb-msg').textContent='Failed: '+error.message}catch(e){$('sb-msg').textContent='Failed: '+(e.message||e)}});
+  const mi=$('sb-mail');if(mi&&!mi.value)mi.value=sbLS('hp_sb_mail','')||''}
+function sbState(s){SB.state=s;if(s==='ok')SB.last=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});sbUI()}
+async function sbUp(key,value){const {error}=await SB.c.from('kv').upsert({owner:SB.uid,key,value,updated_at:new Date().toISOString()},{onConflict:'owner,key'});if(error)throw error}
+function sbLocalVal(k){if(k.startsWith('flashed/'))return {ids:sbLS('hp_fl_'+k.slice(8),[])};if(k==='fixes')return {fixes:sbLS('hp_fixes',{})};return null}
+async function sbFlush(){if(!SB.uid||SB.busy)return;const d=sbDirty(),ks=Object.keys(d);if(!ks.length)return;SB.busy=true;sbState('sync');let bad=false;
+  for(const k of ks){try{if(k.startsWith('photo+/'))await sbPhotoUp(k.slice(7));else if(k.startsWith('photo-/'))await sbPhotoDel(k.slice(7));else{const v=sbLocalVal(k);if(v)await sbUp(k,v)}
+    const n=sbDirty();delete n[k];sbSet('hp_sb_dirty',n)}catch(e){bad=true;console.warn('sync',k,e)}}
+  SB.busy=false;sbState(bad?'err':'ok');if(!bad&&Object.keys(sbDirty()).length)sbFlush()}
+/* apply server values locally without pushing them back */
+function sbApplyFlashed(code,ids){if(!Array.isArray(ids))return;SB.applying=true;try{localStorage.setItem('hp_fl_'+code,JSON.stringify(ids))}catch(e){}SB.applying=false;
+  const s=new Set(ids);allFlashed[code]=s;if(city&&city.code===code){flashed=new Set(ids);route=null;$('result').hidden=true;try{refresh();if(selected&&!$('card').hidden)showCard(selected)}catch(e){}}else{try{renderScore()}catch(e){}}}
+function sbApplyFixes(f){if(!f)return;const loc=sbLS('hp_fixes',{});let ch=false;Object.entries(f).forEach(([id,v])=>{if(JSON.stringify(loc[id])!==JSON.stringify(v)){loc[id]=v;ch=true}});
+  if(!ch)return;SB.applying=true;try{localStorage.setItem('hp_fixes',JSON.stringify(loc))}catch(e){}SB.applying=false;applyFixes(f,true)}
+async function sbPhotoGet(id,path,date){if(PHOTOS[id])return;const {data,error}=await SB.c.storage.from('photos').download(path);if(error||!data)throw error||new Error('no data');
+  await pPut(id,{blob:data,date:date||''});PHOTOS[id]={code:id,url:URL.createObjectURL(data),date:date||''}}
+async function sbPhotoUp(id){const all=await pAll();const v=all[id];if(!v||!v.blob)return;const path=SB.uid+'/'+id;
+  const {error}=await SB.c.storage.from('photos').upload(path,v.blob,{upsert:true,contentType:v.blob.type||'image/jpeg'});if(error)throw error;await sbUp('photos/'+id,{path,date:v.date||''});const kn=new Set(sbLS('hp_sb_ph_'+SB.uid,[]));kn.add(id);sbSet('hp_sb_ph_'+SB.uid,[...kn])}
+async function sbPhotoDel(id){await SB.c.storage.from('photos').remove([SB.uid+'/'+id]);const {error}=await SB.c.from('kv').delete().eq('owner',SB.uid).eq('key','photos/'+id);if(error)throw error;const kn=new Set(sbLS('hp_sb_ph_'+SB.uid,[]));kn.delete(id);sbSet('hp_sb_ph_'+SB.uid,[...kn])}
+const _sbStore=storePhoto,_sbRemove=removePhoto;
+storePhoto=async function(id,blob,date){const r=await _sbStore(id,blob,date);if(SB.uid){const d=sbDirty();delete d['photo-/'+id];sbSet('hp_sb_dirty',d);sbMark('photo+/'+id)}return r};
+removePhoto=async function(id){const r=await _sbRemove(id);if(SB.uid){const d=sbDirty();delete d['photo+/'+id];sbSet('hp_sb_dirty',d);sbMark('photo-/'+id)}return r};
+async function sbFull(loud){if(!SB.uid||SB.busy)return;SB.busy=true;sbState('sync');
+  try{const {data:rows,error}=await SB.c.from('kv').select('key,value');if(error)throw error;
+    const srv={};rows.forEach(r=>srv[r.key]=r.value);const first=!sbLS('hp_sb_merged_'+SB.uid,false);const dirty=sbDirty();
+    const codes=new Set(Object.keys(srv).filter(k=>k.startsWith('flashed/')).map(k=>k.slice(8)));
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('hp_fl_'))codes.add(k.slice(6))}
+    for(const code of codes){const k='flashed/'+code,loc=sbLS('hp_fl_'+code,null),sv=srv[k]&&srv[k].ids;
+      if(!sv){if(loc&&loc.length)dirty[k]=1;continue}
+      if(dirty[k])continue; /* local change waiting to go up wins */
+      if(first&&loc){const u=[...new Set(loc.concat(sv))].sort();sbApplyFlashed(code,u);if(u.length!==sv.length)dirty[k]=1}
+      else if(JSON.stringify(loc||[])!==JSON.stringify(sv))sbApplyFlashed(code,sv)}
+    const sf=(srv.fixes&&srv.fixes.fixes)||{};sbApplyFixes(sf);const lf=sbLS('hp_fixes',{});if(Object.keys(lf).some(id=>!sf[id]||JSON.stringify(sf[id])!==JSON.stringify(lf[id])))dirty.fixes=1;
+    const local=await pAll();const sp=Object.keys(srv).filter(k=>k.startsWith('photos/'));let got=0;
+    const known=new Set(sbLS('hp_sb_ph_'+SB.uid,[]));let gone=0;
+    for(const id of Object.keys(local)){if(!(local[id]&&local[id].blob)||srv['photos/'+id]||dirty['photo-/'+id]||dirty['photo+/'+id])continue;
+      if(known.has(id)){await _sbRemove(id);gone++}else dirty['photo+/'+id]=1}
+    for(const k of sp){const id=k.slice(7);if(dirty['photo-/'+id]||local[id])continue;try{await sbPhotoGet(id,srv[k].path,srv[k].date);got++}catch(e){console.warn('photo',id,e)}}
+    if(got||gone)try{renderGallery()}catch(e){}
+    sbSet('hp_sb_ph_'+SB.uid,sp.map(k=>k.slice(7)));
+    sbSet('hp_sb_dirty',dirty);sbSet('hp_sb_merged_'+SB.uid,true);SB.busy=false;sbState('ok');
+    if(loud||first)toast(first?'Cloud sync on – this device is now in sync':'Synced'+(got?' · '+got+' photos downloaded':''));
+    await sbFlush()}catch(e){SB.busy=false;sbState('err');console.warn('sync',e);if(loud)toast('Sync failed – check your connection')}}
+function sbRT(){if(SB.ch)SB.c.removeChannel(SB.ch);SB.ch=SB.c.channel('kv-'+SB.uid).on('postgres_changes',{event:'*',schema:'public',table:'kv',filter:'owner=eq.'+SB.uid},async p=>{
+  const r=p.new&&p.new.key?p.new:p.old;if(!r||!r.key)return;if(r.owner&&r.owner!==SB.uid)return;const k=r.key,dirty=sbDirty();
+  if(p.eventType==='DELETE'){if(k.startsWith('photos/')){const id=k.slice(7);if(PHOTOS[id]&&!dirty['photo+/'+id]){await _sbRemove(id);try{renderGallery()}catch(e){}}}return}
+  if(dirty[k])return;const v=p.new.value||{};
+  if(k.startsWith('flashed/'))sbApplyFlashed(k.slice(8),v.ids);else if(k==='fixes')sbApplyFixes(v.fixes);
+  else if(k.startsWith('photos/')){try{await sbPhotoGet(k.slice(7),v.path,v.date);renderGallery()}catch(e){}}
+  sbState('ok')}).subscribe()}
+async function sbInit(){try{const lib=await sbLoad();SB.c=lib.createClient(SB.url,SB.key,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true,flowType:'implicit'}});
+  SB.c.auth.onAuthStateChange((ev,ses)=>{const u=ses&&ses.user;const was=SB.uid;SB.uid=u?u.id:null;SB.email=u?u.email||'':'';if(u)sbSet('hp_sb_on',1);
+    if(SB.uid&&SB.uid!==was){sbUI();setTimeout(()=>{sbFull(false);sbRT()},0);if(/access_token|code=/.test(location.hash+location.search))history.replaceState(null,'',location.pathname)}
+    if(!SB.uid&&was){if(SB.ch)SB.c.removeChannel(SB.ch);SB.ch=null;sbState('off')}sbUI()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SB.uid)sbFull(false)});window.addEventListener('online',()=>{if(SB.uid)sbFull(false)})}
+  catch(e){SB.state='err';sbUI()}}
+(function sbMount(){const row=$('alb-imp')&&$('alb-imp').parentNode;if(!row)return;const b=document.createElement('button');b.className='btn y';b.id='sb-btn';b.textContent='☁ Sync devices';row.insertBefore(b,row.firstChild);
+  const p=document.createElement('div');p.id='sb-panel';p.className='opp';p.hidden=true;p.style.cssText='margin:0 0 8px;padding:8px;border:2px solid var(--cyan);border-radius:10px';row.parentNode.insertBefore(p,row.nextSibling);
+  b.onclick=()=>{p.hidden=!p.hidden;sbUI()};sbInit()})();
