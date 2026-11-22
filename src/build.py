@@ -31,6 +31,9 @@ s=s.replace("</style>",""".leaflet-container{background:#141c3e;font-family:var(
 .near.hot{border-color:var(--green);box-shadow:0 0 0 3px rgba(69,240,138,.35)}.near .arrow{font-size:22px;transition:transform .15s}
 #near-cmp.on{outline:2px solid var(--yellow)}
 .hunt{z-index:1000}
+.sbbtn{position:relative;margin-right:6px;color:var(--cyan);border-color:var(--cyan)}.sbbtn .pxi{filter:drop-shadow(1px 1px 0 #ff2a8c)}.sbbtn[aria-expanded="true"]{background:var(--cyan);color:#06121a}
+.sbdot{position:absolute;right:-4px;top:-4px;width:9px;height:9px;background:#7d8199;box-shadow:0 0 0 2px var(--bg)}.sbbtn[data-st=ok] .sbdot{background:var(--green)}.sbbtn[data-st=err] .sbdot{background:#ff8a1f}.sbbtn[data-st=sync] .sbdot{background:var(--yellow)}
+.sbpanel input{width:100%;box-sizing:border-box}.sbpanel .muted{font-size:12px}
 .hpin{width:30px;height:30px;display:grid;place-items:center;background:#0a0d1c;color:#ff5aa8;border:2px solid #ff5aa8;box-shadow:3px 3px 0 #ffd90f}
 :root[data-theme="light"] .leaflet-container{background:#eef1f4}:root[data-theme="light"] .leaflet-tooltip.ilbl{background:rgba(255,255,255,.9);color:#15191e}:root[data-theme="light"] .rnum{background:#fff;color:#15191e}
 .navbar{position:absolute;left:50%;transform:translateX(-50%);bottom:52px;z-index:504;width:min(560px,calc(100% - 20px));background:rgba(10,13,28,.95);border:2px solid var(--cyan);border-radius:12px;padding:8px 10px;display:grid;gap:6px;box-shadow:0 4px 18px #000a}

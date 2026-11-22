@@ -366,17 +366,30 @@ function sbMark(k){const d=sbDirty();d[k]=1;sbSet('hp_sb_dirty',d);clearTimeout(
   _set.call(this,k,v);if(!watch||old===String(v))return;try{if(!this.getItem('hp_sb_on'))return}catch(e){return}
   if(k.startsWith('hp_fl_'))sbMark('flashed/'+k.slice(6));else if(k==='hp_fixes')sbMark('fixes')}})();
 function sbLoad(){if(window.supabase)return Promise.resolve(window.supabase);return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=()=>res(window.supabase);s.onerror=()=>rej(new Error('Could not load sync library'));document.head.appendChild(s)})}
-function sbUI(){const b=$('sb-btn');if(b){b.textContent=SB.uid?(SB.state==='sync'?'☁ Syncing…':SB.state==='err'?'☁ Sync problem':'☁ Synced'):'☁ Sync devices';b.classList.toggle('y',!SB.uid)}
+function sbUI(){const b=$('sb-btn');if(b){const st=SB.uid?(SB.state==='sync'?'sync':SB.state==='err'?'err':'ok'):'off';b.dataset.st=st;
+    b.title=SB.uid?('Signed in as '+SB.email+(st==='err'?' – last sync failed':st==='sync'?' – syncing…':' – synced')):'Sign in to sync your devices';b.setAttribute('aria-label',b.title)}
   const p=$('sb-panel');if(!p||p.hidden)return;
-  if(SB.uid)p.innerHTML=`<div>Signed in as <b>${escapeHtml(SB.email)}</b>. Flashed, location fixes and photos sync between your devices.</div><div class="muted" style="margin:4px 0">${SB.last?'Last sync '+escapeHtml(SB.last):''}${SB.state==='err'?' · last attempt failed':''}</div><div class="inline" style="gap:6px;flex-wrap:wrap"><button class="btn y" id="sb-now">Sync now</button><button class="btn" id="sb-out">Sign out</button><button class="btn" id="sb-x">Close</button></div>`;
-  else p.innerHTML=`<div>Sign in with your email to sync between your Mac and phone. Use the same email on every device.</div><div class="inline" style="gap:6px;margin-top:6px;flex-wrap:wrap"><input id="sb-mail" type="email" placeholder="you@example.com" autocomplete="email" style="flex:1;min-width:180px"><button class="btn y" id="sb-send">Email me a link</button></div><div class="inline" style="gap:6px;margin-top:6px;flex-wrap:wrap"><input id="sb-code" inputmode="numeric" placeholder="or code from the email" style="flex:1;min-width:140px"><button class="btn" id="sb-ver">Use code</button><button class="btn" id="sb-x">Close</button></div><div id="sb-msg" class="muted" style="margin-top:4px"></div>`;
-  const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};on('sb-x',()=>{p.hidden=true});
+  const msg='<div id="sb-msg" class="muted" style="min-height:1em"></div>';
+  if(SB.uid)p.innerHTML=`<b>☁ Account</b><div>Signed in as <b>${escapeHtml(SB.email)}</b></div><div class="muted">Flashed, location fixes and photos sync between your devices.${SB.last?' Last sync '+escapeHtml(SB.last)+'.':''}${SB.state==='err'?' Last attempt failed.':''}</div>
+   <div class="inline" style="gap:6px;flex-wrap:wrap"><button class="btn y" id="sb-now">Sync now</button><button class="btn" id="sb-out">Sign out</button></div>
+   <div class="muted" style="margin-top:4px">Password (to sign in on other devices without an email link)</div>
+   <div class="inline" style="gap:6px"><input id="sb-pw" type="password" autocomplete="new-password" placeholder="new password (6+ chars)" style="flex:1;min-width:0"><button class="btn" id="sb-setpw">Set</button></div>${msg}`;
+  else p.innerHTML=`<b>☁ Sign in to sync</b><div class="muted">Optional – the app works without an account. Use the same login on every device.</div>
+   <input id="sb-mail" type="email" autocomplete="email" placeholder="email">
+   <input id="sb-pw" type="password" autocomplete="current-password" placeholder="password">
+   <div class="inline" style="gap:6px;flex-wrap:wrap"><button class="btn y" id="sb-in">Sign in</button><button class="btn" id="sb-up">Create account</button></div>
+   <div class="muted" style="margin-top:4px">No password yet? Get a one-time link</div>
+   <div class="inline" style="gap:6px;flex-wrap:wrap"><button class="btn" id="sb-send">Email me a link</button><input id="sb-code" inputmode="numeric" placeholder="or code" style="width:90px"><button class="btn" id="sb-ver">Use code</button></div>${msg}`;
+  const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};const say=t=>{const m=$('sb-msg');if(m)m.textContent=t};
+  const mail=()=>{const m=(($('sb-mail')&&$('sb-mail').value)||'').trim();if(m)sbSet('hp_sb_mail',m);return m};const pw=()=>($('sb-pw')&&$('sb-pw').value)||'';
+  const run=async(f,ok)=>{try{const {error}=await f();say(error?('Failed: '+error.message):(ok||''))}catch(e){say('Failed: '+(e.message||e))}};
   on('sb-now',()=>sbFull(true));on('sb-out',async()=>{try{await SB.c.auth.signOut()}catch(e){}try{localStorage.removeItem('hp_sb_on');localStorage.removeItem('hp_sb_dirty')}catch(e){}});
-  on('sb-send',async()=>{const m=($('sb-mail').value||'').trim();if(!/.+@.+\..+/.test(m)){$('sb-msg').textContent='Enter your email';return}
-    sbSet('hp_sb_mail',m);$('sb-msg').textContent='Sending…';try{const {error}=await SB.c.auth.signInWithOtp({email:m,options:{emailRedirectTo:location.origin+location.pathname}});
-    $('sb-msg').textContent=error?('Failed: '+error.message):'Check your email and tap the link (open it on this device).'}catch(e){$('sb-msg').textContent='Failed: '+(e.message||e)}});
-  on('sb-ver',async()=>{const m=($('sb-mail').value||sbLS('hp_sb_mail','')||'').trim(),t=($('sb-code').value||'').trim();if(!m||!t){$('sb-msg').textContent='Enter email and code';return}
-    try{const {error}=await SB.c.auth.verifyOtp({email:m,token:t,type:'email'});if(error)$('sb-msg').textContent='Failed: '+error.message}catch(e){$('sb-msg').textContent='Failed: '+(e.message||e)}});
+  on('sb-setpw',()=>{if(pw().length<6){say('At least 6 characters');return}say('Saving…');run(()=>SB.c.auth.updateUser({password:pw()}),'Password set – use it to sign in on your other devices.')});
+  on('sb-in',()=>{const m=mail();if(!m||!pw()){say('Enter email and password');return}say('Signing in…');run(()=>SB.c.auth.signInWithPassword({email:m,password:pw()}))});
+  on('sb-up',()=>{const m=mail();if(!m||pw().length<6){say('Enter email and a password (6+ chars)');return}say('Creating…');
+    run(async()=>{const r=await SB.c.auth.signUp({email:m,password:pw(),options:{emailRedirectTo:location.origin+location.pathname}});if(!r.error&&!r.data.session)say('Check your email to confirm the account, then sign in.');return r})});
+  on('sb-send',()=>{const m=mail();if(!/.+@.+\..+/.test(m)){say('Enter your email');return}say('Sending…');run(()=>SB.c.auth.signInWithOtp({email:m,options:{emailRedirectTo:location.origin+location.pathname}}),'Check your email and open the link on this device.')});
+  on('sb-ver',()=>{const m=mail()||sbLS('hp_sb_mail',''),t=(($('sb-code')&&$('sb-code').value)||'').trim();if(!m||!t){say('Enter email and code');return}run(()=>SB.c.auth.verifyOtp({email:m,token:t,type:'email'}))});
   const mi=$('sb-mail');if(mi&&!mi.value)mi.value=sbLS('hp_sb_mail','')||''}
 function sbState(s){SB.state=s;if(s==='ok')SB.last=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});sbUI()}
 async function sbUp(key,value){const {error}=await SB.c.from('kv').upsert({owner:SB.uid,key,value,updated_at:new Date().toISOString()},{onConflict:'owner,key'});if(error)throw error}
@@ -432,6 +445,13 @@ async function sbInit(){try{const lib=await sbLoad();SB.c=lib.createClient(SB.ur
     if(!SB.uid&&was){if(SB.ch)SB.c.removeChannel(SB.ch);SB.ch=null;sbState('off')}sbUI()});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SB.uid)sbFull(false)});window.addEventListener('online',()=>{if(SB.uid)sbFull(false)})}
   catch(e){SB.state='err';sbUI()}}
-(function sbMount(){const row=$('alb-imp')&&$('alb-imp').parentNode;if(!row)return;const b=document.createElement('button');b.className='btn y';b.id='sb-btn';b.textContent='☁ Sync devices';row.insertBefore(b,row.firstChild);
-  const p=document.createElement('div');p.id='sb-panel';p.className='opp';p.hidden=true;p.style.cssText='margin:0 0 8px;padding:8px;border:2px solid var(--cyan);border-radius:10px';row.parentNode.insertBefore(p,row.nextSibling);
-  b.onclick=()=>{p.hidden=!p.hidden;sbUI()};sbInit()})();
+(function sbMount(){const th=$('thbtn');if(!th)return;const CL=['...XXX.....','..XXXXX.XX.','.XXXXXXXXXX','XXXXXXXXXXX','XXXXXXXXXXX','.XXXXXXXXX.'];
+  const b=document.createElement('button');b.className='btn thbtn sbbtn';b.id='sb-btn';b.setAttribute('aria-expanded','false');
+  b.innerHTML='<svg class="pxi" viewBox="0 0 11 9" width="22" height="18" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor">'+CL.map((r,y)=>[...r].map((c,x)=>c==='X'?`<rect x="${x}" y="${y+1}" width="1" height="1"/>`:'').join('')).join('')+'</svg><i class="sbdot"></i>';
+  th.parentNode.insertBefore(b,th);
+  const p=document.createElement('div');p.id='sb-panel';p.className='thmenu sbpanel';p.hidden=true;document.body.appendChild(p);
+  p.addEventListener('click',e=>e.stopPropagation());
+  b.onclick=e=>{e.stopPropagation();p.hidden=!p.hidden;b.setAttribute('aria-expanded',String(!p.hidden));sbUI();if(!p.hidden){const f=$('sb-mail');if(f&&!f.value)f.focus()}};
+  document.addEventListener('click',()=>{if(!p.hidden){p.hidden=true;b.setAttribute('aria-expanded','false')}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!p.hidden){p.hidden=true;b.setAttribute('aria-expanded','false')}});
+  sbUI();sbInit()})();
