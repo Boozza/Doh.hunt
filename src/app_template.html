@@ -264,6 +264,44 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 .wbub .t{font:600 10px/1.1 system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;white-space:nowrap}
 .wfloat{position:absolute;left:50%;transform:translateX(-50%);top:10px;z-index:1100;display:flex;gap:6px;align-items:center;background:var(--panel);border:2px solid var(--cyan);border-radius:10px;padding:6px 8px;box-shadow:3px 3px 0 rgba(0,0,0,.4);font-size:12px;white-space:nowrap;max-width:calc(100% - 20px)}
 .wfloat span{overflow:hidden;text-overflow:ellipsis}
+
+/* ---- v42 · map-first layout (html.mf) ---- */
+:root{--glass:color-mix(in srgb,var(--panel) 70%,transparent);--glass-b:color-mix(in srgb,var(--line) 85%,transparent);--sheet-h:150px}
+html.mf .glass,html.mf header .citysel>.btn,html.mf header select,html.mf .maptools button,html.mf .panel,html.mf .card,html.mf .hunt,html.mf .thmenu,html.mf #sb-panel,html.mf .world,html.mf .wfloat,html.mf .filters,html.mf .legend{background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25)}
+html.mf body{overflow:hidden}
+html.mf .wrap{display:block;max-width:none;padding:0}
+html.mf header{position:fixed;z-index:950;top:calc(8px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));display:block;pointer-events:none}
+html.mf header .logo,html.mf header label[for=city],html.mf #mic-top{display:none}
+html.mf header .citysel{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;pointer-events:auto;margin:0}
+html.mf header .citysel>.btn{border-color:var(--glass-b);box-shadow:2px 2px 0 rgba(0,0,0,.35)}
+html.mf header select{flex:1;min-width:0;width:auto;height:42px;border-color:var(--yellow);color:var(--yellow);font-weight:700;box-shadow:3px 3px 0 #ff2a8c}
+html.mf .stats:not(#sc-tot){display:none}
+html.mf .main{display:block}
+html.mf .screen{position:fixed;inset:0;height:auto;min-height:0;border:0;border-radius:0;box-shadow:none;z-index:auto}
+html.mf .maptools{position:fixed;z-index:940;top:calc(62px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));gap:8px;max-height:calc(100vh - var(--sheet-h) - 80px);overflow:auto;scrollbar-width:none}
+html.mf .maptools::-webkit-scrollbar{display:none}
+html.mf .maptools button{min-width:44px;height:44px;border-radius:12px;border:2px solid var(--glass-b);box-shadow:2px 2px 0 rgba(0,0,0,.35);font-size:17px}
+html.mf .filters{display:none;position:fixed;z-index:945;top:calc(62px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));right:64px;padding:8px;border:1px solid var(--glass-b);border-radius:12px}
+html.mf .legend{display:none;position:fixed;z-index:945;left:10px;right:64px;bottom:calc(var(--sheet-h) + 10px);max-width:none}
+html.mf.mf-filt .filters,html.mf.mf-filt .legend{display:flex}
+html.mf .panel{position:fixed;z-index:900;left:0;right:0;bottom:0;height:var(--sheet-h);border:1px solid var(--glass-b);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -8px 28px rgba(0,0,0,.4);transition:height .22s ease;overflow:hidden;padding-bottom:env(safe-area-inset-bottom,0px)}
+html.mf .panel .tabbody{flex:1;overflow:auto;overscroll-behavior:contain}
+html.mf .panel .tabs{background:transparent;flex:none}
+.mfhandle,.mfquick{display:none}
+html.mf .mfhandle{display:block;flex:none;width:100%;height:22px;border:0;background:transparent;cursor:grab;touch-action:none;padding:0}
+html.mf .mfhandle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--muted);opacity:.6;margin:0 auto}
+html.mf .mfquick{display:flex;flex:none;gap:8px;align-items:center;padding:0 12px 8px}
+.mfpill{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:46px;padding:0 10px;border:2px solid var(--glass-b);border-radius:12px;background:transparent;color:var(--text);cursor:pointer;font:700 13px/1.1 var(--px,monospace);white-space:nowrap;overflow:hidden}
+.mfpill span{overflow:hidden;text-overflow:ellipsis}.mfpill small{display:block;font:400 11px system-ui,sans-serif;color:var(--muted)}
+.mfgo{height:46px;padding:0 14px;border:0;border-radius:12px;background:var(--pink,#ff2a8c);color:#fff;font:700 14px var(--px,monospace);cursor:pointer;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25),3px 3px 0 var(--yellow);white-space:nowrap}
+html.mf .card{position:fixed;z-index:960;left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px));top:auto;bottom:calc(var(--sheet-h) + 8px);width:auto;max-width:560px;margin:0 auto;max-height:calc(100vh - var(--sheet-h) - 130px)!important}
+html.mf .hunt{top:auto;bottom:0;left:0;right:0;max-height:68vh;z-index:1000;border-radius:18px 18px 0 0;border:1px solid var(--glass-b);border-bottom:0;box-shadow:0 -8px 28px rgba(0,0,0,.45)}
+html.mf #resume:not([hidden]){position:fixed;z-index:990;left:50%;transform:translateX(-50%);bottom:calc(var(--sheet-h) + 12px)}
+html.mf .wfloat{top:calc(62px + env(safe-area-inset-top,0px));position:fixed}
+@media(min-width:900px){html.mf .panel{left:auto;right:12px;top:calc(64px + env(safe-area-inset-top,0px));bottom:12px;height:auto!important;width:380px;border-radius:14px;border-bottom:1px solid var(--glass-b)}
+ html.mf .mfhandle{display:none}html.mf .maptools{right:404px}html.mf .card{right:404px;left:12px;bottom:12px;max-width:420px;margin:0}html.mf .legend{bottom:12px;right:404px}html.mf .filters{right:460px}
+ html.mf header{right:404px}html.mf #resume:not([hidden]){bottom:16px}
+ html.mf .hunt{left:12px;right:auto;bottom:12px;width:min(520px,calc(100vw - 430px));max-height:calc(100vh - 90px);margin:0;border-radius:14px;border-bottom:1px solid var(--glass-b)}}
 </style>
 
 <div class="wrap">
@@ -453,6 +491,35 @@ let saved=null; try{saved=localStorage.getItem('hp_city')}catch(e){}
 sel.value=saved&&DATA.cities.some(c=>c.code===saved)?saved:'LDN';
 sel.addEventListener('change',()=>{try{localStorage.setItem('hp_city',sel.value)}catch(e){};loadCity(sel.value)});
 
+
+/* ---- v42 · map-first layout ---- */
+const MF={on:true,st:'peek'};try{MF.on=localStorage.getItem('hp_layout')!=='classic'}catch(e){}
+(function mfBuild(){const P=document.querySelector('.panel');if(!P)return;
+  const h=document.createElement('button');h.className='mfhandle';h.id='mf-handle';h.setAttribute('aria-label','Expand or collapse the panel');h.innerHTML='<i></i>';
+  const q=document.createElement('div');q.className='mfquick';q.innerHTML='<button class="mfpill" id="mf-pill" aria-label="Score"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="10.5" stroke="var(--line)" stroke-width="5" fill="none"/><circle id="mf-ring" cx="14" cy="14" r="10.5" stroke="var(--cyan)" stroke-width="5" fill="none" stroke-dasharray="0 66" transform="rotate(-90 14 14)"/></svg><span id="mf-ptxt">–</span></button><button class="mfgo" id="mf-go">PLAN ▶</button>';
+  P.prepend(q);P.prepend(h);
+  const ft=document.createElement('button');ft.id='mf-filt';ft.title='Filters & legend';ft.setAttribute('aria-label','Show filters and legend');ft.setAttribute('aria-expanded','false');
+  ft.innerHTML='<svg class="pxi" viewBox="0 0 9 8" width="18" height="16" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M0 0h9v1H0zM1 1h1v1H1zM7 1h1v1H7zM2 2h1v1H2zM6 2h1v1H6zM3 3h1v1H3zM5 3h1v1H5zM4 4h1v3H4z"/></svg>';
+  const mt=document.querySelector('.maptools');if(mt)mt.appendChild(ft);
+  ft.onclick=()=>{const on=!document.documentElement.classList.contains('mf-filt');document.documentElement.classList.toggle('mf-filt',on);ft.classList.toggle('on',on);ft.setAttribute('aria-expanded',String(on))};
+  $('mf-pill').onclick=()=>{const t=$('t-score');if(t)t.click();setSheet('half')};
+  $('mf-go').onclick=()=>{if(route&&!$('result').hidden){const g=$('huntgo');if(g){g.click();return}}const t=$('t-plan');if(t)t.click();$('plan').click()};
+  const sab=document.createElement('div');sab.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';document.body.appendChild(sab);
+  const H={peek:()=>Math.round(162+sab.offsetHeight),half:()=>Math.round(innerHeight*.52),full:()=>Math.round(innerHeight-70)};
+  window.setSheet=function(st){MF.st=st;if(!MF.on)return;document.documentElement.style.setProperty('--sheet-h',H[st]()+'px');h.setAttribute('aria-expanded',String(st!=='peek'))};
+  h.onclick=()=>{if(h._drag)return;setSheet(MF.st==='peek'?'half':MF.st==='half'?'full':'peek')};
+  let y0=0,hs=0;h.addEventListener('pointerdown',e=>{y0=e.clientY;hs=P.getBoundingClientRect().height;h._drag=false;h.setPointerCapture(e.pointerId);P.style.transition='none'});
+  h.addEventListener('pointermove',e=>{if(!h.hasPointerCapture(e.pointerId))return;const d=y0-e.clientY;if(Math.abs(d)>6)h._drag=true;if(h._drag)document.documentElement.style.setProperty('--sheet-h',Math.max(H.peek(),Math.min(H.full(),hs+d))+'px')});
+  h.addEventListener('pointerup',e=>{P.style.transition='';if(!h._drag)return;const cur=P.getBoundingClientRect().height;const best=['peek','half','full'].reduce((a,b)=>Math.abs(H[b]()-cur)<Math.abs(H[a]()-cur)?b:a);setSheet(best);setTimeout(()=>h._drag=false,0)});
+  document.querySelectorAll('.tabs [role=tab]').forEach(t=>t.addEventListener('click',()=>{if(MF.st==='peek')setSheet('half')}));
+  addEventListener('resize',()=>setSheet(MF.st));
+})();
+function mfPill(){const l=$('s-left'),p=$('s-pts'),f=$('s-flashed'),a=$('s-active');if(!l||!$('mf-ptxt'))return;
+  $('mf-ptxt').innerHTML=`${l.textContent} LEFT · ${p.textContent} PTS<small>${f.textContent} flashed of ${a.textContent} still up</small>`;
+  const fa=+f.textContent.replace(/\D/g,'')||0,aa=+a.textContent.replace(/\D/g,'')||0;const pct=aa?Math.min(1,fa/(fa+(+l.textContent.replace(/\D/g,'')||0))):0;$('mf-ring').setAttribute('stroke-dasharray',`${(pct*66).toFixed(1)} 66`)}
+function mfGoLabel(){const g=$('mf-go');if(g)g.textContent=route&&!$('result').hidden?'START ▶':'PLAN ▶'}
+function mfApply(){document.documentElement.classList.toggle('mf',MF.on);if(MF.on)setSheet(MF.st);else document.documentElement.style.removeProperty('--sheet-h');try{localStorage.setItem('hp_layout',MF.on?'map':'classic')}catch(e){}}
+mfApply();
 /* ---- v41 · world overview ---- */
 function cityStats(c){const fl=flashedOf(c.code);let alive=0,left=0,pl=0,got=0;for(const i of c.inv){if(i[4]==='destroyed')continue;alive++;if(fl.has(i[0]))got++;else{left++;pl+=i[3]||0}}
   const b=c.bbox;return {c,alive,left,pl,got,fl:fl.size,pct:alive?got/alive:(fl.size?1:0),mine:isMine(c),lat:(b[1]+b[3])/2,lon:(b[0]+b[2])/2}}
@@ -517,7 +584,7 @@ function loadCity(code){
   flashed=new Set(); try{const l=JSON.parse(localStorage.getItem('hp_fl_'+code)||'[]');l.forEach(x=>flashed.add(x))}catch(e){}
   fitCity(); subscribe(); loadHotel(); refresh();
 }
-function refresh(){renderFilters();updateStats();renderTargets();renderStartNote();draw();renderScore();if(typeof mcRender==='function')mcRender();}
+function refresh(){renderFilters();updateStats();renderTargets();renderStartNote();draw();renderScore();if(typeof mcRender==='function')mcRender();try{mfPill();mfGoLabel()}catch(e){}}
 // ================= FIELD FEATURES =================
 const EXCL=new Set(); let MISSING=new Set(); let PHOTOS={}; let SESSIONS=[];
 try{JSON.parse(localStorage.getItem('hp_missing')||'[]').forEach(x=>MISSING.add(x))}catch(e){}
@@ -959,7 +1026,7 @@ function tap(x,y){
   const mh=mcHit(x,y);if(mh&&(!best||mh.d<bd-4)){mcCard(mh.h);return}
   mcSel=null;if(best)showCard(best);else{selected=null;$('card').hidden=true;draw()}
 }
-function showCard(i){
+function showCard(i){if(MF.on&&MF.st!=='peek')setSheet('peek');
   selected=i;const fl=flashed.has(i[0]);const c=$('card');const cat=catOf(i);
   const stLabel={ok:'Up on the wall',damaged:'Damaged',unknown:'Status unknown',destroyed:'Destroyed',hidden:'Hidden / not reachable'}[i[4]];
   const stColor={ok:'var(--green)',damaged:'var(--orange)',unknown:'var(--muted)',destroyed:'var(--red)',hidden:'var(--cyan)'}[i[4]];
@@ -981,7 +1048,7 @@ function showCard(i){
   <a class="btn" href="${svUrl(i[1],i[2])}" target="_blank" rel="noopener" title="Satellite view; drag the yellow figure onto a blue street line for real Street View">Satellite ↗</a>
   <a class="btn" href="${spotUrl(i[0])}" target="_blank" rel="noopener" title="Close-up photo on invader-spotter.art (opens their site)">🔎 Close-up ↗</a>
   <button class="btn" id="c-start">Start here</button></div><button class="cclose" id="c-x" aria-label="Close card" title="Close (Esc)">✕</button>`;
-  c.hidden=false;cardExtras(i);const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)';
+  c.hidden=false;cardExtras(i);if(MF.on){c.style.top='';c.style.maxHeight=''}else{const ft=$('filters').offsetHeight+18;c.style.top=ft+'px';c.style.maxHeight='calc(100% - '+(ft+12)+'px)'}
   const f=$('c-fl');if(f)armConfirm(f,()=>flashWithUndo(i[0],!fl),fl?'Tap again to unmark':'Tap again to confirm');
   $('c-start').onclick=()=>{startSrc='pin';try{localStorage.setItem('hp_src_'+city.code,'pin')}catch(e){};start=[i[1],i[2]];try{localStorage.setItem('hp_start_'+city.code,JSON.stringify(start))}catch(e){};route=null;$('result').hidden=true;refresh()};
   $('c-x').onclick=()=>{selected=null;c.hidden=true;draw()};
@@ -1095,6 +1162,7 @@ function plan(o={}){
   route={stops,path:r.map(x=>x.p),km:wkm,vkm,minutes:mins+stops.length*stopMin,pts:stops.reduce((s,i)=>s+i[3],0),legs,cfg};
   if(o.quiet){const rr=route;return rr}
   renderResult(loop,undefined,endHotel?'hotel':'start');
+  if(MF.on){setSheet('half');mfGoLabel();setTimeout(()=>{try{$('result').scrollIntoView({block:'start',behavior:'smooth'})}catch(e){}},80)}
   if(route.path.length>1){const la=route.path.map(p=>p[0]),lo=route.path.map(p=>p[1]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
     view.lat=(a+b)/2;view.lon=(c+d)/2;const kx=(W-60)/(((d-c)||1e-3)*Math.cos(view.lat*Math.PI/180)),ky=(H-80)/((b-a)||1e-3);view.k=Math.min(kx,ky,3e6)}
   draw();
@@ -1229,9 +1297,10 @@ setInterval(()=>{if(db&&!thDbOn)themeSync()},3000);
 const thMenu=document.createElement('div');thMenu.className='thmenu';thMenu.id='thmenu';thMenu.hidden=true;document.body.appendChild(thMenu);thMenu.addEventListener('click',e=>e.stopPropagation());
 function renderThemeMenu(){if(thMenu.hidden)return;
   thMenu.innerHTML='<span class="lbl">LOOK</span>'+THEMES.map(x=>`<button class="thopt${x.id===THEME?' on':''}" data-th="${x.id}" aria-pressed="${x.id===THEME}"><span class="thsw" aria-hidden="true">${x.sw.map(c=>`<i style="background:${c}"></i>`).join('')}</span><span>${x.name}<small>${x.d}</small></span></button>`).join('')+
-  `<label class="check"><input type="checkbox" id="th-auto" ${TAUTO?'checked':''}> Switch to Field while hunting</label><p class="note" style="margin:0">${typeof themeMap==='function'?'The map style follows the look until you pick one yourself (🗺). ':''}Story cards keep the arcade style.</p>`;
+  `<label class="check"><input type="checkbox" id="th-auto" ${TAUTO?'checked':''}> Switch to Field while hunting</label><label class="check"><input type="checkbox" id="th-mf" ${MF.on?'checked':''}> Full-screen map (panels slide over it)</label><p class="note" style="margin:0">${typeof themeMap==='function'?'The map style follows the look until you pick one yourself (🗺). ':''}Story cards keep the arcade style.</p>`;
   thMenu.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{THEME=b.dataset.th;saveTheme();applyTheme();renderThemeMenu()});
-  $('th-auto').onchange=e=>{TAUTO=e.target.checked;saveTheme();applyTheme()}}
+  $('th-auto').onchange=e=>{TAUTO=e.target.checked;saveTheme();applyTheme()};
+  $('th-mf').onchange=e=>{MF.on=e.target.checked;mfApply();$('card').hidden=true}}
 $('thbtn').onclick=e=>{e.stopPropagation();thMenu.hidden=!thMenu.hidden;$('thbtn').setAttribute('aria-expanded',String(!thMenu.hidden));renderThemeMenu()};
 document.addEventListener('click',e=>{if(!thMenu.hidden&&!thMenu.contains(e.target)&&e.target!==$('thbtn')){thMenu.hidden=true;$('thbtn').setAttribute('aria-expanded','false')}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!thMenu.hidden){thMenu.hidden=true;$('thbtn').setAttribute('aria-expanded','false')}});
