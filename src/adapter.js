@@ -461,3 +461,26 @@ async function sbInit(){try{const lib=await sbLoad();SB.c=lib.createClient(SB.ur
   const shut=()=>{if(!p.hidden){p.hidden=true;cv.setAttribute('aria-expanded','false')}};document.addEventListener('click',shut);
   document.addEventListener('keydown',e=>{if(e.key==='Escape')shut()});
   sbUI();sbInit()})();
+
+/* ---- v41 · world map (Leaflet) ---- */
+const WLay=L.layerGroup();let worldOn=false,wPrev=null,wFloat=null;
+function wBubble(n,cls,pct,label){return L.divIcon({className:'',iconSize:[0,0],html:`<div class="wbub ${cls}"><div class="n">${n}</div><div class="p"><i style="width:${Math.round(pct*100)}%"></i></div>${label?`<div class="t">${escapeHtml(label)}</div>`:''}</div>`})}
+function renderWorldMap(){if(!worldOn)return;WLay.clearLayers();const W=worldStats().filter(w=>isFinite(w.lat)&&isFinite(w.lon));const z=LM.getZoom();
+  const pts=W.map(w=>({w,p:LM.latLngToLayerPoint([w.lat,w.lon])})).sort((a,b)=>(b.w.mine-a.w.mine)||(b.w.alive-a.w.alive));const used=new Set(),R=46;
+  pts.forEach((a,ai)=>{if(used.has(ai))return;used.add(ai);const grp=[a];
+    pts.forEach((b,bi)=>{if(!used.has(bi)&&a.p.distanceTo(b.p)<R){used.add(bi);grp.push(b)}});
+    if(grp.length===1){const w=a.w;const cls=w.mine?(w.left===0&&w.alive?'mine done':'mine'):'';
+      const m=L.marker([w.lat,w.lon],{icon:wBubble(w.mine&&w.left===0&&w.alive?'✓':w.left,cls,w.pct,z>=4||w.mine?w.c.code+(z>=5?' · '+cityLabel(w.c):''):''),keyboard:true,title:cityLabel(w.c)+': '+w.left+' left · '+w.fl+' flashed'});
+      m.on('click',()=>goCity(w.c.code));WLay.addLayer(m)}
+    else{const left=grp.reduce((s,g)=>s+g.w.left,0),alive=grp.reduce((s,g)=>s+g.w.alive,0),got=grp.reduce((s,g)=>s+g.w.got,0),anyMine=grp.some(g=>g.w.mine);
+      const lat=grp.reduce((s,g)=>s+g.w.lat,0)/grp.length,lon=grp.reduce((s,g)=>s+g.w.lon,0)/grp.length;
+      const m=L.marker([lat,lon],{icon:wBubble(left,'cl'+(anyMine?' mine':''),alive?got/alive:0,grp.length+' cities'),title:grp.map(g=>g.w.c.code).join(', ')});
+      m.on('click',()=>{const b=L.latLngBounds(grp.map(g=>[g.w.lat,g.w.lon]));LM.fitBounds(b.pad(.4),{maxZoom:Math.max(z+2,6)})});WLay.addLayer(m)}})}
+function worldLayers(on){[LInv,LRoute,LStart,LMar,LNav].forEach(g=>{try{on?LM.removeLayer(g):LM.addLayer(g)}catch(e){}})}
+openWorld=function(){if(worldOn){showWorldGrid();return}worldOn=true;wPrev=[LM.getCenter(),LM.getZoom()];$('card').hidden=true;worldLayers(true);LM.addLayer(WLay);
+  const W=worldStats();wFloat=document.createElement('div');wFloat.className='wfloat';wFloat.innerHTML=`<b style="color:var(--yellow)">WORLD</b><span>${escapeHtml(worldSummary(W))}</span><button class="btn" id="wf-list">☰ List</button><button class="btn" id="wf-x" aria-label="Back to city">✕</button>`;
+  $('screen').appendChild(wFloat);$('wf-list').onclick=showWorldGrid;$('wf-x').onclick=()=>closeWorld(true);
+  const mine=W.filter(w=>w.mine);if(mine.length){LM.fitBounds(L.latLngBounds(mine.map(w=>[w.lat,w.lon])).pad(.25),{maxZoom:4})}else LM.setView([35,10],2);setTimeout(renderWorldMap,50)};
+function closeWorld(back){if(!worldOn)return;worldOn=false;LM.removeLayer(WLay);worldLayers(false);if(wFloat){wFloat.remove();wFloat=null}if(back&&wPrev)LM.setView(wPrev[0],wPrev[1])}
+LM.on('zoomend',()=>{if(worldOn)renderWorldMap()});
+const _goCity=goCity;goCity=function(code){const same=city&&city.code===code;closeWorld(false);_goCity(code);if(same)try{fitCity()}catch(e){}};

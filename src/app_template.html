@@ -247,12 +247,29 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 /* v37.1 info card always above the map chips; chips step aside while it is open */
 .card{z-index:540}
 #screen:has(.card:not([hidden])) .filters{visibility:hidden}
+.world{position:fixed;inset:0;z-index:1500;background:var(--bg);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.whead{display:flex;align-items:center;gap:10px;position:sticky;top:-12px;background:var(--bg);padding:6px 0 8px;z-index:2}
+.whead b{font-family:var(--px,monospace);font-size:16px;color:var(--yellow)}.whead .wsum{flex:1;font-size:12px;color:var(--muted)}
+.wfilt{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px}.wfilt button.on{background:var(--cyan);color:#06121a;border-color:var(--cyan)}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.wt{all:unset;cursor:pointer;display:grid;gap:4px;padding:9px 10px;border:2px solid var(--line);border-radius:8px;background:var(--panel);box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.wt:focus-visible{outline:2px solid var(--yellow)}.wt.mine{border-color:var(--cyan)}.wt.done{border-color:var(--green)}.wt.new{opacity:.72}
+.wt .wc{display:flex;justify-content:space-between;align-items:baseline;gap:6px}.wt .wc b{font-family:var(--px,monospace);font-size:13px}.wt .wc span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .wl{font-size:13px;font-weight:700}.wt .wl small{font-weight:400;color:var(--muted)}
+.wbar{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;height:7px}.wbar i{background:#2a2f4a}.wbar i.f{background:var(--cyan)}.wt.done .wbar i.f{background:var(--green)}
+.wbub{display:grid;justify-items:center;gap:2px;transform:translate(-50%,-50%);cursor:pointer;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.55))}
+.wbub .n{min-width:30px;height:26px;padding:0 6px;display:grid;place-items:center;background:#0a0d1c;color:#fff;border:3px solid #7d8199;font:700 12px/1 var(--px,monospace)}
+.wbub.mine .n{border-color:var(--cyan)}.wbub.done .n{border-color:var(--green);color:var(--green)}.wbub.cl .n{border-style:double;border-width:4px}
+.wbub .p{width:30px;height:5px;background:#2a2f4a;border:1px solid #0a0d1c}.wbub .p i{display:block;height:100%;background:var(--cyan)}.wbub.done .p i{background:var(--green)}
+.wbub .t{font:600 10px/1.1 system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;white-space:nowrap}
+.wfloat{position:absolute;left:50%;transform:translateX(-50%);top:10px;z-index:1100;display:flex;gap:6px;align-items:center;background:var(--panel);border:2px solid var(--cyan);border-radius:10px;padding:6px 8px;box-shadow:3px 3px 0 rgba(0,0,0,.4);font-size:12px;white-space:nowrap;max-width:calc(100% - 20px)}
+.wfloat span{overflow:hidden;text-overflow:ellipsis}
 </style>
 
 <div class="wrap">
   <header>
     <div class="logo">D'OH! HUNT PLANNER<small>@DOH.INVADERS · ROUTE MACHINE · <span id="appver">v__VER__</span></small></div>
-    <div class="citysel"><button class="btn thbtn" id="thbtn" title="Look / theme" aria-label="Choose a look" aria-expanded="false"><svg class="pxi" viewBox="0 0 9 9" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><rect x="2" y="0" width="1" height="1"/><rect x="3" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="6" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="2" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="4" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="1" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="2" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="4" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="1" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/></svg></button><button class="btn mic" id="mic-top" title="Say an invader number to mark it flashed">🎤</button><button class="btn y" id="resume" hidden>▶ Resume hunt</button><label for="city">CITY</label><select id="city"></select></div>
+    <div class="citysel"><button class="btn thbtn" id="thbtn" title="Look / theme" aria-label="Choose a look" aria-expanded="false"><svg class="pxi" viewBox="0 0 9 9" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><rect x="2" y="0" width="1" height="1"/><rect x="3" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="6" y="0" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="2" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="4" y="1" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="1" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="2" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="4" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="1" y="7" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/></svg></button><button class="btn thbtn" id="wbtn" title="World map – all cities" aria-label="World map"><svg class="pxi" viewBox="0 0 9 9" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><rect x="2" y="1" width="1" height="1"/><rect x="3" y="1" width="1" height="1"/><rect x="4" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="7" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="4" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="1" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="5" y="4" width="1" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="7" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="4" y="6" width="1" height="1"/><rect x="7" y="6" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="6" y="7" width="1" height="1"/></svg></button><button class="btn mic" id="mic-top" title="Say an invader number to mark it flashed">🎤</button><button class="btn y" id="resume" hidden>▶ Resume hunt</button><label for="city">CITY</label><select id="city"></select></div>
   </header>
 
   <section class="stats" aria-label="City stats">
@@ -275,6 +292,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
       </div>
       <div class="hint" id="hint" hidden>Tap the map to set your start</div>
       <div class="card" id="card" hidden></div>
+      <div class="world" id="world" hidden role="dialog" aria-label="World map"><div class="whead"><b>WORLD</b><span class="wsum" id="w-sum"></span><button class="btn" id="w-x" aria-label="Close">✕</button></div><div class="wfilt" id="w-f"><button class="btn on" data-f="all">All</button><button class="btn" data-f="mine">My cities</button><button class="btn" data-f="new">Not started</button><button class="btn" data-f="todo">Most left</button></div><div class="wgrid" id="w-grid"></div></div>
       <div class="legend" id="legend"></div>
     </div>
 
@@ -434,6 +452,31 @@ $('src').textContent=DATA.source;
 let saved=null; try{saved=localStorage.getItem('hp_city')}catch(e){}
 sel.value=saved&&DATA.cities.some(c=>c.code===saved)?saved:'LDN';
 sel.addEventListener('change',()=>{try{localStorage.setItem('hp_city',sel.value)}catch(e){};loadCity(sel.value)});
+
+/* ---- v41 · world overview ---- */
+function cityStats(c){const fl=flashedOf(c.code);let alive=0,left=0,pl=0,got=0;for(const i of c.inv){if(i[4]==='destroyed')continue;alive++;if(fl.has(i[0]))got++;else{left++;pl+=i[3]||0}}
+  const b=c.bbox;return {c,alive,left,pl,got,fl:fl.size,pct:alive?got/alive:(fl.size?1:0),mine:isMine(c),lat:(b[1]+b[3])/2,lon:(b[0]+b[2])/2}}
+function worldStats(){return DATA.cities.map(cityStats)}
+function cityLabel(c){return c.name&&c.name!==c.code?c.name:c.code}
+let WF='all';
+function worldSummary(W){const m=W.filter(w=>w.mine);return `${m.length} of ${W.length} cities · ${m.reduce((s,w)=>s+w.fl,0)} flashed · ${m.reduce((s,w)=>s+w.left,0)} left in my cities`}
+function renderWorldGrid(){const W=worldStats();$('w-sum').textContent=worldSummary(W);
+  let L=W.slice();if(WF==='mine')L=L.filter(w=>w.mine);else if(WF==='new')L=L.filter(w=>!w.mine);
+  L.sort(WF==='todo'?(a,b)=>b.pl-a.pl:(a,b)=>(b.mine-a.mine)||(b.pl-a.pl)||(b.alive-a.alive));
+  $('w-grid').innerHTML=L.map(w=>{const f=Math.round(w.pct*10);const cls=w.mine?(w.left===0&&w.alive?'mine done':'mine'):'new';
+    return `<button class="wt ${cls}" data-c="${w.c.code}"><div class="wc"><b>${w.c.code}</b><span>${escapeHtml(cityLabel(w.c))}</span></div>
+      <div class="wl">${!w.alive?'none active':w.left===0&&w.mine?'✓ all active flashed':w.left+' left'}${w.pl?` <small>· ${w.pl.toLocaleString()} pts</small>`:''}</div>
+      <div class="wbar" aria-label="${Math.round(w.pct*100)}% flashed">${Array.from({length:10},(_,k)=>`<i class="${k<f?'f':''}"></i>`).join('')}</div>
+      <div class="wl"><small>${w.fl} flashed · ${w.alive} active</small></div></button>`}).join('')||'<div class="note">Nothing here.</div>';
+  $('w-grid').querySelectorAll('.wt').forEach(b=>b.onclick=()=>goCity(b.dataset.c));
+  $('w-f').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===WF))}
+function showWorldGrid(){$('world').hidden=false;renderWorldGrid();setTimeout(()=>{const f=$('w-grid').querySelector('.wt');if(f)f.focus()},0)}
+function hideWorldGrid(){$('world').hidden=true}
+let openWorld=showWorldGrid;
+let goCity=function(code){hideWorldGrid();if(!DATA.cities.find(c=>c.code===code))return;sel.value=code;sel.dispatchEvent(new Event('change'))};
+$('wbtn').onclick=()=>openWorld();$('w-x').onclick=hideWorldGrid;
+$('w-f').onclick=e=>{const b=e.target.closest('button');if(!b)return;WF=b.dataset.f;renderWorldGrid()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('world').hidden)hideWorldGrid()});
 
 // ---------- legend
 $('legend').innerHTML=[[10,'10'],[20,'20'],[30,'30'],[40,'40'],[50,'50'],[100,'100+']].map(([p,l])=>`<span>${alienSvg(ptColor(p),Math.round(9*alienCell(p)*0.75))} ${l}</span>`).join('')+'<span>'+alienSvg('#6b7399',13)+' flashed</span><span><i style="background:none;border:2px solid #45f08a;border-radius:50%;box-shadow:0 0 0 2px #ff4d5e"></i>status changed ≤30d</span>';
