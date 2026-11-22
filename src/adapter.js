@@ -111,7 +111,7 @@ const MB=[ // [label, regex, tier]  tier: L luxury, P premium, S select
 const MTIER={L:['#ffd90f','Luxury'],P:['#ff5aa8','Premium'],S:['#3ee0ff','Select']};
 const BRAND_RX='Marriott|Sheraton|Westin|Courtyard|Moxy|Renaissance|Ritz.?Carlton|Aloft|M[eé]ridien|AC Hotel|Four Points|St\\.? ?Regis|Luxury Collection|Autograph Collection|Element|Residence Inn|Fairfield|SpringHill|Tribute Portfolio|EDITION|Delta Hotels|W Hotels|B[vu]lgari|Protea|TownePlace|Gaylord|City Express';
 const NAME_RX='Marriott|Sheraton|Westin|Courtyard by|Moxy|Renaissance [A-Z]|Ritz.?Carlton|Aloft|Le M[eé]ridien|AC Hotel|Four Points|St\\.? ?Regis|Luxury Collection|Autograph Collection|Residence Inn|Fairfield Inn|SpringHill Suites|Tribute Portfolio|Delta Hotels|TownePlace|Protea Hotel|B[vu]lgari Hotel|Element by Westin';
-let LMar=L.layerGroup().addTo(LM),MAR=null,marOn=false,marCode=null;
+let LMar=L.layerGroup().addTo(LM),MAR=null,marOn=false,marCode=null,MKG={};
 function brandMatch(t){const txt=[t.brand,t.operator,t.name].filter(Boolean).join(' | ');return MB.some(b=>b[1].test(txt))}
 function brandOf(t){const txt=[t.brand,t.operator,t.name].filter(Boolean).join(' | ');for(const b of MB)if(b[1].test(t.brand||''))return b;for(const b of MB)if(b[1].test(txt))return b;return MB[MB.length-1]}
 function marHav(a,b,c,d){const R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,h=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
@@ -132,13 +132,16 @@ function setBaseFrom(h){saveHotel({lat:h.lat,lon:h.lon,name:h.name});toast(h.nam
 function marPopup(h,s){return `<div style="min-width:200px;font:13px/1.35 var(--f-body);color:#111"><b>${escapeHtml(h.name)}</b><br><span style="color:#555">${escapeHtml(h.brand)} · ${MTIER[h.tier][1]}</span><br>👾 <b>${s.n1}</b> to hunt within 1 km (${s.p1} pts)<br>🚕 ${s.n3} within 2.5 km<div style="display:flex;gap:6px;margin-top:8px"><button class="mpb y" data-mset="1">Set as my base</button><a class="mpb" href="${gmaps(h)}" target="_blank" rel="noopener">Maps</a></div></div>`}
 function renderMar(){LMar.clearLayers();const box=$('mh-list');if(!marOn||!MAR){if(box)box.innerHTML='';return}
   const rows=MAR.map(h=>({h,s:huntScore(h)})).sort((a,b)=>b.s.n1-a.s.n1||b.s.p1-a.s.p1||b.s.n3-a.s.n3);
+  const xn=new Set(((typeof MC_EXTRA!=='undefined'&&city&&MC_EXTRA[city.code])||[]).map(e=>e.n));const isCur=h=>HOTEL&&Math.abs(HOTEL.lat-h.lat)<1e-5&&Math.abs(HOTEL.lon-h.lon)<1e-5;const pin=r=>isCur(r.h)||xn.has(r.h.name);const MK=MKG={};
   for(const {h,s} of rows){const col=MTIER[h.tier][0],cur=HOTEL&&Math.abs(HOTEL.lat-h.lat)<1e-5&&Math.abs(HOTEL.lon-h.lon)<1e-5;
     const m=L.marker([h.lat,h.lon],{icon:L.divIcon({className:'',html:`<div class="mpin${cur?' cur':''}" style="--c:${col}">M<i>${s.n1}</i></div>`,iconSize:[30,30],iconAnchor:[15,15]}),zIndexOffset:cur?1000:0}).addTo(LMar);
-    m.bindPopup(()=>marPopup(h,s),{maxWidth:260});m.on('popupopen',e=>{const b=e.popup.getElement().querySelector('[data-mset]');if(b)b.onclick=()=>{LM.closePopup();setBaseFrom(h)}})}
+    MK[h.name]=m;m.bindPopup(()=>marPopup(h,s),{maxWidth:260});m.on('popupopen',e=>{const b=e.popup.getElement().querySelector('[data-mset]');if(b)b.onclick=()=>{LM.closePopup();setBaseFrom(h)}})}
   if(!box)return;
-  box.innerHTML=rows.length?`<div class="note">${rows.length} Marriott-family hotels · ranked by invaders left to hunt within 1 km</div>`+rows.slice(0,15).map((r,k)=>`<div class="mrow"><span class="mdot" style="background:${MTIER[r.h.tier][0]}"></span><div class="mtx"><b>${escapeHtml(r.h.name)}</b><span>${escapeHtml(r.h.brand)} · 👾 ${r.s.n1} ≤1 km (${r.s.p1} pts) · ${r.s.n3} ≤2.5 km</span></div><button class="btn" data-mz="${k}" aria-label="Show on map">◎</button><button class="btn g" data-ms="${k}">Set</button></div>`).join(''):'<div class="note">No Marriott-family hotels found on OpenStreetMap for this city. Use Find hotel or Paste location.</div>';
-  box.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>setBaseFrom(rows[+b.dataset.ms].h));
-  box.querySelectorAll('[data-mz]').forEach(b=>b.onclick=()=>{const h=rows[+b.dataset.mz].h;window.scrollTo({top:0,behavior:'smooth'});LM.setView([h.lat,h.lon],16);view.k=0})}
+  const show=rows.filter(pin).concat(rows.filter(r=>!pin(r)).slice(0,15));
+  box.innerHTML=rows.length?`<div class="note">${rows.length} Marriott-family hotels · your hotels first, then ranked by invaders left within 1 km</div>`+show.map((r,k)=>`<div class="mrow"><span class="mdot" style="background:${MTIER[r.h.tier][0]}"></span><div class="mtx"><b>${isCur(r.h)?'★ ':''}${escapeHtml(r.h.name)}</b><span>${escapeHtml(r.h.brand)} · 👾 ${r.s.n1} ≤1 km (${r.s.p1} pts) · ${r.s.n3} ≤2.5 km</span></div><button class="btn" data-mz="${k}" aria-label="Show on map">◎</button><button class="btn g" data-ms="${k}">Set</button></div>`).join(''):'<div class="note">No Marriott-family hotels found on OpenStreetMap for this city. Use Find hotel or Paste location.</div>';
+  const marShow=h=>{if(typeof MF!=='undefined'&&MF.on)setSheet('peek');else window.scrollTo({top:0,behavior:'smooth'});LM.setView([h.lat,h.lon],16);view.k=0;setTimeout(()=>{const m=MKG[h.name];if(m)m.openPopup()},350)};
+  box.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>{const h=show[+b.dataset.ms].h;setBaseFrom(h);marShow(h)});
+  box.querySelectorAll('[data-mz]').forEach(b=>b.onclick=()=>marShow(show[+b.dataset.mz].h))}
 async function marToggle(force){if(marOn&&!force){marOn=false;$('mh-btn').classList.remove('on');renderMar();return}
   marOn=true;$('mh-btn').classList.add('on');const box=$('mh-list');box.innerHTML='<div class="note">Loading Marriott hotels…</div>';
   try{MAR=await loadMarriott(force);marCode=city.code;renderMar();if(MAR.length&&!force){const b=L.latLngBounds(MAR.map(h=>[h.lat,h.lon]));if(HOTEL)b.extend([HOTEL.lat,HOTEL.lon]);LM.fitBounds(b,{padding:[30,30],maxZoom:15});view.k=0}}
