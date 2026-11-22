@@ -266,7 +266,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 .wfloat span{overflow:hidden;text-overflow:ellipsis}
 
 /* ---- v42 · map-first layout (html.mf) ---- */
-:root{--glass:color-mix(in srgb,var(--panel) 70%,transparent);--glass-b:color-mix(in srgb,var(--line) 85%,transparent);--sheet-h:150px}
+:root{--glass:color-mix(in srgb,var(--panel) 46%,transparent);--glass-b:color-mix(in srgb,var(--line) 85%,transparent);--sheet-h:150px}
 html.mf .glass,html.mf header .citysel>.btn,html.mf header select,html.mf .maptools button,html.mf .panel,html.mf .card,html.mf .hunt,html.mf .thmenu,html.mf #sb-panel,html.mf .world,html.mf .wfloat,html.mf .filters,html.mf .legend{background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25)}
 html.mf body{overflow:hidden}
 html.mf .wrap{display:block;max-width:none;padding:0}
@@ -309,6 +309,14 @@ html.mf .wfloat{top:auto;bottom:calc(var(--sheet-h) + 12px)}
 html.mf #wbtn[aria-pressed=true]{background:var(--cyan);color:#06121a;border-color:var(--cyan)}
 html.mf.mf-full .maptools,html.mf.mf-full .legend,html.mf:has(#world:not([hidden])) .maptools{display:none}
 details.fold>summary{cursor:pointer;color:var(--muted);font-size:12px;list-style:none;padding:2px 0}details.fold>summary::-webkit-details-marker{display:none}details.fold>summary::before{content:'▸ '}details.fold[open]>summary::before{content:'▾ '}
+
+html.mf.mf-full .mfquick{display:none}
+html.mf .alb-head .lbl{display:none}
+html.mf .alb-grid{max-height:none;overflow:visible;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
+html.mf .alb-stamps{padding:4px 2px 6px}html.mf .alb-stamps button{width:48px;height:48px}
+html.mf .alb-bar{margin:6px 0 2px}
+html.mf .panel .tabbody{gap:10px;grid-auto-rows:max-content}
+html.mf .panel .result,html.mf .panel .hotelbox,html.mf .panel .trip,html.mf .panel .list li,html.mf .panel .seg,html.mf .panel input,html.mf .panel select,html.mf .panel textarea,html.mf .panel .stat,html.mf .panel .tblwrap{background:color-mix(in srgb,var(--panel2,#1b2147) 40%,transparent)!important}
 </style>
 
 <div class="wrap">
@@ -415,11 +423,11 @@ details.fold>summary{cursor:pointer;color:var(--muted);font-size:12px;list-style
         <div class="alb-head"><div><span class="lbl">MY INVASION ALBUM</span><h3 id="alb-city"></h3></div><b id="alb-n"></b></div>
         <div class="alb-bar"><i id="alb-bar"></i></div>
         <div class="alb-stamps" id="alb-stamps" aria-label="My cities"></div>
-        <div class="inline" style="flex-wrap:wrap;gap:6px;margin-bottom:8px"><button class="btn y" id="alb-imp">📥 Import from my photos</button><button class="btn" id="alb-bk">💾 Full backup</button><button class="btn" id="alb-rs">♻ Restore</button></div>
+        <details class="fold"><summary>Import photos · backup · restore</summary><div class="inline" style="flex-wrap:wrap;gap:6px;margin:6px 0 4px"><button class="btn y" id="alb-imp">📥 Import from my photos</button><button class="btn" id="alb-bk">💾 Full backup</button><button class="btn" id="alb-rs">♻ Restore</button></div></details>
         <div id="alb-impres" class="note" hidden></div>
         <div class="seg" id="alb-f"><button data-f="all" class="on">All</button><button data-f="got">Flashed</button><button data-f="gap">Missing</button></div>
         <div class="alb-grid" id="alb-grid"></div>
-        <p class="note" style="margin:0">Your own photos fill the slots (📷 in an invader's card). Tap any slot to see it on the map. Destroyed invaders you never flashed are left out.</p>
+        <details class="fold"><summary>How the album works</summary><p class="note" style="margin:4px 0 0">Your own photos fill the slots (📷 in an invader's card). Tap any slot to see it on the map. Destroyed invaders you never flashed are left out.</p></details>
       </div>
       <div class="tabbody" id="p-mark" hidden>
         <p class="note">Mark what you already flashed in the app, so the planner skips it. Type the invader numbers for this city, ranges allowed.</p>
