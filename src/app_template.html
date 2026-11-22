@@ -243,6 +243,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 @container (max-width:600px){#p-score table.sc{min-width:0}#p-score table.sc :is(th,td):nth-child(3),#p-score table.sc :is(th,td):nth-child(7){display:none}#p-score table.sc td,#p-score table.sc th{padding:6px 5px}}
 #gallery>:not(.gph){grid-column:1/-1}
 @container (max-width:420px){#p-score .bar{display:none}#p-score table.sc td{font-size:13px}}
+.pxg{vertical-align:-2px;flex:none}.legend span{display:inline-flex;align-items:center;gap:3px}.legend svg{filter:drop-shadow(1px 1px 0 rgba(0,0,0,.8))}
 </style>
 
 <div class="wrap">
@@ -286,7 +287,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 
       <div class="tabbody" id="p-plan">
         <div class="hotelbox">
-          <div class="inline" style="justify-content:space-between"><span class="lbl">🏨 Hotel / base</span><span class="note" id="hotelname">not set</span></div>
+          <div class="inline" style="justify-content:space-between"><span class="lbl"><svg class="pxg" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM8 0h1v1h-1zM9 0h1v1h-1zM10 0h1v1h-1zM11 0h1v1h-1zM0 1h1v1h-1zM11 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM9 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM9 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM0 10h1v1h-1zM11 10h1v1h-1zM0 11h1v1h-1zM1 11h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1zM11 11h1v1h-1z"/></svg> Hotel / base</span><span class="note" id="hotelname">not set</span></div>
           <div class="inline">
             <button class="btn" id="h-setmap">Set on map</button>
             <button class="btn" id="h-paste">Paste location</button>
@@ -301,7 +302,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
           </div>
         </div>
         <div class="field"><span class="lbl">Start from</span>
-          <div class="seg" id="startsrc"><button data-s="hotel">🏨 Hotel</button><button data-s="gps" id="ss-gps">◎ My location</button><button data-s="pin">⚑ Map pin</button></div>
+          <div class="seg" id="startsrc"><button data-s="hotel"><svg class="pxg" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM8 0h1v1h-1zM9 0h1v1h-1zM10 0h1v1h-1zM11 0h1v1h-1zM0 1h1v1h-1zM11 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM9 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM9 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM0 10h1v1h-1zM11 10h1v1h-1zM0 11h1v1h-1zM1 11h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1zM11 11h1v1h-1z"/></svg> Hotel</button><button data-s="gps" id="ss-gps">◎ My location</button><button data-s="pin">⚑ Map pin</button></div>
         </div>
         <div class="note" id="startnote"></div>
         <div class="field">
@@ -317,7 +318,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
           <div class="field" style="flex:1;min-width:120px"><label for="stop">Min per flash</label><input id="stop" type="number" min="0" max="15" step="1" value="2"></div>
         </div>
         <div class="field"><span class="lbl">Getting around</span>
-          <div class="seg" id="travel"><button data-t="walk" class="on">🚶 Walk</button><button data-t="transit">🚇 + Transit</button><button data-t="taxi">🚕 + Taxi</button></div>
+          <div class="seg" id="travel"><button data-t="walk" class="on"><svg class="pxg" viewBox="0 0 12 12" width="16" height="16" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M5 0h1v1h-1zM6 0h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM4 7h1v1h-1zM7 7h1v1h-1zM4 8h1v1h-1zM7 8h1v1h-1zM3 9h1v1h-1zM8 9h1v1h-1zM3 10h1v1h-1zM8 10h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1z"/></svg> Walk</button><button data-t="transit"><svg class="pxg" viewBox="0 0 12 12" width="16" height="16" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM8 0h1v1h-1zM9 0h1v1h-1zM10 0h1v1h-1zM0 1h1v1h-1zM11 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM9 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1z"/></svg> + Transit</button><button data-t="taxi"><svg class="pxg" viewBox="0 0 12 12" width="16" height="16" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M4 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM2 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM9 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM11 9h1v1h-1zM1 10h1v1h-1zM2 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM1 11h1v1h-1zM2 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1z"/></svg> + Taxi</button></div>
           <div class="inline" id="mwrap" hidden><label for="maxwalk" class="note">Walk legs up to</label><input id="maxwalk" type="number" min="0.2" max="5" step="0.1" value="1" style="width:80px"><span class="note">km, longer hops ride</span></div>
         </div>
         <div class="field"><label for="days">Days (trip planner: one route per day from the same start)</label><input id="days" type="number" min="1" max="7" value="1" style="width:96px"></div>
@@ -395,6 +396,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:99999;
 const DATA=JSON.parse(document.getElementById('data').textContent);
 const $=id=>document.getElementById(id);
 const COLORS={10:'#22e3ff',20:'#45f08a',30:'#ffd90f',40:'#ff9a3c',50:'#ff5aa8',100:'#ff4d5e'};
+const PXG={"walk": "M5 0h1v1h-1zM6 0h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM4 7h1v1h-1zM7 7h1v1h-1zM4 8h1v1h-1zM7 8h1v1h-1zM3 9h1v1h-1zM8 9h1v1h-1zM3 10h1v1h-1zM8 10h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1z", "taxi": "M4 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM2 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM9 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM9 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM11 9h1v1h-1zM1 10h1v1h-1zM2 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM1 11h1v1h-1zM2 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1z", "bus": "M1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM8 0h1v1h-1zM9 0h1v1h-1zM10 0h1v1h-1zM0 1h1v1h-1zM11 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM9 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1z", "hotel": "M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM8 0h1v1h-1zM9 0h1v1h-1zM10 0h1v1h-1zM11 0h1v1h-1zM0 1h1v1h-1zM11 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM9 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM9 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM0 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM0 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM0 10h1v1h-1zM11 10h1v1h-1zM0 11h1v1h-1zM1 11h1v1h-1zM2 11h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM8 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1zM11 11h1v1h-1z"};
+const pxi=(n,s=16)=>`<svg class="pxg" viewBox="0 0 12 12" width="${s}" height="${s}" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="${PXG[n]}"/></svg>`;
+// our own pixel alien (map markers): size follows points, colour follows points
+const ALIEN=['.X.....X.','..XXXXX..','.XX...XX.','XXXXXXXXX','XX.XXX.XX','X..X.X..X'];
+const alienCell=p=>p>=100?3:p>=50?2.6:p>=40?2.3:p>=30?2.1:p>=20?1.9:1.7;
+function alienPath(c,x,y,s){const x0=x-4.5*s,y0=y-3*s;for(let r=0;r<6;r++){const row=ALIEN[r];for(let k=0;k<9;k++)if(row.charCodeAt(k)===88)c.rect(x0+k*s,y0+r*s,s,s)}}
+function drawHotelPx(c,x,y){const s=2,x0=Math.round(x-12),y0=Math.round(y-12);c.fillStyle='#0a0d1c';c.fillRect(x0-1,y0-1,26,26);c.fillStyle='#ffd90f';c.fillRect(x0+2,y0+2,24,24);c.fillStyle='#0a0d1c';c.fillRect(x0,y0,24,24);c.beginPath();const P=new Path2D(PXG.hotel);c.save();c.translate(x0,y0);c.scale(s,s);c.fillStyle='#ff5aa8';c.fill(P);c.restore()}
+function drawAlien(c,x,y,s,col,alpha){c.save();if(alpha!=null)c.globalAlpha=alpha;c.beginPath();alienPath(c,x+Math.max(1,s*.6),y+Math.max(1,s*.6),s);c.fillStyle='rgba(5,6,15,.9)';c.fill();c.beginPath();alienPath(c,x,y,s);c.fillStyle=col;c.fill();c.restore()}
+const alienSvg=(col,w=16)=>`<svg viewBox="0 0 9 6" width="${w}" height="${Math.round(w*6/9)}" aria-hidden="true" shape-rendering="crispEdges" fill="${col}"><path d="${(()=>{let s='';ALIEN.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==='X')s+=`M${x} ${y}h1v1h-1z`}));return s})()}"/></svg>`;
 const ptColor=p=>p>=100?COLORS[100]:p>=50?COLORS[50]:p>=40?COLORS[40]:p>=30?COLORS[30]:p>=20?COLORS[20]:COLORS[10];
 const R=6371;
 function hav(a,b){const dLa=(b[0]-a[0])*Math.PI/180,dLo=(b[1]-a[1])*Math.PI/180;const s=Math.sin(dLa/2)**2+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(s));}
@@ -423,7 +433,7 @@ sel.value=saved&&DATA.cities.some(c=>c.code===saved)?saved:'LDN';
 sel.addEventListener('change',()=>{try{localStorage.setItem('hp_city',sel.value)}catch(e){};loadCity(sel.value)});
 
 // ---------- legend
-$('legend').innerHTML=[[10,'10'],[20,'20'],[30,'30'],[40,'40'],[50,'50'],[100,'100+']].map(([p,l])=>`<span><i style="background:${ptColor(p)}"></i>${l}</span>`).join('')+'<span><i style="background:#3a4270"></i>flashed</span><span><i style="background:none;border:2px solid #45f08a;border-radius:50%;box-shadow:0 0 0 2px #ff4d5e"></i>status changed ≤30d</span>';
+$('legend').innerHTML=[[10,'10'],[20,'20'],[30,'30'],[40,'40'],[50,'50'],[100,'100+']].map(([p,l])=>`<span>${alienSvg(ptColor(p),Math.round(9*alienCell(p)*0.75))} ${l}</span>`).join('')+'<span>'+alienSvg('#6b7399',13)+' flashed</span><span><i style="background:none;border:2px solid #45f08a;border-radius:50%;box-shadow:0 0 0 2px #ff4d5e"></i>status changed ≤30d</span>';
 // ---------- map filters
 const FILTER={up:true,damaged:true,flashed:true,dead:false};try{Object.assign(FILTER,JSON.parse(localStorage.getItem('hp_filter')||'{}'))}catch(e){}
 function catOf(i){if(flashed.has(i[0]))return 'flashed';if(i[4]==='destroyed'||i[4]==='hidden')return 'dead';return i[4]==='ok'?'up':'damaged'}
@@ -517,9 +527,9 @@ function renderHunt(){
   ${i[5]?`<div class="note">${escapeHtml(i[5])}</div>`:''}</div>
   ${LG.m!=='walk'?`<div class="note" style="text-align:center">${LEGICON[LG.m]} Faster by ${LG.m==='transit'?'public transport':'taxi'}: ~${Math.round(LG.min)} min instead of ~${Math.round(dist/hc.v*60)} min on foot</div>`:''}
   <a class="go h-nav" href="https://www.google.com/maps/dir/?api=1&travelmode=${GMODE[LG.m]}&destination=${i[1]},${i[2]}" target="_blank" rel="noopener">▶ NAVIGATE ${LEGICON[LG.m]}</a>
-  ${LG.m!=='walk'?`<a class="btn" style="justify-content:center" href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${i[1]},${i[2]}" target="_blank" rel="noopener">🚶 Walk there instead</a>`:''}
+  ${LG.m!=='walk'?`<a class="btn" style="justify-content:center" href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${i[1]},${i[2]}" target="_blank" rel="noopener">${pxi('walk',14)} Walk there instead</a>`:''}
   <div class="h-acts"><button class="h-big g" id="h-fl">✓ FLASHED</button><button class="h-big r" id="h-miss">✗ NOT FOUND</button></div>
-  <div class="h-acts small"><button class="btn" id="h-skip">Skip ›</button><button class="btn" id="h-photo">📷 My photo</button><button class="btn mic" id="h-mic">🎤 Say a number</button><a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Look it up ↗</a><button class="btn" id="h-tired">${hc.travel==='walk'||hc.maxWalk>0.6?'🥱 Tired: ride more':'🚶 Back to walking'}</button><button class="btn" id="h-end">End hunt</button></div>
+  <div class="h-acts small"><button class="btn" id="h-skip">Skip ›</button><button class="btn" id="h-photo">📷 My photo</button><button class="btn mic" id="h-mic">🎤 Say a number</button><a class="btn" href="${photos(i[0])}" target="_blank" rel="noopener">Look it up ↗</a><button class="btn" id="h-tired">${hc.travel==='walk'||hc.maxWalk>0.6?'🥱 Tired: ride more':pxi('walk',14)+' Back to walking'}</button><button class="btn" id="h-end">End hunt</button></div>
   <div class="note" id="h-heard"></div>`;
   $('h-close').onclick=()=>{o.hidden=true;$('resume').hidden=false};
   $('h-fl').onclick=()=>huntFlash(i[0]);
@@ -747,7 +757,7 @@ $('h-save').onclick=()=>{const p=parseLoc($('h-txt').value);if(!p){toast('Could 
   saveHotel({lat:p[0],lon:p[1],name:$('h-nm').value.trim()||'Hotel'});$('h-pastebox').hidden=true;toast('Hotel saved – it is now your start point')};
 $('h-clear').onclick=()=>{saveHotel(null)};
 $('startsrc').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.disabled)return;if(b.dataset.s==='gps'&&typeof ME==='undefined'){toast('Live location works in the web app version.');return}setSrc(b.dataset.s)});
-function renderStartNote(){renderHotel();$('startnote').innerHTML=`<b>Start:</b> ${startSrc==='hotel'&&HOTEL?'🏨 '+escapeHtml(HOTEL.name||'Hotel'):startSrc==='gps'?'◎ your live location':start[0].toFixed(4)+', '+start[1].toFixed(4)}${$('loop').checked?' · route ends back here':''}`}
+function renderStartNote(){renderHotel();$('startnote').innerHTML=`<b>Start:</b> ${startSrc==='hotel'&&HOTEL?pxi('hotel',13)+' '+escapeHtml(HOTEL.name||'Hotel'):startSrc==='gps'?'◎ your live location':start[0].toFixed(4)+', '+start[1].toFixed(4)}${$('loop').checked?' · route ends back here':''}`}
 
 // ---------- Marriott layer (data from db: marriott/<CITY>, filled by Claude from OpenStreetMap)
 const MC_TIER={L:['#ffd90f','Luxury'],P:['#ff5aa8','Premium'],S:['#3ee0ff','Select']};
@@ -763,7 +773,7 @@ function mcRender(){const box=$('mc-list'),upd=$('mc-upd');if(!box)return;$('mc-
   const rows=mcRows();
   if(!rows){box.innerHTML='<div class="note">Hotel data for this city is not loaded yet. Ask Claude to refresh the Marriott list.</div>';return}
   if(!rows.length){box.innerHTML='<div class="note">No Marriott-family hotels on OpenStreetMap for this city. Use Set on map or Paste location.</div>';return}
-  box.innerHTML=`<div class="note">${rows.length} Marriott-family hotels · ranked by invaders left to hunt within 1 km</div>`+rows.slice(0,15).map((r,k)=>`<div class="mrow"><span class="mdot" style="background:${MC_TIER[r.h.t][0]}"></span><div class="mtx"><b>${mcIsBase(r.h)?'🏨 ':''}${escapeHtml(r.h.n)}</b><span>${escapeHtml(r.h.b)} · 👾 ${r.s.n1} ≤1 km (${r.s.p1} pts) · ${r.s.n3} ≤2.5 km</span></div><button class="btn" data-mz="${k}" aria-label="Show on map">◎</button><button class="btn g" data-ms="${k}">Set</button></div>`).join('');
+  box.innerHTML=`<div class="note">${rows.length} Marriott-family hotels · ranked by invaders left to hunt within 1 km</div>`+rows.slice(0,15).map((r,k)=>`<div class="mrow"><span class="mdot" style="background:${MC_TIER[r.h.t][0]}"></span><div class="mtx"><b>${mcIsBase(r.h)?pxi('hotel',12)+' ':''}${escapeHtml(r.h.n)}</b><span>${escapeHtml(r.h.b)} · 👾 ${r.s.n1} ≤1 km (${r.s.p1} pts) · ${r.s.n3} ≤2.5 km</span></div><button class="btn" data-mz="${k}" aria-label="Show on map">◎</button><button class="btn g" data-ms="${k}">Set</button></div>`).join('');
   box.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>mcSet(rows[+b.dataset.ms].h));
   box.querySelectorAll('[data-mz]').forEach(b=>b.onclick=()=>{const h=rows[+b.dataset.mz].h;window.scrollTo({top:0,behavior:'smooth'});view.lat=h.lat;view.lon=h.lon;view.k=Math.max(view.k,40000);mcCard(h)})}
 function mcCard(h){mcSel=h;selected=null;const s=mcScore(h),c=$('card');
@@ -862,11 +872,12 @@ function draw(){
     if(!visible(i))continue;
     if(!fl&&(st==='destroyed'||st==='hidden')){ const [x,y]=px(i[1],i[2]);ctx.strokeStyle='#59607f';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-3,y-3);ctx.lineTo(x+3,y+3);ctx.moveTo(x+3,y-3);ctx.lineTo(x-3,y+3);ctx.stroke();continue }
     const [x,y]=px(i[1],i[2]); if(x<-20||y<-20||x>W+20||y>H+20)continue;
-    if(fl){ctx.fillStyle='#3a4270';ctx.fillRect(x-r0*.7,y-r0*.7,r0*1.4,r0*1.4);continue}
-    ctx.fillStyle=ptColor(i[3]);ctx.fillRect(x-r0,y-r0,r0*2,r0*2);
-    if(st!=='ok'){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.strokeRect(x-r0-2,y-r0-2,r0*2+4,r0*2+4);ctx.setLineDash([])}
+    const zs=Math.max(.75,Math.min(1.6,r0/6)),cs=alienCell(i[3])*zs,hw=4.5*cs,hh=3*cs;
+    if(fl){drawAlien(ctx,x,y,cs*.7,'#6b7399',.75);continue}
+    drawAlien(ctx,x,y,cs,ptColor(i[3]));
+    if(st!=='ok'){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.strokeRect(x-hw-3,y-hh-3,hw*2+6,hh*2+6);ctx.setLineDash([])}
     if(order&&order.has(i[0])){ctx.fillStyle='#0a0d1c';ctx.font='bold 10px "IBM Plex Mono",monospace';const n=String(order.get(i[0]));ctx.fillStyle='#fff';ctx.strokeStyle='#0a0d1c';ctx.lineWidth=3;ctx.strokeText(n,x+r0+2,y-r0);ctx.fillText(n,x+r0+2,y-r0)}
-    if(selected&&selected[0]===i[0]){ctx.strokeStyle='#ffd90f';ctx.lineWidth=2;ctx.strokeRect(x-r0-5,y-r0-5,r0*2+10,r0*2+10)}
+    if(selected&&selected[0]===i[0]){ctx.strokeStyle='#ffd90f';ctx.lineWidth=2;ctx.strokeRect(x-hw-6,y-hh-6,hw*2+12,hh*2+12)}
   }
   for(const i of city.inv){const c=recentCh(i[0]);if(!c||!visible(i))continue;const [x,y]=px(i[1],i[2]);if(x<-20||y<-20||x>W+20||y>H+20)continue;
     const col=CH_COL[c.type]||'#fff';ctx.strokeStyle='#0a0d1c';ctx.lineWidth=5;ctx.beginPath();ctx.arc(x,y,r0+7,0,7);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,r0+7,0,7);ctx.stroke();
@@ -876,7 +887,7 @@ function draw(){
   // start flag
   const [sx,sy]=px(start[0],start[1]);ctx.fillStyle='#ffd90f';ctx.fillRect(sx-1.5,sy-22,3,22);ctx.beginPath();ctx.moveTo(sx+1.5,sy-22);ctx.lineTo(sx+16,sy-16);ctx.lineTo(sx+1.5,sy-10);ctx.fill();
   ctx.beginPath();ctx.arc(sx,sy,4,0,7);ctx.fill();
-  if(HOTEL){const [hx,hy]=px(HOTEL.lat,HOTEL.lon);ctx.font='20px sans-serif';ctx.fillText('🏨',hx-10,hy+7)}
+  if(HOTEL){const [hx,hy]=px(HOTEL.lat,HOTEL.lon);drawHotelPx(ctx,hx,hy)}
 }
 // interactions
 const ptrs=new Map();let lastPinch=null,downAt=null,moved=false;
@@ -990,7 +1001,7 @@ const TRANSIT={overhead:10,kmh:18,walkKm:0.5}, TAXI={overhead:5,kmh:20,walkKm:0}
 function travelCfg(){return {travel:($('travel').querySelector('.on')||{}).dataset?.t||'walk',maxWalk:Math.max(0.2,+$('maxwalk').value||1),v:Math.max(1,+$('speed').value||4.5)}}
 function legOf(d,cfg){const m=(cfg.travel==='walk'||d<=cfg.maxWalk)?'walk':cfg.travel;
   if(m==='walk')return {m,min:d/cfg.v*60,wkm:d};const T=m==='transit'?TRANSIT:TAXI;return {m,min:T.overhead+d/T.kmh*60,wkm:T.walkKm}}
-const LEGICON={walk:'🚶',transit:'🚇',taxi:'🚕'}, GMODE={walk:'walking',transit:'transit',taxi:'driving'};
+const LEGICON={walk:pxi('walk',14),transit:pxi('bus',14),taxi:pxi('taxi',14)}, GMODE={walk:'walking',transit:'transit',taxi:'driving'};
 function legUrl(a,b,m){return `https://www.google.com/maps/dir/?api=1&travelmode=${GMODE[m]}&origin=${a[0]},${a[1]}&destination=${b[0]},${b[1]}`}
 function plan(o={}){
   const cfg=Object.assign(travelCfg(),o.cfg||{});const stopMin=Math.max(0,+$('stop').value||0), loop=$('loop').checked;
@@ -1049,7 +1060,7 @@ function renderResult(loop,el){
   ${mixed?`<div class="note">${nV} ride${nV>1?'s':''} (${LEGICON[route.cfg.travel]} ${route.vkm.toFixed(1)} km). Tap ↗ on each leg for live ${route.cfg.travel==='transit'?'transit':'driving'} directions.</div>`:''}
   <button class="go" id="huntgo" style="background:var(--green);color:#062b15;box-shadow:0 4px 0 #1a7a44">▶ START HUNT MODE</button>
   ${mixed&&L0?`<a class="btn y" style="justify-content:center" href="${legUrl(L0.a,L0.b,L0.m)}" target="_blank" rel="noopener">▶ Google Maps: first leg ${LEGICON[L0.m]}</a>`:''}
-  ${driveLinks.length?`<div class="inline">${driveLinks.map((u,j)=>`<a class="btn y" href="${u}" target="_blank" rel="noopener">🚕 Whole route by car${driveLinks.length>1?' · part '+(j+1):''}</a>`).join('')}</div>`:''}
+  ${driveLinks.length?`<div class="inline">${driveLinks.map((u,j)=>`<a class="btn y" href="${u}" target="_blank" rel="noopener">${pxi('taxi',14)} Whole route by car${driveLinks.length>1?' · part '+(j+1):''}</a>`).join('')}</div>`:''}
   <div class="inline">${walkLinks.map((u,j)=>`<a class="btn ${mixed?'':'y'}" href="${u}" target="_blank" rel="noopener">${mixed?'🗺 Whole route on map':'▶ Google Maps'}${walkLinks.length>1?' · part '+(j+1):''}</a>`).join('')}</div>
   ${mixed?'<p class="note" style="margin:0">Google Maps can\'t chain several transit legs in one link, so use ↗ on each leg (or NAVIGATE in hunt mode) for live transit directions.</p>':''}
   <ol class="route">${route.stops.map((i,j)=>{const L=legs[j];return `${L?`<li class="leg"><span class="num">${LEGICON[L.m]}</span><span class="note">${L.m==='walk'?(L.d*1000<1000?Math.round(L.d*100)*10+' m':L.d.toFixed(1)+' km'):L.d.toFixed(1)+' km by '+(L.m==='transit'?'transit':'taxi')} · ~${Math.round(L.min)} min</span><a class="btn" href="${legUrl(L.a,L.b,L.m)}" target="_blank" rel="noopener" aria-label="Directions">↗</a></li>`:''}<li><span class="num">${j+1}</span><span>${i[0]} <span class="pts" style="color:${ptColor(i[3])}">${i[3]}</span>${i[4]!=='ok'?' <span class="tag">'+i[4]+'</span>':''}</span><button class="btn g" data-fl="${i[0]}">✓</button></li>`}).join('')}
@@ -1347,7 +1358,7 @@ function renderWx(){const el=$('wx');if(!WX||!WX.days||!WX.days.length||!city||W
 function tripCity(){if(!TRIP||!TRIP.city)return null;return DATA.cities.find(c=>c.code===TRIP.city)||DATA.cities.find(c=>c.name.toLowerCase()===String(TRIP.city).toLowerCase())||null}
 function renderTrip(){const el=$('tripbar');const c=tripCity();if(!c||!TRIP.end||TRIP.end<TODAY()){el.hidden=true;return}
   const n=Math.max(1,Math.round((Date.parse(TRIP.end)-Date.parse(TRIP.start))/864e5)+1);
-  el.hidden=false;el.innerHTML=`<span>✈ <b>${escapeHtml(c.name)}</b> · ${fmtD(TRIP.start)} – ${fmtD(TRIP.end)} (${n} day${n>1?'s':''})${TRIP.hotel&&TRIP.hotel.name?' · 🏨 '+escapeHtml(TRIP.hotel.name):''}</span><button class="btn y" id="trip-go">${city&&city.code===c.code?'Plan this trip':'Switch &amp; plan'}</button>`;
+  el.hidden=false;el.innerHTML=`<span>✈ <b>${escapeHtml(c.name)}</b> · ${fmtD(TRIP.start)} – ${fmtD(TRIP.end)} (${n} day${n>1?'s':''})${TRIP.hotel&&TRIP.hotel.name?' · '+pxi('hotel',13)+' '+escapeHtml(TRIP.hotel.name):''}</span><button class="btn y" id="trip-go">${city&&city.code===c.code?'Plan this trip':'Switch &amp; plan'}</button>`;
   $('trip-go').onclick=()=>{if(!city||city.code!==c.code){sel.value=c.code;try{localStorage.setItem('hp_city',c.code)}catch(e){};loadCity(c.code)}
     $('days').value=Math.min(7,n);const h=TRIP.hotel;if(h&&h.lat&&h.lon&&!HOTEL)saveHotel({lat:h.lat,lon:h.lon,name:h.name||'Hotel'});
     if(TRIP.days&&TRIP.days.length){WX={city:c.code,days:TRIP.days,src:'trip forecast'};renderWx()}

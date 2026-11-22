@@ -1,5 +1,10 @@
 // ================= STANDALONE (Leaflet + GPS) =================
 const STANDALONE=true;
+// pixel-alien marker drawn on Leaflet's canvas renderer (fast for thousands of points)
+const AlienM=L.CircleMarker.extend({_updatePath(){const r=this._renderer;if(!r._drawing||this._empty())return;const p=this._point,c=r._ctx,o=this.options,s=o.cell;
+  drawAlien(c,p.x,p.y,s,o.fillColor,o.fillOpacity);const hw=4.5*s,hh=3*s;
+  if(o.dash){c.save();c.strokeStyle='#fff';c.lineWidth=1;c.setLineDash([2,2]);c.strokeRect(p.x-hw-3,p.y-hh-3,hw*2+6,hh*2+6);c.restore()}
+  if(o.sel){c.save();c.strokeStyle='#ffd90f';c.lineWidth=2.5;c.strokeRect(p.x-hw-6,p.y-hh-6,hw*2+12,hh*2+12);c.restore()}}});
 (function seed(){const S=__SEED__;for(const [code,ids] of Object.entries(S)){try{if(localStorage.getItem('hp_fl_'+code)===null)localStorage.setItem('hp_fl_'+code,JSON.stringify(ids))}catch(e){}}})();
 function applyStatus(ch){const MAP={destroyed:'destroyed',degraded:'damaged',damaged:'damaged',restored:'ok',reactivated:'ok',ok:'ok'};
   const idx=new Map();DATA.cities.forEach(c=>c.inv.forEach(i=>idx.set(i[0],i)));
@@ -35,7 +40,8 @@ function draw(){
   for(const i of city.inv){const st=i[4],fl=flashed.has(i[0]);
     if(!visible(i))continue;
     const dead=st==='destroyed'||st==='hidden';
-    const m=L.circleMarker([i[1],i[2]],{renderer:LR,radius:fl||dead?5:8,weight:selected&&selected[0]===i[0]?4:(st==='ok'?1.5:2),color:selected&&selected[0]===i[0]?'#ffd90f':(st==='ok'?'#0a0d1c':'#ffffff'),dashArray:st==='damaged'?'3 3':null,fillColor:dead?'#59607f':fl?'#6b7399':ptColor(i[3]),fillOpacity:fl||dead?.6:.95,interactive:false}).addTo(LInv);
+    const zf=Math.max(.8,Math.min(1.4,(LM.getZoom()-12)/4+.8)),cs=alienCell(i[3])*zf*(fl||dead?.7:1);
+    const m=new AlienM([i[1],i[2]],{renderer:LR,radius:4.5*cs+2,cell:cs,sel:!!(selected&&selected[0]===i[0]),dash:st==='damaged'||st==='degraded',fillColor:dead?'#59607f':fl?'#6b7399':ptColor(i[3]),fillOpacity:fl||dead?.7:1,interactive:false}).addTo(LInv);
     if(order&&order.has(i[0]))m.bindTooltip(String(order.get(i[0])),{permanent:true,direction:'right',className:'rnum',offset:[6,0]});
     else if(LM.getZoom()>=14&&!dead)LBLC.push({i,m});    const rc=recentCh(i[0]);if(rc){const col=CH_COL[rc.type]||'#fff';L.circleMarker([i[1],i[2]],{renderer:LR,radius:14,weight:3,color:col,fill:false,interactive:false}).addTo(LInv);
       L.marker([i[1],i[2]],{icon:L.divIcon({className:'',html:'<div class="chb" style="background:'+col+'">'+(rc.type==='destroyed'?'✕':(rc.type==='degraded'||rc.type==='damaged')?'!':'↑')+'</div>',iconSize:[16,16],iconAnchor:[-6,22]}),interactive:false,keyboard:false}).addTo(LInv)}
@@ -46,7 +52,7 @@ function draw(){
     if(route.geo&&route.geo.length===(route.path.length-1)){route.geo.forEach((g,j)=>{const leg=route.legs&&route.legs[j];const ride=leg&&leg.m!=='walk';
       L.polyline(ride||!g?[route.path[j],route.path[j+1]]:g,ride||!g?{color:'#ff5aa8',weight:3,dashArray:'4 8',opacity:.9}:{color:'#ff5aa8',weight:5,opacity:.9}).addTo(LRoute)})}
     else L.polyline(route.path,{color:'#ff5aa8',weight:4,dashArray:'8 6'}).addTo(LRoute)}
-  if(HOTEL)L.marker([HOTEL.lat,HOTEL.lon],{icon:L.divIcon({className:'',html:'<div class="flag" style="font-size:24px">🏨</div>',iconSize:[28,28],iconAnchor:[14,14]})}).bindTooltip(HOTEL.name||'Hotel').addTo(LStart);
+  if(HOTEL)L.marker([HOTEL.lat,HOTEL.lon],{icon:L.divIcon({className:'',html:'<div class="hpin">'+pxi('hotel',20)+'</div>',iconSize:[30,30],iconAnchor:[15,15]})}).bindTooltip(HOTEL.name||'Hotel').addTo(LStart);
   if(!(startSrc==='hotel'&&HOTEL))L.marker(start,{icon:L.divIcon({className:'',html:'<div class="flag">'+(startSrc==='gps'?'◎':'⚑')+'</div>',iconSize:[24,24],iconAnchor:[4,22]})}).addTo(LStart);
 }
 function fitCity(){LM.invalidateSize();const [lo0,la0,lo1,la1]=city.bbox;LM.fitBounds([[la0,lo0],[la1,lo1]]);lastView='';view.k=0}
