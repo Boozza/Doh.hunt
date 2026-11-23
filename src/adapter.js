@@ -488,3 +488,7 @@ openWorld=function(){if(worldOn){hideWorldGrid();closeWorld(true);return}worldOn
 function closeWorld(back){if(!worldOn)return;worldOn=false;$('wbtn').setAttribute('aria-pressed','false');LM.removeLayer(WLay);worldLayers(false);if(wFloat){wFloat.remove();wFloat=null}if(back&&wPrev)LM.setView(wPrev[0],wPrev[1])}
 LM.on('zoomend',()=>{if(worldOn)renderWorldMap()});
 const _goCity=goCity;goCity=function(code){const same=city&&city.code===code;closeWorld(false);_goCity(code);if(same)try{fitCity()}catch(e){}};
+
+/* v43.2 · popups never open under the top bar or the sheet */
+LM.on('popupopen',e=>{try{const cs=getComputedStyle(document.documentElement);const hb=parseFloat(cs.getPropertyValue('--hb'))||60,sh=document.documentElement.classList.contains('mf')?(parseFloat(cs.getPropertyValue('--sheet-h'))||0):0;
+  e.popup.options.autoPanPaddingTopLeft=L.point(12,hb+12);e.popup.options.autoPanPaddingBottomRight=L.point(64,sh+12);e.popup.options.autoPan=true;if(e.popup._adjustPan)e.popup._adjustPan()}catch(x){}});

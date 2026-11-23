@@ -331,6 +331,19 @@ html.mf .hunt{bottom:calc(-1 * var(--vfix,0px));padding-bottom:calc(20px + env(s
 html.mf .panel .list,html.mf .panel ol.route{max-height:none;overflow:visible}
 html.mf #p-news{padding-bottom:10px}
 .mfver{position:absolute;right:14px;top:4px;font:400 10px/1 var(--f-mono,monospace);color:var(--muted);letter-spacing:.5px}
+
+/* v43.2 · nothing hides under the top bar or the sheet */
+html.mf .card{max-height:calc(var(--vh,100vh) - var(--sheet-h) - var(--hb,110px) - 18px)!important}
+html.mf .maptools{top:calc(var(--hb,60px) + 8px);max-height:calc(var(--vh,100vh) - var(--sheet-h) - var(--hb,60px) - 20px)}
+html.mf .filters,html.mf .srch{top:calc(var(--hb,60px) + 8px)}
+html.mf .world{top:calc(var(--hb,60px) + 6px)}
+html.mf .thmenu{top:calc(var(--hb,60px) + 8px);max-height:calc(var(--vh,100vh) - var(--hb,60px) - 24px);overflow:auto}
+html.mf .hunt{max-height:min(68vh,calc(var(--vh,100vh) - var(--hb,60px) - 12px))}
+html.mf .navbar{position:fixed;left:max(10px,env(safe-area-inset-left,0px));right:64px;top:calc(var(--hb,60px) + 8px);bottom:auto;transform:none;width:auto;z-index:955}
+html.mf .toast{bottom:calc(var(--sheet-h) + 14px)}
+html.mf .leaflet-bottom{bottom:var(--sheet-h)}
+html.mf .leaflet-top{top:var(--hb,60px)}
+@media(min-width:900px){html.mf .card{max-height:calc(var(--vh,100vh) - var(--hb,60px) - 28px)!important}html.mf .maptools{max-height:calc(var(--vh,100vh) - var(--hb,60px) - 20px)}html.mf .leaflet-bottom{bottom:0}html.mf .toast{bottom:16px}}
 </style>
 
 <div class="wrap">
@@ -536,7 +549,8 @@ const MF={on:true,st:'peek'};try{MF.on=localStorage.getItem('hp_layout')!=='clas
   $('mf-go').onclick=()=>{if(route&&!$('result').hidden){const g=$('huntgo');if(g){g.click();return}}const t=$('t-plan');if(t)t.click();$('plan').click()};
   const sab=document.createElement('div');sab.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';document.body.appendChild(sab);
   const H={peek:()=>{const t=P.querySelector('.tabs');return Math.round(h.offsetHeight+q.offsetHeight+(t?t.offsetHeight:44)+2+sab.offsetHeight)},half:()=>Math.round(innerHeight*.52),full:()=>{const c=document.querySelector('header .citysel');const t=c?c.getBoundingClientRect().bottom+8:70;return Math.round(innerHeight-t)}};
-  window.setSheet=function(st){MF.st=st;document.documentElement.classList.toggle('mf-full',MF.on&&st==='full');if(!MF.on)return;document.documentElement.style.setProperty('--sheet-h',H[st]()+'px');h.setAttribute('aria-expanded',String(st!=='peek'))};
+  window.mfVars=function(){const r=document.documentElement.style;r.setProperty('--vh',innerHeight+'px');const c=document.querySelector('header .citysel');r.setProperty('--hb',Math.round(c&&MF.on?c.getBoundingClientRect().bottom:60)+'px')};
+  window.setSheet=function(st){mfVars();MF.st=st;document.documentElement.classList.toggle('mf-full',MF.on&&st==='full');if(!MF.on)return;document.documentElement.style.setProperty('--sheet-h',H[st]()+'px');h.setAttribute('aria-expanded',String(st!=='peek'))};
   h.onclick=()=>{if(h._drag)return;setSheet(MF.st==='peek'?'half':MF.st==='half'?'full':'peek')};
   let y0=0,hs=0;h.addEventListener('pointerdown',e=>{y0=e.clientY;hs=P.getBoundingClientRect().height;h._drag=false;h.setPointerCapture(e.pointerId);P.style.transition='none'});
   h.addEventListener('pointermove',e=>{if(!h.hasPointerCapture(e.pointerId))return;const d=y0-e.clientY;if(Math.abs(d)>6)h._drag=true;if(h._drag)document.documentElement.style.setProperty('--sheet-h',Math.max(H.peek(),Math.min(H.full(),hs+d))+'px')});
