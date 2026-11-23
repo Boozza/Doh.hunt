@@ -61,7 +61,9 @@ const _gl=mfGoLabel;mfGoLabel=function(){_gl();const g=$('mf-go');if(g&&huntOn()
 if(window.visualViewport)visualViewport.addEventListener('resize',()=>H.classList.toggle('kb',visualViewport.height<innerHeight*0.72));
 
 // ---------- thumbnails (invader-spotter close-ups)
-function refUrl(id){const u=spotUrl(id);return /grosplan/.test(u)?u:''}
+// The Claude version runs in a sandbox that blocks pictures and data from other sites: no external images there.
+const EXT=!/Claude\)/.test((document.querySelector('footer')||{}).textContent||'');
+function refUrl(id){if(!EXT)return '';const u=spotUrl(id);return /grosplan/.test(u)?u:''}
 window.refUrl=refUrl;
 function thumbFor(id,cls){const p=(typeof PHOTOS!=='undefined')&&PHOTOS[id];const u=p?blobUrl(p):refUrl(id);return u?`<img class="${cls||'ithumb'}" src="${u}" alt="" data-id="${id}" loading="lazy" referrerpolicy="no-referrer" onerror="thErr(this)">`:''}
 window.thErr=el=>{if(el.classList.contains('ithumb')){el.remove();return}const s=document.createElement('span');s.className='more';s.textContent=String(el.dataset.id||'').split('_')[1]||'?';s.style.fontSize='13px';el.replaceWith(s)};
@@ -131,7 +133,7 @@ async function cityImg(name){if(name in CIMG)return CIMG[name];let v=null,err=''
   CIMG[name]=v||{u:''};cimgSave();return CIMG[name]}
 function loadImg(u){return new Promise((res,rej)=>{if(!u)return rej();const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>res(u);im.onerror=rej;im.src=u})}
 let CIO=null;
-function wikiBg(el){const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
+function wikiBg(el){if(!EXT)return;const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
   cityImg(c.name).then(async v=>{if(!v||!v.u){if(v)return;CIST.fail++;return}let u=null;try{u=await loadImg(v.u)}catch(e){try{u=await loadImg(v.alt)}catch(e2){}}
     if(!u){CIST.fail++;CIST.why='image blocked';delete CIMG[c.name];cimgSave();return}CIST.ok++;
     el.style.setProperty('--cbg',`url('${u}')`);if(!el.querySelector('.cc-cred'))el.insertAdjacentHTML('beforeend',`<a class="cc-cred" href="${v.l}" target="_blank" rel="noopener">📷 ${escapeHtml(v.by||'')}</a>`);const a=el.querySelector('.cc-cred');if(a)a.onclick=e=>e.stopPropagation()})}
@@ -162,7 +164,7 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
     <div class="cp-tot" id="cp-tot"><div class="r1"><b>TOTAL FLASHED</b><span><span class="big">${fl.toLocaleString()}</span> / ${tot.toLocaleString()} (${Math.round(pct*100)}%)</span></div>
       <div class="cp-bar"><i style="width:${Math.max(1,pct*100).toFixed(1)}%"></i></div>
       <div class="r1"><span class="note">${mine.length} cities · ${pts.toLocaleString()} pts</span><span class="note">${CMORE?'less ▴':'more ▾'}</span></div>
-      ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span><span>City photos: ${CIST.ok} loaded${CIST.fail?` · ${CIST.fail} failed${CIST.why?' ('+escapeHtml(CIST.why)+')':''}`:''}</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
+      ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span>${!EXT?'<span>City photos: your own (outside photos work in the Netlify app)</span>':''}<span ${EXT?'':'hidden'}>City photos: ${CIST.ok} loaded${CIST.fail?` · ${CIST.fail} failed${CIST.why?' ('+escapeHtml(CIST.why)+')':''}`:''}</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
     <div class="cp-row"><input id="cp-q" type="search" placeholder="Search for a city" value="${escapeHtml(CQ)}" aria-label="Search for a city"><button class="btn" id="cp-world" title="World map">🌍 Map</button></div>
     <div class="cp-chips" id="cp-chips">${chips.map(([k,l])=>`<button data-f="${k}" class="${k===CF?'on':''}">${l}</button>`).join('')}</div>
     ${L.map(card).join('')||'<p class="note">No city here.</p>'}</div>`;
