@@ -4,6 +4,7 @@ import json,glob,os
 import datetime
 VER=open('VERSION').read().strip();VD=datetime.date.today().isoformat()
 t=open('app_template.html').read().replace('__VER__',VER).replace('__VERDATE__',VD)
+t=t.replace("</style>",open('v44.css').read()+"</style>",1).replace("loadCity(sel.value);\ninitDb().then(initField);",open('v44.js').read()+"\nloadCity(sel.value);\ninitDb().then(initField);",1)
 d=open('data.json').read().replace('</','<\\/')
 # Claude-version build: embed detailed streets when present (src/streets/<CODE>.json)
 D=json.load(open('data.json'));ns=0

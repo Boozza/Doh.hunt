@@ -387,7 +387,7 @@ function sbUI(){const b=$('sb-btn');if(b){const st=SB.uid?(SB.state==='sync'?'sy
   const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};const say=t=>{const m=$('sb-msg');if(m)m.textContent=t};
   const mail=()=>{const m=(($('sb-mail')&&$('sb-mail').value)||'').trim();if(m)sbSet('hp_sb_mail',m);return m};const pw=()=>($('sb-pw')&&$('sb-pw').value)||'';
   const run=async(f,ok)=>{try{const {error}=await f();say(error?('Failed: '+error.message):(ok||''))}catch(e){say('Failed: '+(e.message||e))}};
-  on('sb-now',()=>sbFull(true));on('sb-out',async()=>{try{await SB.c.auth.signOut()}catch(e){}try{localStorage.removeItem('hp_sb_on');localStorage.removeItem('hp_sb_dirty');localStorage.removeItem('hp_trip')}catch(e){}try{setTrip(null)}catch(e){}});
+  on('sb-now',()=>sbFull(true));on('sb-out',async()=>{try{await SB.c.auth.signOut()}catch(e){}try{localStorage.removeItem('hp_sb_on');localStorage.removeItem('hp_sb_dirty');localStorage.removeItem('hp_trip');localStorage.removeItem('hp_hist')}catch(e){}try{setHist(null)}catch(e){}try{setTrip(null)}catch(e){}});
   on('sb-setpw',()=>{if(pw().length<6){say('At least 6 characters');return}say('Saving…');run(()=>SB.c.auth.updateUser({password:pw()}),'Password set – use it to sign in on your other devices.')});
   on('sb-in',()=>{const m=mail();if(!m||!pw()){say('Enter email and password');return}say('Signing in…');run(()=>SB.c.auth.signInWithPassword({email:m,password:pw()}))});
   on('sb-up',()=>{const m=mail();if(!m||pw().length<6){say('Enter email and a password (6+ chars)');return}say('Creating…');
@@ -405,6 +405,7 @@ async function sbFlush(){if(!SB.uid||SB.busy)return;const d=sbDirty(),ks=Object.
 /* apply server values locally without pushing them back */
 function sbApplyFlashed(code,ids){if(!Array.isArray(ids))return;SB.applying=true;try{localStorage.setItem('hp_fl_'+code,JSON.stringify(ids))}catch(e){}SB.applying=false;
   const s=new Set(ids);allFlashed[code]=s;if(city&&city.code===code){flashed=new Set(ids);route=null;$('result').hidden=true;try{refresh();if(selected&&!$('card').hidden)showCard(selected)}catch(e){}}else{try{renderScore()}catch(e){}}}
+window.histChanged=function(h){try{localStorage.setItem('hp_hist',JSON.stringify(h))}catch(e){}if(typeof SB!=='undefined'&&SB.uid)sbUp('history',h).catch(()=>{})};
 tripChanged=function(t){try{localStorage.setItem('hp_trip',JSON.stringify(t))}catch(e){}if(typeof SB!=='undefined'&&SB.uid)sbUp('trip',t).catch(()=>{})};
 function sbApplyTrip(t){try{localStorage.setItem('hp_trip',JSON.stringify(t))}catch(e){}try{setTrip(t)}catch(e){}}
 function sbApplyFixes(f){if(!f)return;const loc=sbLS('hp_fixes',{});let ch=false;Object.entries(f).forEach(([id,v])=>{if(JSON.stringify(loc[id])!==JSON.stringify(v)){loc[id]=v;ch=true}});
@@ -428,6 +429,7 @@ async function sbFull(loud){if(!SB.uid||SB.busy)return;SB.busy=true;sbState('syn
       if(first&&loc){const u=[...new Set(loc.concat(sv))].sort();sbApplyFlashed(code,u);if(u.length!==sv.length)dirty[k]=1}
       else if(JSON.stringify(loc||[])!==JSON.stringify(sv))sbApplyFlashed(code,sv)}
     if(srv.trip&&srv.trip.city!==undefined)sbApplyTrip(srv.trip);else getData('trip.json').then(t=>{if(t&&t.city){sbApplyTrip(t);sbUp('trip',t).catch(()=>{})}}).catch(()=>{});
+    if(srv.history&&srv.history.cities){try{setHist(srv.history)}catch(e){}}else{const lh=sbLS('hp_hist',null);if(lh&&lh.cities)sbUp('history',lh).catch(()=>{})}
     const sf=(srv.fixes&&srv.fixes.fixes)||{};sbApplyFixes(sf);const lf=sbLS('hp_fixes',{});if(Object.keys(lf).some(id=>!sf[id]||JSON.stringify(sf[id])!==JSON.stringify(lf[id])))dirty.fixes=1;
     const local=await pAll();const sp=Object.keys(srv).filter(k=>k.startsWith('photos/'));let got=0;
     const known=new Set(sbLS('hp_sb_ph_'+SB.uid,[]));let gone=0;
@@ -443,7 +445,7 @@ function sbRT(){if(SB.ch)SB.c.removeChannel(SB.ch);SB.ch=SB.c.channel('kv-'+SB.u
   const r=p.new&&p.new.key?p.new:p.old;if(!r||!r.key)return;if(r.owner&&r.owner!==SB.uid)return;const k=r.key,dirty=sbDirty();
   if(p.eventType==='DELETE'){if(k.startsWith('photos/')){const id=k.slice(7);if(PHOTOS[id]&&!dirty['photo+/'+id]){await _sbRemove(id);try{renderGallery()}catch(e){}}}return}
   if(dirty[k])return;const v=p.new.value||{};
-  if(k.startsWith('flashed/'))sbApplyFlashed(k.slice(8),v.ids);else if(k==='fixes')sbApplyFixes(v.fixes);else if(k==='trip')sbApplyTrip(v);
+  if(k.startsWith('flashed/'))sbApplyFlashed(k.slice(8),v.ids);else if(k==='fixes')sbApplyFixes(v.fixes);else if(k==='trip')sbApplyTrip(v);else if(k==='history'){try{if(v&&v.cities)setHist(v)}catch(e){}}
   else if(k.startsWith('photos/')){try{await sbPhotoGet(k.slice(7),v.path,v.date);renderGallery()}catch(e){}}
   sbState('ok')}).subscribe()}
 async function sbInit(){try{const lib=await sbLoad();SB.c=lib.createClient(SB.url,SB.key,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true,flowType:'implicit'}});
