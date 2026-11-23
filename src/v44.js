@@ -79,6 +79,10 @@ showCard=function(i){_showCard(i);try{const c=$('card'),u=refUrl(i[0]);if(!u||c.
   d.innerHTML=`<img src="${u}" alt="Close-up of ${i[0]}" loading="lazy" referrerpolicy="no-referrer" title="Tap to enlarge"><span class="src">close-up: invader-spotter</span>`;
   const im=d.querySelector('img');im.onerror=()=>d.remove();im.onclick=()=>im.classList.toggle('big');const h=c.querySelector('h3');(h||c.firstChild).after(d)}catch(e){}};
 
+// album: flashed slots without my own photo show the close-up (marked, so own photos stay distinguishable)
+const _ra=renderAlbum;
+renderAlbum=function(){_ra();if(!EXT)return;try{$('alb-grid').querySelectorAll('button[data-id]').forEach(b=>{const sl=b.querySelector('.alb-slot.got');if(!sl||sl.querySelector('img'))return;const u=refUrl(b.dataset.id);if(!u)return;
+  const im=document.createElement('img');im.className='ref';im.loading='lazy';im.referrerPolicy='no-referrer';im.alt='Close-up of '+b.dataset.id;im.onerror=()=>{im.remove();sl.classList.remove('hasref')};im.src=u;sl.classList.add('hasref');sl.prepend(im)})}catch(e){}};
 // ---------- relative dates on news
 function relDay(d){if(!d)return '';const t=Date.parse(d);if(!t)return d.slice(5);const n=Math.floor((Date.now()-t)/864e5);if(n<=0)return 'today';if(n===1)return 'yesterday';if(n<7)return n+' days ago';return new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}
 const _rn=renderNews;
