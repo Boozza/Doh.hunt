@@ -41,7 +41,7 @@ html.mf.nav-cities .panel,html.mf.nav-cities .maptools,html.mf.nav-cities .filte
 .ccard:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.25) 40%,rgba(0,0,0,.78) 100%);pointer-events:none}
 .ccard>*{position:relative}
 .cc-top{position:absolute!important;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center}
-.cc-code{background:rgba(0,0,0,.45);border-radius:12px;padding:3px 10px;font:700 12px var(--f-body);letter-spacing:.04em}
+.cc-code{background:rgba(0,0,0,.45);border:0;color:#fff;border-radius:12px;padding:3px 10px;font:700 12px var(--f-body);letter-spacing:.04em;cursor:pointer}
 .cc-star{background:none;border:0;color:#fff;font-size:24px;line-height:1;cursor:pointer;padding:4px;text-shadow:0 1px 3px #000}
 .cc-star.on{color:var(--yellow)}
 .cc-name{font-size:26px;font-weight:700;line-height:1.1}.cc-name small{font-size:16px;opacity:.75;font-weight:600}

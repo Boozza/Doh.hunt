@@ -129,23 +129,24 @@ const CIST={ok:0,fail:0,why:''};
 const WTITLE={'New York':'New York City','Newcastle':'Newcastle upon Tyne','Bhutan':'Thimphu','Pau':'Pau, Pyrénées-Atlantiques','Faro':'Faro, Portugal','Anzere':'Anzère','Perth':'Perth'};
 const cimgSave=()=>{try{localStorage.setItem('hp_cimg3',JSON.stringify(CIMG))}catch(e){}};
 const fileUrl=(f,w)=>'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(f.replace(/ /g,'_'))+'?width='+w;
-const fileTo=f=>({u:fileUrl(f,1280),alt:fileUrl(f,960),l:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(f.replace(/ /g,'_')),by:'Wikimedia Commons'});
+const fileTo=f=>({u:fileUrl(f,960),alt:fileUrl(f,1280),l:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(f.replace(/ /g,'_')),by:'Wikimedia Commons'});
 async function claims(q,prop){const r=await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${q}&property=${prop}&format=json&origin=*`);if(!r.ok)return [];const j=await r.json();
   return ((j.claims||{})[prop]||[]).filter(c=>c.rank!=='deprecated').sort((a,b)=>(b.rank==='preferred')-(a.rank==='preferred')).map(c=>c.mainsnak&&c.mainsnak.datavalue&&c.mainsnak.datavalue.value).filter(v=>typeof v==='string'&&!/\.svg$/i.test(v))}
-async function cityCands(name){if(CIMG[name])return CIMG[name];const out=[];let err='',ok=false;
-  try{const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent((WTITLE[name]||name).replace(/ /g,'_')));
-    if(r.ok){ok=true;const j=await r.json();if(j.type!=='disambiguation'){const q=j.wikibase_item;
-      if(q){try{(await claims(q,'P18')).slice(0,2).forEach(f=>out.push(fileTo(f)))}catch(e){}try{(await claims(q,'P948')).slice(0,1).forEach(f=>out.push(Object.assign(fileTo(f),{by:'Wikivoyage'})))}catch(e){}}
-      const t=j.thumbnail&&j.thumbnail.source,o=j.originalimage;if(t&&!/\.svg/i.test(t))out.push({u:o&&o.width&&o.width<=1280?o.source:t.replace(/\/\d+px-/,'/960px-'),alt:t,l:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||'',by:'Wikipedia'})}}}catch(e){err=String(e.message||e)}
-  try{const r=await fetch('https://api.openverse.org/v1/images/?q='+encodeURIComponent(name+' city skyline')+'&page_size=6&aspect_ratio=wide&mature=false');if(r.ok){ok=true;const j=await r.json();
-    (j.results||[]).filter(z=>z.url&&!/\.svg/i.test(z.url)).slice(0,3).forEach(x=>out.push({u:x.url,alt:x.thumbnail||'',l:x.foreign_landing_url||'',by:(x.creator?x.creator+' · ':'')+(x.license?'CC '+String(x.license).toUpperCase():'Openverse')}))}}catch(e){err=String(e.message||e)}
-  const seen=new Set();const L=out.filter(x=>!seen.has(x.u)&&seen.add(x.u));
+async function cityCands(name){if(CIMG[name])return CIMG[name];let err='',ok=false;
+  const wiki=(async()=>{const out=[];try{const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent((WTITLE[name]||name).replace(/ /g,'_')));
+    if(!r.ok)return out;ok=true;const j=await r.json();if(j.type==='disambiguation')return out;const q=j.wikibase_item;
+    const [p18,p948]=q?await Promise.all([claims(q,'P18').catch(()=>[]),claims(q,'P948').catch(()=>[])]):[[],[]];
+    p18.slice(0,2).forEach(f=>out.push(fileTo(f)));p948.slice(0,1).forEach(f=>out.push(Object.assign(fileTo(f),{by:'Wikivoyage'})));
+    const t=j.thumbnail&&j.thumbnail.source,o=j.originalimage;if(t&&!/\.svg/i.test(t))out.push({u:o&&o.width&&o.width<=960?o.source:t.replace(/\/\d+px-/,'/960px-'),alt:t,l:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||'',by:'Wikipedia'})}catch(e){err=String(e.message||e)}return out})();
+  const ov=(async()=>{const out=[];try{const r=await fetch('https://api.openverse.org/v1/images/?q='+encodeURIComponent(name+' city skyline')+'&page_size=6&aspect_ratio=wide&mature=false');if(r.ok){ok=true;const j=await r.json();
+    (j.results||[]).filter(z=>z.url&&!/\.svg/i.test(z.url)).slice(0,3).forEach(x=>out.push({u:x.thumbnail||x.url,alt:x.url,l:x.foreign_landing_url||'',by:(x.creator?x.creator+' · ':'')+(x.license?'CC '+String(x.license).toUpperCase():'Openverse')}))}}catch(e){err=String(e.message||e)}return out})();
+  const [a,b]=await Promise.all([wiki,ov]);const seen=new Set();const L=a.concat(b).filter(x=>!seen.has(x.u)&&seen.add(x.u));
   if(!ok){CIST.why=err||'offline';return null}CIMG[name]=L;cimgSave();return L}
 function loadImg(u){return new Promise((res,rej)=>{if(!u)return rej();const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>res(u);im.onerror=rej;im.src=u})}
 let CIO=null;
 async function wikiBg(el,step){if(!EXT)return;const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
   const L=(await cityCands(c.name))||[];const own=ownPhoto(code);const all=L.concat(own?[{u:own,by:'my photo',own:true}]:[]);
-  const pb=el.querySelector('.cc-pic');if(pb)pb.hidden=all.length<2;if(!all.length){CIST.fail++;return}
+  if(!all.length){CIST.fail++;return}
   let k=(CPICK[code]||0)%all.length;if(step){k=(k+1)%all.length}
   for(let n=0;n<all.length;n++){const v=all[(k+n)%all.length];let u=null;try{u=await loadImg(v.u)}catch(e){try{u=await loadImg(v.alt)}catch(e2){}}
     if(!u)continue;k=(k+n)%all.length;if(step||CPICK[code]){CPICK[code]=k;try{localStorage.setItem('hp_cpick',JSON.stringify(CPICK))}catch(e){}}CIST.ok++;
@@ -170,7 +171,7 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
     const vs=h?(h.visits||[]):[];const un=h?(h.unknown||[]):[];
     const hist=vs.length?`<details class="cc-hist"><summary>🕓 ${vs.length} visit${vs.length>1?'s':''} · ${vs.map(v=>MON[+v.from.slice(5,7)-1]+' '+v.from.slice(0,4)).join(' → ')}</summary><ol>${vs.slice().reverse().map(v=>`<li><div class="vh"><b>${fmtRange(v.from,v.to)}</b><span>${v.ids.length} · ${ptsOf(v.ids).toLocaleString()} pts</span></div>${strip(v.ids,5)}</li>`).join('')}${un.length?`<li><div class="vh"><b>Date unknown</b><span>${un.length} · ${ptsOf(un).toLocaleString()} pts</span></div>${strip(un,5)}</li>`:''}</ol></details>`:'';
     return `<div class="ccard" data-c="${c.code}" style="${style}" role="button" tabindex="0" aria-label="Open ${escapeHtml(cityName(c.code))} on the map">
-      <div class="cc-top"><span class="cc-code">${c.code}</span><span class="cc-acts"><button class="cc-pic" data-pic="${c.code}" aria-label="Next photo" title="Next photo" hidden>🖼</button><button class="cc-star${FAV.has(c.code)?' on':''}" data-fav="${c.code}" aria-label="Favourite" aria-pressed="${FAV.has(c.code)}">${FAV.has(c.code)?'★':'☆'}</button></span></div>
+      <div class="cc-top"><button class="cc-code" data-pic="${c.code}" aria-label="${c.code} – tap for another photo" title="Tap for another photo">${c.code}</button><span class="cc-acts"><button class="cc-star${FAV.has(c.code)?' on':''}" data-fav="${c.code}" aria-label="Favourite" aria-pressed="${FAV.has(c.code)}">${FAV.has(c.code)?'★':'☆'}</button></span></div>
       <div class="cc-name">${escapeHtml(cityName(c.code))} ${c.name&&c.name!==c.code?`<small>(${c.code})</small>`:''}</div>${pill}
       <div class="cc-stats"><span>📷 <b>${w.fl}</b> flashed</span><span>🎯 <b>${w.alive}</b> active</span>${w.mine?`<span>⭐ <b>${cityScore(w).toLocaleString()}</b> pts</span>`:''}</div>
       <div class="cc-bar"><i style="width:${Math.round(w.pct*100)}%"></i></div>${hist}</div>`};
