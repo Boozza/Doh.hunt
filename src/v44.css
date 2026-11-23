@@ -79,3 +79,4 @@ html.mf.nav-me #recentbox,html:not(.mf) #recentbox{display:grid}
 .ccard.space{--cbg:radial-gradient(circle at 20% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 70% 60%,#fff 0 1px,transparent 2px),radial-gradient(circle at 40% 80%,#cde 0 1px,transparent 2px),radial-gradient(circle at 85% 20%,#fff 0 1px,transparent 2px),linear-gradient(160deg,#0b1240,#05060f 70%)}
 .cc-mark{align-self:flex-start;border:0;border-radius:12px;padding:6px 12px;background:var(--green);color:#06121a;font:700 14px var(--f-body);cursor:pointer}
 html.mf.mf-full #resume{display:none!important}
+html.mf #wbtn{display:none!important}

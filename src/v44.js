@@ -115,16 +115,26 @@ function hue(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))%360;return h
 function cityScore(w){const r=cityRow(w.c.code);return r?r.pts+(r.n?100:0):0}
 function spaceStat(){const f=flashedOf('SPACE');const up=SPACE.inv.filter(i=>i[4]==='ok');const got=up.filter(i=>f.has(i[0])).length;return {c:SPACE,alive:up.length,left:up.length-got,pl:up.filter(i=>!f.has(i[0])).reduce((a,i)=>a+i[3],0),got,fl:f.size,pct:up.length?got/up.length:0,mine:f.size>0,space:true}}
 // representative city photo: Wikipedia lead image (free licences, credited on the card); own photo / colour as fallback
-let CIMG={};try{CIMG=JSON.parse(localStorage.getItem('hp_cimg')||'{}')}catch(e){}
-const WTITLE={'New York':'New York City','Newcastle':'Newcastle upon Tyne','Perth':'Perth','Menorca':'Menorca','Bhutan':'Thimphu','Djerba':'Djerba','Pau':'Pau, Pyrénées-Atlantiques','Faro':'Faro, Portugal','Anzere':'Anzère'};
-async function wikiImg(name){if(name in CIMG)return CIMG[name];let v=null;
-  try{const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent((WTITLE[name]||name).replace(/ /g,'_')));if(r.ok){const j=await r.json();const t=j.thumbnail&&j.thumbnail.source;
-    if(j.type!=='disambiguation'&&t&&!/\.svg/i.test(t))v={u:t.replace(/\/\d+px-/,'/800px-'),l:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||''};else v={u:'',l:''}}}catch(e){return null}
-  if(v){CIMG[name]=v;try{localStorage.setItem('hp_cimg',JSON.stringify(CIMG))}catch(e){}}return v}
+let CIMG={};try{CIMG=JSON.parse(localStorage.getItem('hp_cimg2')||'{}')}catch(e){}
+const CIST={ok:0,fail:0,why:''};
+const WTITLE={'New York':'New York City','Newcastle':'Newcastle upon Tyne','Bhutan':'Thimphu','Pau':'Pau, Pyrénées-Atlantiques','Faro':'Faro, Portugal','Anzere':'Anzère','Perth':'Perth'};
+const cimgSave=()=>{try{localStorage.setItem('hp_cimg2',JSON.stringify(CIMG))}catch(e){}};
+// 1) Wikipedia lead image (free licences) at a standard Wikimedia width; 2) Openverse (Creative Commons search, no key)
+async function srcWiki(name){const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent((WTITLE[name]||name).replace(/ /g,'_')));if(!r.ok)throw new Error('wiki '+r.status);
+  const j=await r.json();const t=j.thumbnail&&j.thumbnail.source,o=j.originalimage;if(j.type==='disambiguation'||!t||/\.svg/i.test(t))return null;
+  const u=o&&o.width&&o.width<=1280?o.source:t.replace(/\/\d+px-/,'/960px-');return {u,alt:t,l:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||'',by:'Wikipedia'}}
+async function srcOpenverse(name){const r=await fetch('https://api.openverse.org/v1/images/?q='+encodeURIComponent(name+' city skyline')+'&page_size=5&aspect_ratio=wide&mature=false');if(!r.ok)throw new Error('openverse '+r.status);
+  const j=await r.json();const x=(j.results||[]).find(z=>z.url&&!/\.svg/i.test(z.url));if(!x)return null;return {u:x.url,alt:x.thumbnail||'',l:x.foreign_landing_url||'',by:(x.creator?x.creator+' · ':'')+(x.license?'CC '+String(x.license).toUpperCase():'Openverse')}}
+async function cityImg(name){if(name in CIMG)return CIMG[name];let v=null,err='';
+  for(const f of [srcWiki,srcOpenverse]){try{v=await f(name);if(v)break}catch(e){err=String(e.message||e)}}
+  if(!v&&err){CIST.why=err;return null} /* network/API problem: try again next time */
+  CIMG[name]=v||{u:''};cimgSave();return CIMG[name]}
+function loadImg(u){return new Promise((res,rej)=>{if(!u)return rej();const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>res(u);im.onerror=rej;im.src=u})}
 let CIO=null;
 function wikiBg(el){const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
-  wikiImg(c.name).then(v=>{if(!v||!v.u)return;const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>{el.style.setProperty('--cbg',`url('${v.u}')`);if(!el.querySelector('.cc-cred'))el.insertAdjacentHTML('beforeend',`<a class="cc-cred" href="${v.l}" target="_blank" rel="noopener">📷 Wikipedia</a>`);const a=el.querySelector('.cc-cred');if(a)a.onclick=e=>e.stopPropagation()};
-    im.onerror=()=>{v.u='';try{localStorage.setItem('hp_cimg',JSON.stringify(CIMG))}catch(e){}};im.src=v.u})}
+  cityImg(c.name).then(async v=>{if(!v||!v.u){if(v)return;CIST.fail++;return}let u=null;try{u=await loadImg(v.u)}catch(e){try{u=await loadImg(v.alt)}catch(e2){}}
+    if(!u){CIST.fail++;CIST.why='image blocked';delete CIMG[c.name];cimgSave();return}CIST.ok++;
+    el.style.setProperty('--cbg',`url('${u}')`);if(!el.querySelector('.cc-cred'))el.insertAdjacentHTML('beforeend',`<a class="cc-cred" href="${v.l}" target="_blank" rel="noopener">📷 ${escapeHtml(v.by||'')}</a>`);const a=el.querySelector('.cc-cred');if(a)a.onclick=e=>e.stopPropagation()})}
 function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DATA.cities.concat([SPACE]);
   const tot=DATA.cities.reduce((s,c)=>s+c.inv.length,0);const fl=all.reduce((s,c)=>s+flashedOf(c.code).size,0);const pct=tot?fl/tot:0;
   const mine=W.filter(w=>w.mine),done=mine.filter(w=>w.alive&&w.left===0);const pts=W.reduce((s,w)=>s+cityScore(w),0);
@@ -152,7 +162,7 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
     <div class="cp-tot" id="cp-tot"><div class="r1"><b>TOTAL FLASHED</b><span><span class="big">${fl.toLocaleString()}</span> / ${tot.toLocaleString()} (${Math.round(pct*100)}%)</span></div>
       <div class="cp-bar"><i style="width:${Math.max(1,pct*100).toFixed(1)}%"></i></div>
       <div class="r1"><span class="note">${mine.length} cities · ${pts.toLocaleString()} pts</span><span class="note">${CMORE?'less ▴':'more ▾'}</span></div>
-      ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
+      ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span><span>City photos: ${CIST.ok} loaded${CIST.fail?` · ${CIST.fail} failed${CIST.why?' ('+escapeHtml(CIST.why)+')':''}`:''}</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
     <div class="cp-row"><input id="cp-q" type="search" placeholder="Search for a city" value="${escapeHtml(CQ)}" aria-label="Search for a city"><button class="btn" id="cp-world" title="World map">🌍 Map</button></div>
     <div class="cp-chips" id="cp-chips">${chips.map(([k,l])=>`<button data-f="${k}" class="${k===CF?'on':''}">${l}</button>`).join('')}</div>
     ${L.map(card).join('')||'<p class="note">No city here.</p>'}</div>`;
