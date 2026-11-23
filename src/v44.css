@@ -12,7 +12,7 @@ html.mf .bnav{display:flex;position:fixed;z-index:990;left:max(10px,env(safe-are
 .bnav .nbdg[hidden]{display:none}
 html.mf .panel .tabs{display:none!important}
 html.mf .panel{padding-bottom:calc(var(--nav-h,76px) + var(--vfix,0px))}
-html.mf:has(#hunt:not([hidden])) .bnav,html.mf.kb .bnav{display:none}
+html.mf:has(#hunt:not([hidden])) .bnav,html.mf.kb .bnav,html.mf:has(#hunt:not([hidden])) .panel,html.mf:has(#hunt:not([hidden])) #world,html.mf:has(#hunt:not([hidden])) .wfloat{display:none!important}
 html.mf.nav-me #mesub{display:flex;flex:none;margin:0 12px 6px}
 #mesub button{flex:1}
 /* status chips always on the map */
@@ -75,3 +75,7 @@ html.mf.nav-me #recentbox,html:not(.mf) #recentbox{display:grid}
 #recentbox .rv .t{display:flex;justify-content:space-between;gap:8px;font-size:14px}
 #recentbox .rv .t b{font-size:15px}
 @media(min-width:900px){html.mf .bnav{right:404px;left:12px;bottom:12px}html.mf .panel{padding-bottom:0}html.mf.nav-cities #citiespg{padding-bottom:96px}}
+.ccard .cc-cred{position:absolute!important;right:10px;bottom:6px;font-size:10px;opacity:.75;color:#fff;text-decoration:none}
+.ccard.space{--cbg:radial-gradient(circle at 20% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 70% 60%,#fff 0 1px,transparent 2px),radial-gradient(circle at 40% 80%,#cde 0 1px,transparent 2px),radial-gradient(circle at 85% 20%,#fff 0 1px,transparent 2px),linear-gradient(160deg,#0b1240,#05060f 70%)}
+.cc-mark{align-self:flex-start;border:0;border-radius:12px;padding:6px 12px;background:var(--green);color:#06121a;font:700 14px var(--f-body);cursor:pointer}
+html.mf.mf-full #resume{display:none!important}

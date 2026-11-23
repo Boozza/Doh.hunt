@@ -25,7 +25,11 @@ function navMark(k){CUR=k;nav.querySelectorAll('button').forEach(b=>b.toggleAttr
   ['map','cities','hunt','news','me'].forEach(n=>H.classList.toggle('nav-'+n,n===k));
   ms.querySelectorAll('button').forEach(b=>b.classList.toggle('on',$(b.dataset.t)&&$(b.dataset.t).getAttribute('aria-selected')==='true'))}
 document.querySelectorAll('.tabs [role=tab]').forEach(t=>t.addEventListener('click',()=>{const k=TAB2NAV[t.id];if(k)navMark(k)}));
-function navGo(k,sub){const same=k===CUR;
+function closeOverlays(k){try{document.querySelectorAll('.thmenu:not([hidden])').forEach(m=>m.hidden=true);const tb=$('thbtn');if(tb)tb.setAttribute('aria-expanded','false');const sa=$('sb-acct');if(sa)sa.setAttribute('aria-expanded','false')}catch(e){}
+  const sb=$('srchbox');if(sb)sb.hidden=true;
+  if(k!=='map'){try{hideWorldGrid()}catch(e){}try{if(typeof closeWorld==='function')closeWorld(false)}catch(e){}if(!$('card').hidden){selected=null;$('card').hidden=true;try{draw()}catch(e){}}}}
+window.closeOverlays=closeOverlays;
+function navGo(k,sub){const same=k===CUR;closeOverlays(k);
   if(k==='cities'){navMark('cities');renderCities();if(same)pg.scrollTo({top:0,behavior:'smooth'});return}
   if(k==='map'){$('t-list').click();navMark('map');setSheet('peek');if(same){try{fitCity()}catch(e){}}return}
   if(k==='hunt'){$('t-plan').click();navMark('hunt');setSheet(same&&MF.st==='half'?'full':'half');return}
@@ -41,6 +45,14 @@ window.setSheet=function(st){_set(st);if(!MF.on||innerWidth>=900)return;const nh
   let v=parseFloat(getComputedStyle(H).getPropertyValue('--sheet-h'))||0;
   if(st==='peek')v=peek;else if(st==='half')v=Math.max(v,peek+180);
   H.style.setProperty('--sheet-h',v+'px')};
+// hunt mode: hide the sheet and the world while hunting, back to peek when it is minimised or closed
+{const hu=$('hunt');let was=!hu.hidden;new MutationObserver(()=>{const on=!hu.hidden;if(on===was)return;was=on;if(on){closeOverlays('hunt')}else{try{setSheet('peek')}catch(e){}}}).observe(hu,{attributes:true,attributeFilter:['hidden']})}
+// a hunt in progress: START resumes it instead of starting over
+const huntOn=()=>typeof HUNT!=='undefined'&&HUNT&&city&&HUNT.city===city.code&&HUNT.idx<HUNT.stops.length;
+{const g=$('mf-go'),_o=g.onclick;g.onclick=e=>{if(huntOn()&&$('hunt').hidden){$('resume').click();return}_o&&_o(e)}}
+const _gl=mfGoLabel;mfGoLabel=function(){_gl();const g=$('mf-go');if(g&&huntOn())g.textContent='RESUME ▶'};
+{const r=$('result');if(r)r.addEventListener('click',e=>{if(e.target.closest('#huntgo')&&huntOn()){e.stopImmediatePropagation();e.preventDefault();$('resume').click()}},true)}
+{const hu=$('hunt');new MutationObserver(()=>{try{mfGoLabel()}catch(e){}}).observe(hu,{attributes:true,attributeFilter:['hidden']})}
 // score pill → Me
 {const p=$('mf-pill');if(p)p.onclick=()=>navGo('me','t-score')}
 // news badge mirror
@@ -101,14 +113,31 @@ let CQ='',CMORE=false;
 function ownPhoto(code){if(typeof PHOTOS==='undefined')return null;let best=null;for(const [id,p] of Object.entries(PHOTOS)){if(id.split('_')[0]!==code)continue;if(!best||(p.date||'')>(best.date||''))best=p}return best?blobUrl(best):null}
 function hue(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))%360;return h}
 function cityScore(w){const r=cityRow(w.c.code);return r?r.pts+(r.n?100:0):0}
-function renderCities(){const W=worldStats();const all=DATA.cities.concat([SPACE]);
+function spaceStat(){const f=flashedOf('SPACE');const up=SPACE.inv.filter(i=>i[4]==='ok');const got=up.filter(i=>f.has(i[0])).length;return {c:SPACE,alive:up.length,left:up.length-got,pl:up.filter(i=>!f.has(i[0])).reduce((a,i)=>a+i[3],0),got,fl:f.size,pct:up.length?got/up.length:0,mine:f.size>0,space:true}}
+// representative city photo: Wikipedia lead image (free licences, credited on the card); own photo / colour as fallback
+let CIMG={};try{CIMG=JSON.parse(localStorage.getItem('hp_cimg')||'{}')}catch(e){}
+const WTITLE={'New York':'New York City','Newcastle':'Newcastle upon Tyne','Perth':'Perth','Menorca':'Menorca','Bhutan':'Thimphu','Djerba':'Djerba','Pau':'Pau, Pyrénées-Atlantiques','Faro':'Faro, Portugal','Anzere':'Anzère'};
+async function wikiImg(name){if(name in CIMG)return CIMG[name];let v=null;
+  try{const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent((WTITLE[name]||name).replace(/ /g,'_')));if(r.ok){const j=await r.json();const t=j.thumbnail&&j.thumbnail.source;
+    if(j.type!=='disambiguation'&&t&&!/\.svg/i.test(t))v={u:t.replace(/\/\d+px-/,'/800px-'),l:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||''};else v={u:'',l:''}}}catch(e){return null}
+  if(v){CIMG[name]=v;try{localStorage.setItem('hp_cimg',JSON.stringify(CIMG))}catch(e){}}return v}
+let CIO=null;
+function wikiBg(el){const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
+  wikiImg(c.name).then(v=>{if(!v||!v.u)return;const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>{el.style.setProperty('--cbg',`url('${v.u}')`);if(!el.querySelector('.cc-cred'))el.insertAdjacentHTML('beforeend',`<a class="cc-cred" href="${v.l}" target="_blank" rel="noopener">📷 Wikipedia</a>`);const a=el.querySelector('.cc-cred');if(a)a.onclick=e=>e.stopPropagation()};
+    im.onerror=()=>{v.u='';try{localStorage.setItem('hp_cimg',JSON.stringify(CIMG))}catch(e){}};im.src=v.u})}
+function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DATA.cities.concat([SPACE]);
   const tot=DATA.cities.reduce((s,c)=>s+c.inv.length,0);const fl=all.reduce((s,c)=>s+flashedOf(c.code).size,0);const pct=tot?fl/tot:0;
-  const mine=W.filter(w=>w.mine),done=mine.filter(w=>w.alive&&w.left===0);const pts=W.reduce((s,w)=>s+(w.mine?cityScore(w):0),0)+(flashedOf('SPACE').has('SPACE_02')?100:0);
+  const mine=W.filter(w=>w.mine),done=mine.filter(w=>w.alive&&w.left===0);const pts=W.reduce((s,w)=>s+cityScore(w),0);
   const alive=W.reduce((s,w)=>s+w.got,0);
   let L=W.slice();if(CF==='mine')L=L.filter(w=>w.mine);else if(CF==='done')L=L.filter(w=>w.mine&&w.alive&&w.left===0);else if(CF==='fav')L=L.filter(w=>FAV.has(w.c.code));else if(CF==='new')L=L.filter(w=>!w.mine);
   if(CQ){const q=CQ.toLowerCase();L=L.filter(w=>w.c.code.toLowerCase().includes(q)||String(w.c.name||'').toLowerCase().includes(q))}
   L.sort((a,b)=>(FAV.has(b.c.code)-FAV.has(a.c.code))||(b.mine-a.mine)||(b.fl-a.fl)||(b.pl-a.pl));
   const card=w=>{const c=w.c,h=HIST&&HIST.cities[c.code],bg=ownPhoto(c.code),hu=hue(c.code);
+    if(w.space)return `<div class="ccard space" data-c="SPACE" role="group" aria-label="Space">
+      <div class="cc-top"><span class="cc-code">SPACE</span><button class="cc-star${FAV.has('SPACE')?' on':''}" data-fav="SPACE" aria-label="Favourite" aria-pressed="${FAV.has('SPACE')}">${FAV.has('SPACE')?'★':'☆'}</button></div>
+      <div class="cc-name">Space <small>(ISS)</small></div>${w.left?`<button class="cc-mark" id="cc-space">✓ Mark SPACE_02 flashed</button>`:'<span class="cc-pill done">✓ complete</span>'}
+      <div class="cc-stats"><span>📷 <b>${w.fl}</b> flashed</span><span>🎯 <b>${w.alive}</b> active</span>${w.mine?`<span>⭐ <b>${cityScore(w).toLocaleString()}</b> pts</span>`:''}</div>
+      <div class="cc-bar"><i style="width:${Math.round(w.pct*100)}%"></i></div></div>`;
     const style=bg?`--cbg:url('${bg}')`:`--cbg:linear-gradient(135deg,hsl(${hu} 55% 32%),hsl(${(hu+60)%360} 60% 18%))`;
     const pill=!w.alive?'<span class="cc-pill">none active</span>':w.mine&&w.left===0?'<span class="cc-pill done">✓ complete</span>':`<span class="cc-pill">${w.left} left to flash · ${w.pl.toLocaleString()} pts</span>`;
     const vs=h?(h.visits||[]):[];const un=h?(h.unknown||[]):[];
@@ -123,7 +152,7 @@ function renderCities(){const W=worldStats();const all=DATA.cities.concat([SPACE
     <div class="cp-tot" id="cp-tot"><div class="r1"><b>TOTAL FLASHED</b><span><span class="big">${fl.toLocaleString()}</span> / ${tot.toLocaleString()} (${Math.round(pct*100)}%)</span></div>
       <div class="cp-bar"><i style="width:${Math.max(1,pct*100).toFixed(1)}%"></i></div>
       <div class="r1"><span class="note">${mine.length} cities · ${pts.toLocaleString()} pts</span><span class="note">${CMORE?'less ▴':'more ▾'}</span></div>
-      ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive-(flashedOf('SPACE').size)}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
+      ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
     <div class="cp-row"><input id="cp-q" type="search" placeholder="Search for a city" value="${escapeHtml(CQ)}" aria-label="Search for a city"><button class="btn" id="cp-world" title="World map">🌍 Map</button></div>
     <div class="cp-chips" id="cp-chips">${chips.map(([k,l])=>`<button data-f="${k}" class="${k===CF?'on':''}">${l}</button>`).join('')}</div>
     ${L.map(card).join('')||'<p class="note">No city here.</p>'}</div>`;
@@ -133,7 +162,10 @@ function renderCities(){const W=worldStats();const all=DATA.cities.concat([SPACE
   $('cp-chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;CF=b.dataset.f;try{localStorage.setItem('hp_cf',CF)}catch(x){};renderCities()};
   pg.querySelectorAll('[data-fav]').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.fav;FAV.has(k)?FAV.delete(k):FAV.add(k);try{localStorage.setItem('hp_fav',JSON.stringify([...FAV]))}catch(x){};renderCities()});
   pg.querySelectorAll('.cc-hist').forEach(d=>d.addEventListener('click',e=>e.stopPropagation()));
-  pg.querySelectorAll('.ccard').forEach(el=>{const go=()=>{navGo('map');goCity(el.dataset.c)};el.onclick=go;el.onkeydown=e=>{if(e.key==='Enter')go()}})}
+  {const m=$('cc-space');if(m)m.onclick=e=>{e.stopPropagation();const f=new Set(flashedOf('SPACE'));f.add('SPACE_02');allFlashed.SPACE=f;try{localStorage.setItem('hp_fl_SPACE',JSON.stringify([...f]))}catch(x){};try{renderScore()}catch(x){};toast('SPACE_02 marked flashed');renderCities()}}
+  if(CIO)CIO.disconnect();CIO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){CIO.unobserve(en.target);wikiBg(en.target)}}),{root:pg,rootMargin:'300px'}):null;
+  pg.querySelectorAll('.ccard:not(.space)').forEach(el=>{if(CIO)CIO.observe(el);else wikiBg(el)});
+  pg.querySelectorAll('.ccard:not(.space)').forEach(el=>{const go=()=>{navGo('map');goCity(el.dataset.c)};el.onclick=go;el.onkeydown=e=>{if(e.key==='Enter')go()}})}
 window.renderCities=renderCities;
 // start on Map
 navMark('map');setTimeout(()=>{try{setSheet(MF.st||'peek')}catch(e){}},0);
