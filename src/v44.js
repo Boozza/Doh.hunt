@@ -121,26 +121,37 @@ function hue(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))%360;return h
 function cityScore(w){const r=cityRow(w.c.code);return r?r.pts+(r.n?100:0):0}
 function spaceStat(){const f=flashedOf('SPACE');const up=SPACE.inv.filter(i=>i[4]==='ok');const got=up.filter(i=>f.has(i[0])).length;return {c:SPACE,alive:up.length,left:up.length-got,pl:up.filter(i=>!f.has(i[0])).reduce((a,i)=>a+i[3],0),got,fl:f.size,pct:up.length?got/up.length:0,mine:f.size>0,space:true}}
 // representative city photo: Wikipedia lead image (free licences, credited on the card); own photo / colour as fallback
-let CIMG={};try{CIMG=JSON.parse(localStorage.getItem('hp_cimg2')||'{}')}catch(e){}
+// City photo candidates, best first: Wikidata "image" (P18, one curated photo) → Wikivoyage banner (P948) → Wikipedia lead image → Openverse (CC search) → my own photo.
+// 🖼 on a card cycles through them; the choice is remembered per city.
+let CIMG={};try{CIMG=JSON.parse(localStorage.getItem('hp_cimg3')||'{}')}catch(e){}
+let CPICK={};try{CPICK=JSON.parse(localStorage.getItem('hp_cpick')||'{}')}catch(e){}
 const CIST={ok:0,fail:0,why:''};
 const WTITLE={'New York':'New York City','Newcastle':'Newcastle upon Tyne','Bhutan':'Thimphu','Pau':'Pau, Pyrénées-Atlantiques','Faro':'Faro, Portugal','Anzere':'Anzère','Perth':'Perth'};
-const cimgSave=()=>{try{localStorage.setItem('hp_cimg2',JSON.stringify(CIMG))}catch(e){}};
-// 1) Wikipedia lead image (free licences) at a standard Wikimedia width; 2) Openverse (Creative Commons search, no key)
-async function srcWiki(name){const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent((WTITLE[name]||name).replace(/ /g,'_')));if(!r.ok)throw new Error('wiki '+r.status);
-  const j=await r.json();const t=j.thumbnail&&j.thumbnail.source,o=j.originalimage;if(j.type==='disambiguation'||!t||/\.svg/i.test(t))return null;
-  const u=o&&o.width&&o.width<=1280?o.source:t.replace(/\/\d+px-/,'/960px-');return {u,alt:t,l:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||'',by:'Wikipedia'}}
-async function srcOpenverse(name){const r=await fetch('https://api.openverse.org/v1/images/?q='+encodeURIComponent(name+' city skyline')+'&page_size=5&aspect_ratio=wide&mature=false');if(!r.ok)throw new Error('openverse '+r.status);
-  const j=await r.json();const x=(j.results||[]).find(z=>z.url&&!/\.svg/i.test(z.url));if(!x)return null;return {u:x.url,alt:x.thumbnail||'',l:x.foreign_landing_url||'',by:(x.creator?x.creator+' · ':'')+(x.license?'CC '+String(x.license).toUpperCase():'Openverse')}}
-async function cityImg(name){if(name in CIMG)return CIMG[name];let v=null,err='';
-  for(const f of [srcWiki,srcOpenverse]){try{v=await f(name);if(v)break}catch(e){err=String(e.message||e)}}
-  if(!v&&err){CIST.why=err;return null} /* network/API problem: try again next time */
-  CIMG[name]=v||{u:''};cimgSave();return CIMG[name]}
+const cimgSave=()=>{try{localStorage.setItem('hp_cimg3',JSON.stringify(CIMG))}catch(e){}};
+const fileUrl=(f,w)=>'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(f.replace(/ /g,'_'))+'?width='+w;
+const fileTo=f=>({u:fileUrl(f,1280),alt:fileUrl(f,960),l:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(f.replace(/ /g,'_')),by:'Wikimedia Commons'});
+async function claims(q,prop){const r=await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${q}&property=${prop}&format=json&origin=*`);if(!r.ok)return [];const j=await r.json();
+  return ((j.claims||{})[prop]||[]).filter(c=>c.rank!=='deprecated').sort((a,b)=>(b.rank==='preferred')-(a.rank==='preferred')).map(c=>c.mainsnak&&c.mainsnak.datavalue&&c.mainsnak.datavalue.value).filter(v=>typeof v==='string'&&!/\.svg$/i.test(v))}
+async function cityCands(name){if(CIMG[name])return CIMG[name];const out=[];let err='',ok=false;
+  try{const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent((WTITLE[name]||name).replace(/ /g,'_')));
+    if(r.ok){ok=true;const j=await r.json();if(j.type!=='disambiguation'){const q=j.wikibase_item;
+      if(q){try{(await claims(q,'P18')).slice(0,2).forEach(f=>out.push(fileTo(f)))}catch(e){}try{(await claims(q,'P948')).slice(0,1).forEach(f=>out.push(Object.assign(fileTo(f),{by:'Wikivoyage'})))}catch(e){}}
+      const t=j.thumbnail&&j.thumbnail.source,o=j.originalimage;if(t&&!/\.svg/i.test(t))out.push({u:o&&o.width&&o.width<=1280?o.source:t.replace(/\/\d+px-/,'/960px-'),alt:t,l:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||'',by:'Wikipedia'})}}}catch(e){err=String(e.message||e)}
+  try{const r=await fetch('https://api.openverse.org/v1/images/?q='+encodeURIComponent(name+' city skyline')+'&page_size=6&aspect_ratio=wide&mature=false');if(r.ok){ok=true;const j=await r.json();
+    (j.results||[]).filter(z=>z.url&&!/\.svg/i.test(z.url)).slice(0,3).forEach(x=>out.push({u:x.url,alt:x.thumbnail||'',l:x.foreign_landing_url||'',by:(x.creator?x.creator+' · ':'')+(x.license?'CC '+String(x.license).toUpperCase():'Openverse')}))}}catch(e){err=String(e.message||e)}
+  const seen=new Set();const L=out.filter(x=>!seen.has(x.u)&&seen.add(x.u));
+  if(!ok){CIST.why=err||'offline';return null}CIMG[name]=L;cimgSave();return L}
 function loadImg(u){return new Promise((res,rej)=>{if(!u)return rej();const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>res(u);im.onerror=rej;im.src=u})}
 let CIO=null;
-function wikiBg(el){if(!EXT)return;const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
-  cityImg(c.name).then(async v=>{if(!v||!v.u){if(v)return;CIST.fail++;return}let u=null;try{u=await loadImg(v.u)}catch(e){try{u=await loadImg(v.alt)}catch(e2){}}
-    if(!u){CIST.fail++;CIST.why='image blocked';delete CIMG[c.name];cimgSave();return}CIST.ok++;
-    el.style.setProperty('--cbg',`url('${u}')`);if(!el.querySelector('.cc-cred'))el.insertAdjacentHTML('beforeend',`<a class="cc-cred" href="${v.l}" target="_blank" rel="noopener">📷 ${escapeHtml(v.by||'')}</a>`);const a=el.querySelector('.cc-cred');if(a)a.onclick=e=>e.stopPropagation()})}
+async function wikiBg(el,step){if(!EXT)return;const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
+  const L=(await cityCands(c.name))||[];const own=ownPhoto(code);const all=L.concat(own?[{u:own,by:'my photo',own:true}]:[]);
+  const pb=el.querySelector('.cc-pic');if(pb)pb.hidden=all.length<2;if(!all.length){CIST.fail++;return}
+  let k=(CPICK[code]||0)%all.length;if(step){k=(k+1)%all.length}
+  for(let n=0;n<all.length;n++){const v=all[(k+n)%all.length];let u=null;try{u=await loadImg(v.u)}catch(e){try{u=await loadImg(v.alt)}catch(e2){}}
+    if(!u)continue;k=(k+n)%all.length;if(step||CPICK[code]){CPICK[code]=k;try{localStorage.setItem('hp_cpick',JSON.stringify(CPICK))}catch(e){}}CIST.ok++;
+    el.style.setProperty('--cbg',`url('${u}')`);let a=el.querySelector('.cc-cred');if(!a){el.insertAdjacentHTML('beforeend','<a class="cc-cred" target="_blank" rel="noopener"></a>');a=el.querySelector('.cc-cred');a.onclick=e=>e.stopPropagation()}
+    a.textContent='📷 '+(v.by||'')+(all.length>1?` · ${k+1}/${all.length}`:'');if(v.l)a.href=v.l;else a.removeAttribute('href');return}
+  CIST.fail++;CIST.why='image blocked'}
 function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DATA.cities.concat([SPACE]);
   const tot=DATA.cities.reduce((s,c)=>s+c.inv.length,0);const fl=all.reduce((s,c)=>s+flashedOf(c.code).size,0);const pct=tot?fl/tot:0;
   const mine=W.filter(w=>w.mine),done=mine.filter(w=>w.alive&&w.left===0);const pts=W.reduce((s,w)=>s+cityScore(w),0);
@@ -159,7 +170,7 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
     const vs=h?(h.visits||[]):[];const un=h?(h.unknown||[]):[];
     const hist=vs.length?`<details class="cc-hist"><summary>🕓 ${vs.length} visit${vs.length>1?'s':''} · ${vs.map(v=>MON[+v.from.slice(5,7)-1]+' '+v.from.slice(0,4)).join(' → ')}</summary><ol>${vs.slice().reverse().map(v=>`<li><div class="vh"><b>${fmtRange(v.from,v.to)}</b><span>${v.ids.length} · ${ptsOf(v.ids).toLocaleString()} pts</span></div>${strip(v.ids,5)}</li>`).join('')}${un.length?`<li><div class="vh"><b>Date unknown</b><span>${un.length} · ${ptsOf(un).toLocaleString()} pts</span></div>${strip(un,5)}</li>`:''}</ol></details>`:'';
     return `<div class="ccard" data-c="${c.code}" style="${style}" role="button" tabindex="0" aria-label="Open ${escapeHtml(cityName(c.code))} on the map">
-      <div class="cc-top"><span class="cc-code">${c.code}</span><button class="cc-star${FAV.has(c.code)?' on':''}" data-fav="${c.code}" aria-label="Favourite" aria-pressed="${FAV.has(c.code)}">${FAV.has(c.code)?'★':'☆'}</button></div>
+      <div class="cc-top"><span class="cc-code">${c.code}</span><span class="cc-acts"><button class="cc-pic" data-pic="${c.code}" aria-label="Next photo" title="Next photo" hidden>🖼</button><button class="cc-star${FAV.has(c.code)?' on':''}" data-fav="${c.code}" aria-label="Favourite" aria-pressed="${FAV.has(c.code)}">${FAV.has(c.code)?'★':'☆'}</button></span></div>
       <div class="cc-name">${escapeHtml(cityName(c.code))} ${c.name&&c.name!==c.code?`<small>(${c.code})</small>`:''}</div>${pill}
       <div class="cc-stats"><span>📷 <b>${w.fl}</b> flashed</span><span>🎯 <b>${w.alive}</b> active</span>${w.mine?`<span>⭐ <b>${cityScore(w).toLocaleString()}</b> pts</span>`:''}</div>
       <div class="cc-bar"><i style="width:${Math.round(w.pct*100)}%"></i></div>${hist}</div>`};
@@ -177,6 +188,7 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
   $('cp-world').onclick=()=>{navGo('map');setTimeout(()=>{try{openWorld()}catch(e){}},60)};
   $('cp-chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;CF=b.dataset.f;try{localStorage.setItem('hp_cf',CF)}catch(x){};renderCities()};
   pg.querySelectorAll('[data-fav]').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.fav;FAV.has(k)?FAV.delete(k):FAV.add(k);try{localStorage.setItem('hp_fav',JSON.stringify([...FAV]))}catch(x){};renderCities()});
+  pg.querySelectorAll('[data-pic]').forEach(b=>b.onclick=e=>{e.stopPropagation();wikiBg(b.closest('.ccard'),true)});
   pg.querySelectorAll('.cc-hist').forEach(d=>d.addEventListener('click',e=>e.stopPropagation()));
   {const m=$('cc-space');if(m)m.onclick=e=>{e.stopPropagation();const f=new Set(flashedOf('SPACE'));f.add('SPACE_02');allFlashed.SPACE=f;try{localStorage.setItem('hp_fl_SPACE',JSON.stringify([...f]))}catch(x){};try{renderScore()}catch(x){};toast('SPACE_02 marked flashed');renderCities()}}
   if(CIO)CIO.disconnect();CIO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){CIO.unobserve(en.target);wikiBg(en.target)}}),{root:pg,rootMargin:'300px'}):null;
