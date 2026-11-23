@@ -411,6 +411,7 @@ html.mf #p-news{padding-bottom:10px}
         </div>
         <div class="field"><label for="days">Days (trip planner: one route per day from the same start)</label><input id="days" type="number" min="1" max="7" value="1" style="width:96px"></div>
         <label class="check"><input type="checkbox" id="loop" checked> Loop back to start</label><label class="check" id="endhotel-l"><input type="checkbox" id="endhotel"> Finish at my hotel</label>
+        <label class="check" id="fixroute-l" hidden><input type="checkbox" id="fixroute" checked> Follow my trip route <span class="note" id="fixroute-n"></span></label>
         <label class="check"><input type="checkbox" id="dmg" checked> Include damaged pieces</label>
         <button class="go" id="plan">PLAN MY HUNT</button>
         <div class="result" id="result" hidden></div>
@@ -1153,6 +1154,7 @@ function legOf(d,cfg){const m=(cfg.travel==='walk'||d<=cfg.maxWalk)?'walk':cfg.t
 const LEGICON={walk:pxi('walk',14),transit:pxi('bus',14),taxi:pxi('taxi',14)}, GMODE={walk:'walking',transit:'transit',taxi:'driving'};
 function legUrl(a,b,m){return `https://www.google.com/maps/dir/?api=1&travelmode=${GMODE[m]}&origin=${a[0]},${a[1]}&destination=${b[0]},${b[1]}`}
 function plan(o={}){
+  if(o.fixed&&o.fixed.start&&o.fixed.start.lat){try{localStorage.setItem('hp_start_'+city.code,JSON.stringify([o.fixed.start.lat,o.fixed.start.lon]))}catch(e){};startSrc='pin';start=[o.fixed.start.lat,o.fixed.start.lon]}
   const cfg=Object.assign(travelCfg(),o.cfg||{});const stopMin=Math.max(0,+$('stop').value||0), loopChk=$('loop').checked;
   const endHotel=!loopChk&&$('endhotel').checked&&HOTEL;const endPt=loopChk?start:(endHotel?[HOTEL.lat,HOTEL.lon]:null);const loop=!!endPt;
   const budget=Math.max(0.1,o.budget||+$('budget').value||60);
@@ -1186,13 +1188,15 @@ function plan(o={}){
         const before=cost(A.p,B.p)+(D?cost(Cc.p,D.p):0), after=cost(A.p,Cc.p)+(D?cost(B.p,D.p):0);
         if(after<before-1e-6){r=r.slice(0,a).concat(r.slice(a,b+1).reverse(),r.slice(b+1));better=true}}}
     tot=total(r)}
-  for(let pass=0;pass<4;pass++){insertAll();twoOpt()}
+  if(o.fixed){const inv=o.fixed.ids.filter(id=>!flashed.has(id)&&!MISSING.has(id)).map(id=>invById(id)).filter(Boolean);r=[S].concat(inv.map(i=>({p:[i[1],i[2]],i})));if(endPt)r.push({p:endPt,i:null})}
+  else for(let pass=0;pass<4;pass++){insertAll();twoOpt()}
   const stops=r.filter(x=>x.i).map(x=>x.i);
   const legs=[];let wkm=0,mins=0,vkm=0;
   for(let j=0;j<r.length-1;j++){const d=walk(r[j].p,r[j+1].p);const L=legOf(d,cfg);legs.push({a:r[j].p,b:r[j+1].p,d,m:L.m,min:L.min});wkm+=L.wkm;mins+=L.min;if(L.m!=='walk')vkm+=d}
   route={stops,path:r.map(x=>x.p),km:wkm,vkm,minutes:mins+stops.length*stopMin,pts:stops.reduce((s,i)=>s+i[3],0),legs,cfg};
   if(o.quiet){const rr=route;return rr}
   renderResult(loop,undefined,endHotel?'hotel':'start');
+  if(o.fixed){const n=document.createElement('p');n.className='note';n.innerHTML='📋 Order follows your trip plan'+(o.fixed.src?' ('+escapeHtml(o.fixed.src)+')':'')+'. Untick <b>Follow my trip route</b> for an optimised order.';$('result').prepend(n)}
   if(MF.on){setSheet('half');mfGoLabel();setTimeout(()=>{try{$('result').scrollIntoView({block:'start',behavior:'smooth'})}catch(e){}},80)}
   if(route.path.length>1){const la=route.path.map(p=>p[0]),lo=route.path.map(p=>p[1]);const a=Math.min(...la),b=Math.max(...la),c=Math.min(...lo),d=Math.max(...lo);
     view.lat=(a+b)/2;view.lon=(c+d)/2;const kx=(W-60)/(((d-c)||1e-3)*Math.cos(view.lat*Math.PI/180)),ky=(H-80)/((b-a)||1e-3);view.k=Math.min(kx,ky,3e6)}
@@ -1534,6 +1538,31 @@ function drawStreets(lw){const S=city&&city.streets;if(!S)return false;const z=v
       let a=l[3]*Math.PI/180;if(a>Math.PI/2)a-=Math.PI;if(a<-Math.PI/2)a+=Math.PI;ctx.translate(x,y);ctx.rotate(a);ctx.lineWidth=3;ctx.strokeStyle='rgba(10,13,28,.85)';ctx.strokeText(l[0],0,0);ctx.fillStyle='#d9dcf2';ctx.fillText(l[0],0,0);ctx.setTransform(dpr,0,0,dpr,0,0)}
     ctx.restore()}
   return true}
+
+// ---- v43 · fixed trip route: the hunt order from the trip plan (e.g. Tripsy). Arrives by a private link (#route=…), kept on this device + private sync only – never in the repo.
+function routeLS(){try{return JSON.parse(localStorage.getItem('hp_routes')||'{}')}catch(e){return {}}}
+function routeFor(code){if(!code)return null;if(TRIP&&TRIP.city===code&&TRIP.route&&TRIP.route.ids&&TRIP.route.ids.length)return TRIP.route;const r=routeLS()[code];return r&&r.ids&&r.ids.length?r:null}
+function syncFixUI(){const l=$('fixroute-l');if(!l)return;const r=city&&routeFor(city.code);l.hidden=!r;if(r){const left=r.ids.filter(id=>!flashed.has(id)).length;$('fixroute-n').textContent='('+left+'/'+r.ids.length+' left'+(r.start&&r.start.name?' · start '+r.start.name:'')+')'}}
+{const _st=setTrip;setTrip=function(t){if(t&&t.city&&!(t.route&&t.route.ids)){const r=routeLS()[t.city];if(r&&r.ids&&r.ids.length){t=Object.assign({},t,{route:r});setTimeout(()=>{try{tripChanged(t)}catch(e){}},1500)}}
+  else if(t&&t.city&&t.route&&t.route.ids){const all=routeLS();if(JSON.stringify(all[t.city])!==JSON.stringify(t.route)){all[t.city]=t.route;try{localStorage.setItem('hp_routes',JSON.stringify(all))}catch(e){}}}
+  const r=_st.call(this,t);try{syncFixUI()}catch(e){}return r}}
+{const _lc=loadCity;loadCity=function(){const r=_lc.apply(this,arguments);try{syncFixUI()}catch(e){}return r}}
+{const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{syncFixUI()}catch(e){}return r}}
+{const _rp=runPlan;runPlan=function(){const fr=$('fixroute'),r=city&&routeFor(city.code);if(r&&fr&&fr.checked&&!$('fixroute-l').hidden){DAYS=null;return plan({fixed:r})}return _rp.apply(this,arguments)};$('plan').onclick=runPlan}
+function importRouteHash(){const h=location.hash||'';const m=h.match(/(?:^#|&)route=([^&]+)/);if(!m)return;
+  const ids=decodeURIComponent(m[1]).split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);
+  const ok=[...new Set(ids)].filter(id=>INVBY.has(id));history.replaceState(null,'',location.pathname+location.search);
+  if(!ok.length){toast('Route link: no known invaders in it');return}
+  const c=INVBY.get(ok[0])[0];let st=null;const sm=h.match(/(?:^#|&)start=([^&]+)/);
+  if(sm){const a=decodeURIComponent(sm[1]).split(',');if(a.length>=2&&isFinite(+a[0])&&isFinite(+a[1]))st={lat:+a[0],lon:+a[1],name:a.slice(2).join(',').trim()||'Start'}}
+  const src=(h.match(/(?:^#|&)src=([^&]+)/)||[])[1];
+  const r={ids:ok.filter(id=>INVBY.get(id)[0].code===c.code),start:st,src:src?decodeURIComponent(src):'trip plan',at:TODAY()};
+  const all=routeLS();all[c.code]=r;try{localStorage.setItem('hp_routes',JSON.stringify(all))}catch(e){}
+  if(TRIP&&TRIP.city===c.code){TRIP=Object.assign({},TRIP,{route:r});try{tripChanged(TRIP)}catch(e){}}
+  if(!city||city.code!==c.code){sel.value=c.code;try{localStorage.setItem('hp_city',c.code)}catch(e){};loadCity(c.code)}
+  const fr=$('fixroute');if(fr)fr.checked=true;syncFixUI();toast('Trip route saved: '+r.ids.length+' invaders in '+c.name+(st?' · start '+st.name:''))}
+window.addEventListener('hashchange',()=>{try{importRouteHash()}catch(e){}});
+setTimeout(()=>{try{importRouteHash()}catch(e){}},400);
 
 loadCity(sel.value);
 initDb().then(initField);
