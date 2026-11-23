@@ -1549,9 +1549,9 @@ function syncFixUI(){const l=$('fixroute-l');if(!l)return;const r=city&&routeFor
 {const _lc=loadCity;loadCity=function(){const r=_lc.apply(this,arguments);try{syncFixUI()}catch(e){}return r}}
 {const _rf=refresh;refresh=function(){const r=_rf.apply(this,arguments);try{syncFixUI()}catch(e){}return r}}
 {const _rp=runPlan;runPlan=function(){const fr=$('fixroute'),r=city&&routeFor(city.code);if(r&&fr&&fr.checked&&!$('fixroute-l').hidden){DAYS=null;return plan({fixed:r})}return _rp.apply(this,arguments)};$('plan').onclick=runPlan}
-function importRouteHash(){const h=location.hash||'';const m=h.match(/(?:^#|&)route=([^&]+)/);if(!m)return;
+function importRouteHash(txt){const fromHash=txt==null;let h=fromHash?(location.hash||''):String(txt).trim();if(!fromHash){const k=h.indexOf('#');h=k>=0?h.slice(k):(/route=/.test(h)?'#'+h.replace(/^[^?]*\?/,''):'#route='+h.replace(/\s+/g,','))}const m=h.match(/(?:^#|&)route=([^&]+)/);if(!m)return false;
   const ids=decodeURIComponent(m[1]).split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);
-  const ok=[...new Set(ids)].filter(id=>INVBY.has(id));history.replaceState(null,'',location.pathname+location.search);
+  const ok=[...new Set(ids)].filter(id=>INVBY.has(id));if(fromHash)history.replaceState(null,'',location.pathname+location.search);
   if(!ok.length){toast('Route link: no known invaders in it');return}
   const c=INVBY.get(ok[0])[0];let st=null;const sm=h.match(/(?:^#|&)start=([^&]+)/);
   if(sm){const a=decodeURIComponent(sm[1]).split(',');if(a.length>=2&&isFinite(+a[0])&&isFinite(+a[1]))st={lat:+a[0],lon:+a[1],name:a.slice(2).join(',').trim()||'Start'}}
@@ -1560,7 +1560,9 @@ function importRouteHash(){const h=location.hash||'';const m=h.match(/(?:^#|&)ro
   const all=routeLS();all[c.code]=r;try{localStorage.setItem('hp_routes',JSON.stringify(all))}catch(e){}
   if(TRIP&&TRIP.city===c.code){TRIP=Object.assign({},TRIP,{route:r});try{tripChanged(TRIP)}catch(e){}}
   if(!city||city.code!==c.code){sel.value=c.code;try{localStorage.setItem('hp_city',c.code)}catch(e){};loadCity(c.code)}
-  const fr=$('fixroute');if(fr)fr.checked=true;syncFixUI();toast('Trip route saved: '+r.ids.length+' invaders in '+c.name+(st?' · start '+st.name:''))}
+  const fr=$('fixroute');if(fr)fr.checked=true;syncFixUI();toast('Trip route saved: '+r.ids.length+' invaders in '+c.name+(st?' · start '+st.name:''));return true}
+{const b=document.createElement('button');b.className='btn';b.id='route-paste';b.type='button';b.textContent='📋 Paste trip route';b.title='Paste a route link or a list of invader IDs';$('plan').before(b);
+ b.onclick=async()=>{let t='';try{t=await navigator.clipboard.readText()}catch(e){}if(!/[A-Z]+_\d+/i.test(t||''))t=prompt('Paste the route link (or invader IDs separated by commas):',t||'')||'';if(!t.trim())return;let ok=false;try{ok=importRouteHash(t)}catch(e){}if(!ok)toast('No route found in what you pasted')}}
 window.addEventListener('hashchange',()=>{try{importRouteHash()}catch(e){}});
 setTimeout(()=>{try{importRouteHash()}catch(e){}},400);
 
