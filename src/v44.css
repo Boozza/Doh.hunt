@@ -186,3 +186,13 @@ html.mf .panel .tabbody{overflow-x:hidden!important;touch-action:pan-y}
 .bnav .bkdot{position:absolute;top:6px;left:calc(50% + 10px);width:9px;height:9px;border-radius:50%;background:var(--orange,#ff9f1a);box-shadow:0 0 0 2px rgba(0,0,0,.4)}
 .btn.due{animation:hlive 1.6s ease-in-out infinite}
 .bkd{color:var(--orange,#ff9f1a)}
+/* v50.2 · readable Me boxes */
+#recentbox,#statsbox{background:rgba(6,8,22,.62);border-color:rgba(255,255,255,.16)}
+html[data-theme=light] #recentbox,html[data-theme=light] #statsbox{background:rgba(255,255,255,.75)}
+#statsbox .lbl,#recentbox .lbl{color:var(--fg);font-weight:700}
+.stgrid span{font-size:12px;color:var(--fg);opacity:.85}
+.stgrid b{font-size:20px}
+.sty{font-size:13px}.sty span{color:var(--fg);font-weight:700}.sty b{color:var(--fg);font-weight:600;opacity:.9}
+#statsbox .note,#recentbox .note{color:var(--fg);opacity:.85}
+#recentbox .rv .t{color:var(--fg)}
+#r-all{justify-self:start}

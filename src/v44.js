@@ -104,11 +104,13 @@ function cityName(code){const c=CITYBY.get(code);return c?(c.name&&c.name!==c.co
 // Me → "My recent flashes"
 const rb=document.createElement('div');rb.id='recentbox';
 {const sc=$('p-score');if(sc)sc.prepend(rb)}
+let RALL=false;
 function renderRecent(){const V=allVisits();
   rb.innerHTML=`<div class="rh"><span class="lbl">MY RECENT FLASHES</span><label class="btn" style="cursor:pointer">📥 History file<input type="file" id="hist-in" accept=".json,application/json" hidden></label></div>`+
-  (V.length?V.slice(0,8).map((v,k)=>`<div class="rv" data-k="${k}"><div class="t"><span><b>${escapeHtml(cityName(v.code))}</b> · ${fmtRange(v.from,v.to)}</span><span>${v.ids.length} flashed · ${ptsOf(v.ids).toLocaleString()} pts</span></div>${strip(v.ids,5)}</div>`).join('')
+  (V.length?V.slice(0,RALL?V.length:8).map((v,k)=>`<div class="rv" data-k="${k}"><div class="t"><span><b>${escapeHtml(cityName(v.code))}</b> · ${fmtRange(v.from,v.to)}</span><span>${v.ids.length} flashed · ${ptsOf(v.ids).toLocaleString()} pts</span></div>${strip(v.ids,5)}</div>`).join('')
    :'<p class="note" style="margin:0">Load your hunt history file (made from your photo library) to see each visit with its real dates.</p>');
   rb.querySelectorAll('.rv').forEach(el=>el.onclick=()=>{const v=V[+el.dataset.k];if(!v)return;if(!city||city.code!==v.code){goCity(v.code)}navGo('me','t-album')});
+  if(V.length>8){const b=document.createElement('button');b.className='btn';b.id='r-all';b.textContent=RALL?'Show fewer':`Show all ${V.length} visits`;b.onclick=e=>{e.stopPropagation();RALL=!RALL;renderRecent()};rb.appendChild(b)}
   const fi=$('hist-in');if(fi)fi.onchange=async()=>{const f=fi.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(!j||!j.cities)throw 0;setHist(j);histChanged(j);toast('Hunt history loaded: '+allVisits().length+' visits')}catch(e){toast('That file is not a hunt history file')}fi.value=''}}
 renderRecent();
 
