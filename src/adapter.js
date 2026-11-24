@@ -242,7 +242,7 @@ function renderNear(){const n=nearestOpen();if(!n||n.d>5){near.hidden=true;NEARC
   $('near-id').textContent=n.i[0];$('near-d').textContent=m<1000?m+' m':(m/1000).toFixed(1)+' km';$('near-p').textContent=n.i[3]+' pts';$('near-p').style.color=ptColor(n.i[3]);
   $('near-fl').hidden=m>60;near.classList.toggle('hot',m<=40);near.dataset.b=bearing(ME,[n.i[1],n.i[2]]);updArrows();
   if(m<=40&&lastNear!==n.i[0]){lastNear=n.i[0];if(navigator.vibrate)navigator.vibrate([200,100,200]);beep();toast(n.i[0]+' is about '+m+' m away!')}}
-function updArrows(){const b=+near.dataset.b||0;$('near-ar').style.transform=`rotate(${HEADING==null?b:b-HEADING}deg)`;
+function updArrows(){const b=+near.dataset.b||0;const na=$('near-ar');if(na)na.style.transform=`rotate(${HEADING==null?b:b-HEADING}deg)`;
   const ha=document.querySelector('#hunt .h-dir .arrow');if(ha&&ha.dataset.b!=null)ha.style.transform=`rotate(${HEADING==null?+ha.dataset.b:+ha.dataset.b-HEADING}deg)`}
 let arRaf=0;function onHeading(e){const h=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.absolute&&e.alpha!=null?360-e.alpha:null);if(h==null)return;HEADING=h;if(!arRaf)arRaf=requestAnimationFrame(()=>{arRaf=0;updArrows()})}
 function enableCompass(){const go=()=>{window.addEventListener('deviceorientationabsolute',onHeading,true);window.addEventListener('deviceorientation',onHeading,true);$('near-cmp').classList.add('on');toast('Compass on – arrows now point where to walk')};

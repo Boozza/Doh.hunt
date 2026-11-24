@@ -169,7 +169,7 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
     const style=bg?`--cbg:url('${bg}')`:`--cbg:linear-gradient(135deg,hsl(${hu} 55% 32%),hsl(${(hu+60)%360} 60% 18%))`;
     const pill=!w.alive?'<span class="cc-pill">none active</span>':w.mine&&w.left===0?'<span class="cc-pill done">✓ complete</span>':`<span class="cc-pill">${w.left} left to flash · ${w.pl.toLocaleString()} pts</span>`;
     const vs=h?(h.visits||[]):[];const un=h?(h.unknown||[]):[];
-    const hist=vs.length?`<details class="cc-hist"><summary>🕓 ${vs.length} visit${vs.length>1?'s':''} · ${vs.map(v=>MON[+v.from.slice(5,7)-1]+' '+v.from.slice(0,4)).join(' → ')}</summary><ol>${vs.slice().reverse().map(v=>`<li><div class="vh"><b>${fmtRange(v.from,v.to)}</b><span>${v.ids.length} · ${ptsOf(v.ids).toLocaleString()} pts</span></div>${strip(v.ids,5)}</li>`).join('')}${un.length?`<li><div class="vh"><b>Date unknown</b><span>${un.length} · ${ptsOf(un).toLocaleString()} pts</span></div>${strip(un,5)}</li>`:''}</ol></details>`:'';
+    const hist=vs.length?`<details class="cc-hist"><summary>🕓 ${vs.length} visit${vs.length>1?'s':''} · ${vs.map(v=>MON[+v.from.slice(5,7)-1]+' '+v.from.slice(0,4)).join(' → ')}</summary><ol>${vs.slice().reverse().map(v=>`<li><div class="vh"><b>${fmtRange(v.from,v.to)}</b><span>${v.ids.length} · ${ptsOf(v.ids).toLocaleString()} pts</span></div>${strip(v.ids,5)}</li>`).join('')}${un.length?`<li><div class="vh"><b>Date unknown</b><span>${un.length} · ${ptsOf(un).toLocaleString()} pts</span></div>${strip(un,5)}<details class="unfix"><summary>✎ Set the visit for each one</summary>${un.map(id=>`<div class="unrow"><span>${id}</span><select data-ufix="${id}" data-c="${c.code}" aria-label="Visit for ${id}"><option value="-1">date unknown</option>${vs.map((v,k)=>`<option value="${k}">${fmtRange(v.from,v.to)}</option>`).join('')}</select></div>`).join('')}</details></li>`:''}</ol></details>`:'';
     return `<div class="ccard" data-c="${c.code}" style="${style}" role="button" tabindex="0" aria-label="Open ${escapeHtml(cityName(c.code))} on the map">
       <div class="cc-top"><button class="cc-code" data-pic="${c.code}" aria-label="${c.code} – tap for another photo" title="Tap for another photo">${c.code}</button><span class="cc-acts"><button class="cc-star${FAV.has(c.code)?' on':''}" data-fav="${c.code}" aria-label="Favourite" aria-pressed="${FAV.has(c.code)}">${FAV.has(c.code)?'★':'☆'}</button></span></div>
       <div class="cc-name">${escapeHtml(cityName(c.code))} ${c.name&&c.name!==c.code?`<small>(${c.code})</small>`:''}</div>${pill}
@@ -190,12 +190,88 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
   $('cp-chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;CF=b.dataset.f;try{localStorage.setItem('hp_cf',CF)}catch(x){};renderCities()};
   pg.querySelectorAll('[data-fav]').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.fav;FAV.has(k)?FAV.delete(k):FAV.add(k);try{localStorage.setItem('hp_fav',JSON.stringify([...FAV]))}catch(x){};renderCities()});
   pg.querySelectorAll('[data-pic]').forEach(b=>b.onclick=e=>{e.stopPropagation();wikiBg(b.closest('.ccard'),true)});
+  pg.querySelectorAll('[data-ufix]').forEach(sel=>{sel.onclick=e=>e.stopPropagation();sel.onchange=()=>{assignVisit(sel.dataset.c,sel.dataset.ufix,+sel.value);const row=sel.closest('.unrow');if(row&&+sel.value>=0){row.classList.add('done');sel.disabled=true;toast(sel.dataset.ufix+' → '+sel.options[sel.selectedIndex].text)}}});
   pg.querySelectorAll('.cc-hist').forEach(d=>d.addEventListener('click',e=>e.stopPropagation()));
   {const m=$('cc-space');if(m)m.onclick=e=>{e.stopPropagation();const f=new Set(flashedOf('SPACE'));f.add('SPACE_02');allFlashed.SPACE=f;try{localStorage.setItem('hp_fl_SPACE',JSON.stringify([...f]))}catch(x){};try{renderScore()}catch(x){};toast('SPACE_02 marked flashed');renderCities()}}
   if(CIO)CIO.disconnect();CIO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){CIO.unobserve(en.target);wikiBg(en.target)}}),{root:pg,rootMargin:'300px'}):null;
   pg.querySelectorAll('.ccard:not(.space)').forEach(el=>{if(CIO)CIO.observe(el);else wikiBg(el)});
   pg.querySelectorAll('.ccard:not(.space)').forEach(el=>{const go=()=>{navGo('map');goCity(el.dataset.c)};el.onclick=go;el.onkeydown=e=>{if(e.key==='Enter')go()}})}
 window.renderCities=renderCities;
+/* ================= v47 · map-only zoom, photo viewer, text size, live Hunt tab, safe hunts, manual visit dates ================= */
+// 1) zoom only on the map: block page pinch / double-tap zoom (the map and the photo viewer handle their own gestures)
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1&&!e.target.closest('#lmap,#map,.leaflet-container,#pview'))e.preventDefault()},{passive:false});
+{const m=document.querySelector('meta[name=viewport]');if(m&&!/maximum-scale/.test(m.content))m.content+=',maximum-scale=1,user-scalable=no'}
+
+// 2) full-screen photo viewer with pinch zoom
+const pv=document.createElement('div');pv.id='pview';pv.hidden=true;pv.setAttribute('role','dialog');pv.setAttribute('aria-label','Photo');
+pv.innerHTML='<img alt=""><button class="pv-x" aria-label="Close">✕</button><span class="pv-cap"></span>';document.body.appendChild(pv);
+const pvi=pv.querySelector('img');let PZ={s:1,x:0,y:0},pvP=new Map(),pd=0,lastTap=0,moved=false;
+const pvApply=()=>{pvi.style.transform=`translate(${PZ.x}px,${PZ.y}px) scale(${PZ.s})`};
+function openPhoto(src,cap){pvi.src=src;pv.querySelector('.pv-cap').textContent=cap||'';PZ={s:1,x:0,y:0};pvApply();pv.hidden=false}
+window.openPhoto=openPhoto;
+const pvClose=()=>{pv.hidden=true;pvi.removeAttribute('src')};
+pv.querySelector('.pv-x').onclick=pvClose;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pv.hidden)pvClose()});
+pv.addEventListener('pointerdown',e=>{if(e.target.closest('.pv-x'))return;pv.setPointerCapture(e.pointerId);pvP.set(e.pointerId,[e.clientX,e.clientY]);moved=false;if(pvP.size===2){const [a,b]=[...pvP.values()];pd=Math.hypot(a[0]-b[0],a[1]-b[1])}});
+pv.addEventListener('pointermove',e=>{if(!pvP.has(e.pointerId))return;const p0=pvP.get(e.pointerId);pvP.set(e.pointerId,[e.clientX,e.clientY]);
+  if(pvP.size===2){const [a,b]=[...pvP.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd){PZ.s=Math.min(6,Math.max(1,PZ.s*d/pd));if(PZ.s===1){PZ.x=PZ.y=0}}pd=d;moved=true;pvApply()}
+  else if(PZ.s>1){PZ.x+=e.clientX-p0[0];PZ.y+=e.clientY-p0[1];if(Math.abs(e.clientX-p0[0])+Math.abs(e.clientY-p0[1])>2)moved=true;pvApply()}
+  else if(Math.abs(e.clientY-p0[1])>3){moved=true}});
+pv.addEventListener('pointerup',e=>{pvP.delete(e.pointerId);if(pvP.size<2)pd=0;if(moved)return;const t=Date.now();
+  if(t-lastTap<300){PZ=PZ.s>1?{s:1,x:0,y:0}:{s:2.5,x:0,y:0};pvApply();lastTap=0}else{lastTap=t;setTimeout(()=>{if(lastTap===t&&PZ.s===1&&e.target!==pvi)pvClose()},310)}});
+pv.addEventListener('wheel',e=>{e.preventDefault();PZ.s=Math.min(6,Math.max(1,PZ.s*Math.exp(-e.deltaY*0.002)));if(PZ.s===1)PZ.x=PZ.y=0;pvApply()},{passive:false});
+document.addEventListener('click',e=>{const im=e.target.closest&&e.target.closest('#card img,.h-ph,#recentbox .tstrip img,.cc-hist .tstrip img');if(!im||!im.src)return;
+  e.preventDefault();e.stopPropagation();openPhoto(im.dataset.full||im.src,im.alt||im.dataset.id||'')},true);
+
+// 3) text size (Look menu)
+const FS=[1,1.12,1.25,1.4];let fsI=0;try{fsI=Math.min(3,Math.max(0,+localStorage.getItem('hp_fs')||0))}catch(e){}
+const fsApply=()=>H.style.setProperty('--fs',FS[fsI]);fsApply();
+const _rtm=renderThemeMenu;renderThemeMenu=function(){_rtm();if(thMenu.hidden)return;const r=document.createElement('div');r.className='fsrow';
+  r.innerHTML=`<span>Text size</span><button class="btn" id="fs-m" aria-label="Smaller text" ${fsI?'':'disabled'}>A−</button><b>${Math.round(FS[fsI]*100)}%</b><button class="btn" id="fs-p" aria-label="Larger text" ${fsI<3?'':'disabled'}>A+</button>`;
+  const lbl=thMenu.querySelector('.check');thMenu.insertBefore(r,lbl);
+  const set=d=>{fsI=Math.min(3,Math.max(0,fsI+d));try{localStorage.setItem('hp_fs',fsI)}catch(e){};fsApply();renderThemeMenu();try{setSheet(MF.st)}catch(e){}};
+  $('fs-m').onclick=()=>set(-1);$('fs-p').onclick=()=>set(1)};
+
+// 4–7) live Hunt tab, no floating Resume, Plan inside hunt mode, no silent overwrite
+const huntLive=()=>typeof HUNT!=='undefined'&&HUNT&&HUNT.stops&&HUNT.idx<HUNT.stops.length;
+const hbn=nav.querySelector('[data-n=hunt]');const hbLbl=document.createElement('span');hbLbl.className='nhl';hbLbl.textContent='Hunt';
+[...hbn.childNodes].forEach(n=>{if(n.nodeType===3)n.remove()});hbn.appendChild(hbLbl);
+function huntBtn(){const on=huntLive();hbn.classList.toggle('live',!!on);hbLbl.textContent=on?`${HUNT.idx}/${HUNT.stops.length}`:'Hunt';hbn.setAttribute('aria-label',on?`Back to the hunt in ${HUNT.cityName||HUNT.city}, stop ${HUNT.idx+1} of ${HUNT.stops.length}`:'Hunt')}
+window.huntBtn=huntBtn;
+const _sh=saveHunt;saveHunt=function(){_sh();huntBtn()};
+function openLiveHunt(){closeOverlays('hunt');navMark('hunt');$('resume').click()}
+const _ng=navGo;navGo=function(k,sub){if(k==='hunt'&&!sub&&huntLive()&&$('hunt').hidden){openLiveHunt();return}_ng(k,sub)};window.navGo=navGo;
+const _rh=renderHunt;renderHunt=function(){_rh();huntBtn();const top=$('hunt').querySelector('.h-top');if(!top||!huntLive()||$('h-plan'))return;
+  const b=document.createElement('button');b.className='btn';b.id='h-plan';b.textContent='Plan';b.title='Open the planner – the hunt keeps running';
+  b.onclick=()=>{$('hunt').hidden=true;$('t-plan').click();navMark('hunt');setSheet('half');toast('Hunt paused on screen – tap Hunt to go back')};top.insertBefore(b,$('h-close'))};
+const _st=startHunt;startHunt=function(){if(huntLive()){
+    if(city&&HUNT.city===city.code){openLiveHunt();return}
+    if(!confirm(`You have a hunt running in ${HUNT.cityName||HUNT.city} (${HUNT.idx}/${HUNT.stops.length}).\nEnd it and start a new one here?`))return;
+    addHuntToHist(HUNT);if(typeof db!=='undefined'&&db&&canWrite&&HUNT.got.length){const s=Object.assign({},HUNT,{id:HUNT.date+'-'+HUNT.city+'-'+HUNT.t0});db.doc('sessions/'+s.id).set(s).catch(()=>{})}}
+  _st();huntBtn()};
+// minimise / close → sheet back, Hunt button updates
+{const hu=$('hunt');new MutationObserver(huntBtn).observe(hu,{attributes:true,attributeFilter:['hidden']})}
+huntBtn();
+
+// 8) hunt summary → private visit history
+function addHuntToHist(s){if(!s||!s.got||!s.got.length)return;const H2=HIST?JSON.parse(JSON.stringify(HIST)):{v:1,source:'hunts',cities:{}};
+  const c=H2.cities[s.city]||(H2.cities[s.city]={visits:[],unknown:[]});const d=s.date||new Date().toISOString().slice(0,10);
+  let v=c.visits.find(x=>Math.abs(Date.parse(d)-Date.parse(x.to))<=14*864e5||Math.abs(Date.parse(d)-Date.parse(x.from))<=14*864e5);
+  if(!v){v={from:d,to:d,ids:[]};c.visits.push(v)}if(d<v.from)v.from=d;if(d>v.to)v.to=d;
+  s.got.forEach(id=>{if(!v.ids.includes(id))v.ids.push(id)});v.ids.sort();c.unknown=(c.unknown||[]).filter(id=>!s.got.includes(id));c.visits.sort((a,b)=>a.from.localeCompare(b.from));
+  H2.updated=new Date().toISOString().slice(0,10);setHist(H2);histChanged(H2)}
+window.addHuntToHist=addHuntToHist;
+const _rhe=renderHuntEnd;renderHuntEnd=function(){const snap=HUNT?JSON.parse(JSON.stringify(HUNT)):null;_rhe();
+  ['h-done','h-x'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>{addHuntToHist(snap);setTimeout(huntBtn,50)},{once:true,capture:true})})};
+
+// 9) manual dates for "date unknown" invaders (city card timeline)
+function assignVisit(code,id,k){if(!HIST||!HIST.cities[code])return;const H2=JSON.parse(JSON.stringify(HIST)),c=H2.cities[code];
+  c.unknown=(c.unknown||[]).filter(x=>x!==id);c.visits.forEach(v=>v.ids=v.ids.filter(x=>x!==id));if(k>=0&&c.visits[k]){c.visits[k].ids.push(id);c.visits[k].ids.sort()}else c.unknown.push(id);
+  H2.updated=new Date().toISOString().slice(0,10);HIST=H2;try{localStorage.setItem('hp_hist',JSON.stringify(H2))}catch(e){};histChanged(H2)}
+window.assignVisit=assignVisit;
+
 // start on Map
 navMark('map');setTimeout(()=>{try{setSheet(MF.st||'peek')}catch(e){}},0);
 addEventListener('resize',()=>{try{setSheet(MF.st)}catch(e){}});
