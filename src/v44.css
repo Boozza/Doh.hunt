@@ -164,3 +164,22 @@ html.mf .panel .tabbody{overflow-x:hidden!important;touch-action:pan-y}
 .panel .tabbody input[type=file]{width:100%;font-size:14px}
 .panel .tabbody textarea,.panel .tabbody input[type=text],.panel .tabbody input[type=search]{width:100%}
 .panel .tabbody .inline{flex-wrap:wrap}
+/* v50 */
+.tstrip.sw{overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scroll-snap-type:x proximity;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tstrip.sw::-webkit-scrollbar{display:none}
+.tstrip.sw figure{margin:0;flex:none;display:grid;gap:3px;justify-items:center;scroll-snap-align:start}
+.tstrip.sw figcaption{font-size:10px;color:var(--muted);text-shadow:none}
+.cc-hist .tstrip.sw figcaption{color:#dde}
+.panel .tabbody .tstrip.sw *{max-width:none}
+.cp-sort{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);justify-self:end}
+.cp-sort select{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:14px}
+.cp-ctry{font:700 12px var(--f-display,monospace);letter-spacing:.08em;color:var(--yellow);margin:6px 2px -4px;text-transform:uppercase}
+.ccard.iss{background:var(--cbg)!important;image-rendering:pixelated}
+.hnear{display:block;margin:4px 0 2px;font-weight:700;font-size:14px;color:var(--cyan,#5fd7ff)}
+.hnear.close{color:var(--green,#3ddc84);animation:hlive 1.2s ease-in-out infinite}
+.reprow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.reprow .btn{padding:6px 10px;font-size:13px}
+#statsbox{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-top:10px}
+#statsbox:empty{display:none}
+.stgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}.stgrid b{display:block;font:700 18px var(--f-display,monospace);color:var(--yellow)}.stgrid span{font-size:11px;color:var(--muted)}
+.styears{display:grid;gap:5px}.sty{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:center;font-size:12px}.sty i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--pink),var(--yellow))}.sty b{font-weight:600;color:var(--muted)}
+.offrow{margin-top:8px;align-items:center}

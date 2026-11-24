@@ -98,7 +98,7 @@ const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','De
 function fmtRange(a,b){const A=a.split('-').map(Number),B=(b||a).split('-').map(Number);if(a===b||!b)return `${A[2]} ${MON[A[1]-1]} ${A[0]}`;
   if(A[0]===B[0]&&A[1]===B[1])return `${A[2]}–${B[2]} ${MON[A[1]-1]} ${A[0]}`;if(A[0]===B[0])return `${A[2]} ${MON[A[1]-1]} – ${B[2]} ${MON[B[1]-1]} ${A[0]}`;return `${A[2]} ${MON[A[1]-1]} ${A[0]} – ${B[2]} ${MON[B[1]-1]} ${B[0]}`}
 const ptsOf=ids=>ids.reduce((s,id)=>{const h=INVBY.get(id);return s+(h?h[1][3]||0:0)},0);
-function strip(ids,max){max=max||4;const show=ids.slice(0,max);return `<div class="tstrip">${show.map(id=>thumbFor(id,'')||'').join('')}${ids.length>max?`<span class="more">+${ids.length-max}</span>`:''}</div>`}
+function strip(ids){return `<div class="tstrip sw">${ids.map(id=>`<figure>${thumbFor(id,'')||'<span class="more">'+(id.split('_')[1]||'?')+'</span>'}<figcaption>${id}</figcaption></figure>`).join('')}</div>`}
 function allVisits(){if(!HIST)return [];const out=[];Object.entries(HIST.cities).forEach(([code,v])=>(v.visits||[]).forEach(x=>out.push(Object.assign({code},x))));return out.sort((a,b)=>b.from.localeCompare(a.from))}
 function cityName(code){const c=CITYBY.get(code);return c?(c.name&&c.name!==c.code?c.name:c.code):code}
 // Me → "My recent flashes"
@@ -115,7 +115,7 @@ renderRecent();
 // ---------- cities page
 let FAV=new Set();try{FAV=new Set(JSON.parse(localStorage.getItem('hp_fav')||'[]'))}catch(e){}
 let CF='all';try{CF=localStorage.getItem('hp_cf')||'all'}catch(e){}
-let CQ='',CMORE=false;
+let CQ='',CMORE=false;let CS='mine';try{CS=localStorage.getItem('hp_csort')||'mine'}catch(e){}
 function ownPhoto(code){if(typeof PHOTOS==='undefined')return null;let best=null;for(const [id,p] of Object.entries(PHOTOS)){if(id.split('_')[0]!==code)continue;if(!best||(p.date||'')>(best.date||''))best=p}return best?blobUrl(best):null}
 function hue(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))%360;return h}
 function cityScore(w){const r=cityRow(w.c.code);return r?r.pts+(r.n?100:0):0}
@@ -195,7 +195,7 @@ async function wikiBg(el,step){if(!EXT)return;const code=el.dataset.c,c=CITYBY.g
   CIST.fail++;CIST.why='image blocked'}
 // v49 · country names and three-part bars (flashed · to flash · destroyed)
 const CNAME={GB:'United Kingdom',FR:'France',AT:'Austria',US:'United States',IT:'Italy',HK:'Hong Kong',JP:'Japan',TH:'Thailand',IL:'Israel',BE:'Belgium',NL:'Netherlands',CH:'Switzerland',ES:'Spain',DE:'Germany',BT:'Bhutan',MX:'Mexico',TN:'Tunisia',BD:'Bangladesh',TR:'Türkiye',NP:'Nepal',PT:'Portugal',SI:'Slovenia',MA:'Morocco',AU:'Australia',KE:'Kenya',BR:'Brazil',IN:'India',SE:'Sweden',BO:'Bolivia',KR:'South Korea',BA:'Bosnia & Herzegovina'};
-function triOf(c){const f=flashedOf(c.code);let g=0,y=0,r=0;for(const i of c.inv){if(f.has(i[0]))g++;else if(i[4]==='destroyed')r++;else y++}return {g,y,r,t:g+y+r}}
+function triOf(c){const f=flashedOf(c.code);let g=0,y=0,r=0;for(const i of c.inv){if(f.has(i[0]))g++;else if(i[4]==='destroyed'||(c.code==='SPACE'&&i[4]!=='ok'))r++;else y++}return {g,y,r,t:g+y+r}}
 function triBar(t,cls){const p=v=>t.t?(100*v/t.t).toFixed(2):0;return `<div class="${cls} tri" role="img" aria-label="${t.g} flashed, ${t.y} to flash, ${t.r} destroyed"><i class="g" style="width:${p(t.g)}%"></i><i class="y" style="width:${p(t.y)}%"></i><i class="r" style="width:${p(t.r)}%"></i></div>`}
 function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DATA.cities.concat([SPACE]);
   const tot=DATA.cities.reduce((s,c)=>s+c.inv.length,0);const fl=all.reduce((s,c)=>s+flashedOf(c.code).size,0);const pct=tot?fl/tot:0;
@@ -203,7 +203,11 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
   const alive=W.reduce((s,w)=>s+w.got,0);
   let L=W.slice();if(CF==='mine')L=L.filter(w=>w.mine);else if(CF==='done')L=L.filter(w=>w.mine&&w.alive&&w.left===0);else if(CF==='fav')L=L.filter(w=>FAV.has(w.c.code));else if(CF==='new')L=L.filter(w=>!w.mine);
   if(CQ){const q=CQ.toLowerCase();L=L.filter(w=>w.c.code.toLowerCase().includes(q)||String(w.c.name||'').toLowerCase().includes(q))}
-  L.sort((a,b)=>(FAV.has(b.c.code)-FAV.has(a.c.code))||(b.mine-a.mine)||(b.fl-a.fl)||(b.pl-a.pl));
+  const lastV=code=>{const h=HIST&&HIST.cities[code];return h&&h.visits&&h.visits.length?h.visits.map(v=>v.to).sort().pop():''};
+  const cn=w=>w.space?'~Space':(CNAME[CTRY[w.c.code]]||'~Other');const nm=w=>cityName(w.c.code).toLowerCase();
+  const SORTS={mine:(a,b)=>(b.mine-a.mine)||(b.fl-a.fl)||(b.pl-a.pl),az:(a,b)=>nm(a).localeCompare(nm(b)),country:(a,b)=>((a.space?1:0)-(b.space?1:0))||((cn(a)==='~Other')-(cn(b)==='~Other'))||cn(a).localeCompare(cn(b))||nm(a).localeCompare(nm(b)),
+    left:(a,b)=>(b.left-a.left)||nm(a).localeCompare(nm(b)),ptsleft:(a,b)=>(b.pl-a.pl)||nm(a).localeCompare(nm(b)),pct:(a,b)=>(b.pct-a.pct)||(b.fl-a.fl),recent:(a,b)=>lastV(b.c.code).localeCompare(lastV(a.c.code))||(b.fl-a.fl)};
+  L.sort((a,b)=>(CS!=='country'&&CS!=='az'?(FAV.has(b.c.code)-FAV.has(a.c.code)):0)||(SORTS[CS]||SORTS.mine)(a,b));
   const card=w=>{const c=w.c,h=HIST&&HIST.cities[c.code],bg=ownPhoto(c.code),hu=hue(c.code);
     if(w.space)return `<div class="ccard space" data-c="SPACE" role="group" aria-label="Space">
       <div class="cc-top"><span class="cc-code">Space</span><button class="cc-star${FAV.has('SPACE')?' on':''}" data-fav="SPACE" aria-label="Favourite" aria-pressed="${FAV.has('SPACE')}">${FAV.has('SPACE')?'★':'☆'}</button></div>
@@ -228,8 +232,10 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
       ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span>${!EXT?'<span>City photos: your own (outside photos work in the Netlify app)</span>':''}<span ${EXT?'':'hidden'}>City photos: ${CIST.ok} loaded${CIST.fail?` · ${CIST.fail} failed${CIST.why?' ('+escapeHtml(CIST.why)+')':''}`:''}</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
     <div class="cp-row"><input id="cp-q" type="search" placeholder="Search for a city" value="${escapeHtml(CQ)}" aria-label="Search for a city"><button class="btn" id="cp-bg" title="Card backgrounds: photos or flags">${CBG==='flag'?'🖼 Photos':'🏳 Flags'}</button><button class="btn" id="cp-world" title="World map">🌍 Map</button></div>
     <div class="cp-chips" id="cp-chips">${chips.map(([k,l])=>`<button data-f="${k}" class="${k===CF?'on':''}">${l}</button>`).join('')}</div>
-    ${L.map(card).join('')||'<p class="note">No city here.</p>'}</div>`;
+    <label class="cp-sort">Sort <select id="cp-sort" aria-label="Sort cities">${[['mine','My cities first'],['az','A–Z'],['country','Country'],['left','Most left to flash'],['ptsleft','Most points left'],['pct','% complete'],['recent','Most recent visit']].map(([k,l])=>`<option value="${k}"${k===CS?' selected':''}>${l}</option>`).join('')}</select></label>
+    ${(CS==='country'?(()=>{let last='';return L.map(w=>{const c=cn(w).replace('~','');const h=c!==last?`<div class="cp-ctry">${FLAG[CTRY[w.c.code]]?'':''}${escapeHtml(c)}</div>`:'';last=c;return h+card(w)}).join('')})():L.map(card).join(''))||'<p class="note">No city here.</p>'}</div>`;
   $('cp-tot').onclick=()=>{CMORE=!CMORE;renderCities()};
+  $('cp-sort').onchange=e=>{CS=e.target.value;try{localStorage.setItem('hp_csort',CS)}catch(x){};renderCities()};
   const qi=$('cp-q');qi.oninput=()=>{CQ=qi.value;const p=qi.selectionStart;renderCities();const n=$('cp-q');n.focus();try{n.setSelectionRange(p,p)}catch(e){}};
   $('cp-bg').onclick=()=>{CBG=CBG==='flag'?'photo':'flag';try{localStorage.setItem('hp_cbg',CBG)}catch(e){};renderCities()};
   $('cp-world').onclick=()=>{navGo('map');setTimeout(()=>{try{openWorld()}catch(e){}},60)};
@@ -344,6 +350,98 @@ window.assignVisit=assignVisit;
 // v49.3 · typing in the sheet (Mark list, search, notes): keep the page itself from scrolling under the keyboard
 document.addEventListener('focusin',e=>{if(!MF.on||!e.target.matches('input,textarea'))return;const fix=()=>{if(window.scrollY||document.documentElement.scrollTop){window.scrollTo(0,0)}};setTimeout(fix,60);setTimeout(fix,350)});
 if(window.visualViewport)visualViewport.addEventListener('scroll',()=>{if(MF.on&&!document.activeElement.matches('input,textarea')&&(window.scrollY||0))window.scrollTo(0,0)});
+
+/* ================= v50 · ISS card, offline route map, screen on while hunting, "you're close", field reports, stats ================= */
+// 1) Space card art – original pixel art (ISS over Earth), drawn here so it works offline and in the Claude version
+let ISSURL=null;
+function issArt(){if(ISSURL)return ISSURL;const cv=document.createElement('canvas');cv.width=120;cv.height=60;const x=cv.getContext('2d');const W=120,H=60;
+ const px=(a,b,c)=>{x.fillStyle=c;x.fillRect(a,b,1,1)},rect=(a,b,w,h,c)=>{x.fillStyle=c;x.fillRect(a,b,w,h)};
+ const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#05061a');g.addColorStop(1,'#0f1640');x.fillStyle=g;x.fillRect(0,0,W,H);
+ let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+ for(let i=0;i<70;i++){const a=Math.floor(rnd()*W),b=Math.floor(rnd()*36);px(a,b,rnd()>.8?'#ffe9a8':rnd()>.5?'#ffffff':'#8fa3ff')}
+ const cx=50,cy=146,R=112;
+ for(let yy=0;yy<H;yy++)for(let xx=0;xx<W;xx++){const d=Math.hypot(xx-cx,yy-cy);
+  if(d<R+4&&d>=R){x.fillStyle=d<R+1?'#7fe3ff':d<R+2?'rgba(95,215,255,.6)':'rgba(70,150,255,.25)';x.fillRect(xx,yy,1,1);continue}
+  if(d<R){let c='#1d4fa3';const n=Math.sin(xx*.21+yy*.5)+Math.sin(xx*.07-yy*.33)*1.3+Math.cos(xx*.13+yy*.11);if(n>1.2)c='#3f8f4a';if(n>1.9)c='#a5894e';
+   const cl=Math.sin(xx*.19+yy*.37)*Math.cos(xx*.07-yy*.45+1)+Math.sin(xx*.29-yy*.17+2)*.6;if(cl>.78)c='#e9f1ff';else if(cl>.66&&c==='#1d4fa3')c='#9db8e6';
+   if(d>R-3&&c==='#1d4fa3')c='#2b67c4';
+   if(xx<cx-40+(yy-40)*0.6){c=c==='#e9f1ff'?'#4a5680':c==='#3f8f4a'?'#173a24':c==='#a5894e'?'#3d3320':'#0d2350';if(rnd()>.985)c='#ffd25a'}px(xx,yy,c)}}
+ [[112,6,'#fff6c8'],[111,6,'#ffe9a8'],[113,6,'#ffe9a8'],[112,5,'#ffe9a8'],[112,7,'#ffe9a8'],[110,6,'#ffd25a'],[114,6,'#ffd25a'],[112,4,'#ffd25a'],[112,8,'#ffd25a']].forEach(p=>px(...p));
+ const ox=60,oy=14,panel=(a,b)=>{rect(a,b,9,6,'#c98a1b');for(let i=0;i<9;i+=3)rect(a+i,b,1,6,'#7a4f0d');rect(a,b+2,9,1,'#e0a830')};
+ rect(ox,oy+8,38,1,'#c9ced8');rect(ox,oy+9,38,1,'#7d8494');panel(ox+1,oy+1);panel(ox+1,oy+11);panel(ox+28,oy+1);panel(ox+28,oy+11);
+ rect(ox+5,oy+7,1,4,'#9aa1b0');rect(ox+32,oy+7,1,4,'#9aa1b0');rect(ox+15,oy+4,3,11,'#eef1f7');rect(ox+15,oy+4,1,11,'#b9c0cf');rect(ox+18,oy+6,6,3,'#dfe4ee');rect(ox+18,oy+8,6,1,'#9aa1b0');rect(ox+12,oy+12,3,3,'#eef1f7');
+ rect(ox+20,oy+11,4,1,'#ffffff');rect(ox+20,oy+12,4,1,'#c9ced8');px(ox+16,oy+3,'#ff5a5a');
+ try{ISSURL=cv.toDataURL('image/png')}catch(e){ISSURL=''}return ISSURL}
+{const _rc=renderCities;renderCities=function(){_rc();const sp=pg.querySelector('.ccard.space');const u=issArt();if(sp&&u){sp.classList.add('iss');sp.style.setProperty('--cbg',`url('${u}') center/cover`)}};window.renderCities=renderCities}
+
+// P2) keep the screen on while hunt mode is open
+let WL=null;const wlOn=async()=>{try{if('wakeLock' in navigator&&!WL&&!$('hunt').hidden&&!document.hidden){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}}catch(e){}};
+const wlOff=()=>{try{if(WL)WL.release()}catch(e){}WL=null};
+new MutationObserver(()=>{$('hunt').hidden?wlOff():wlOn()}).observe($('hunt'),{attributes:true,attributeFilter:['hidden']});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)wlOn()});
+
+// P3) "you're close": distance to the next invader in hunt mode, buzz + beep within ~40 m
+let PXW=null,PXC=null,AC=null;
+function beep(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=880;g.gain.value=.08;o.connect(g);g.connect(AC.destination);o.start();
+  o.frequency.setValueAtTime(1320,AC.currentTime+.09);g.gain.setValueAtTime(0,AC.currentTime+.2);o.stop(AC.currentTime+.22)}catch(e){}}
+const brg=(a,b)=>{const t=Math.atan2((b[1]-a[1])*Math.cos(a[0]*Math.PI/180),b[0]-a[0])*180/Math.PI;return ['N','NE','E','SE','S','SW','W','NW'][Math.round(((t+360)%360)/45)%8]};
+function pxTick(lat,lon){if(!huntLive()||$('hunt').hidden)return;const id=HUNT.stops[HUNT.idx];const h=INVBY.get(id);if(!h)return;const iv=h[1];
+  const d=Math.round(hav([lat,lon],[iv[1],iv[2]])*1000);window.__lastPos=[lat,lon];let chip=$('h-near');const top=$('hunt').querySelector('.h-top');
+  if(!chip&&top){chip=document.createElement('span');chip.id='h-near';chip.className='hnear';top.after(chip)}
+  if(chip){chip.textContent=`📍 ${id} · ${d<1000?d+' m':(d/1000).toFixed(1)+' km'} ${brg([lat,lon],[iv[1],iv[2]])}`;chip.classList.toggle('close',d<=40)}
+  if(d<=40&&PXC!==id){PXC=id;try{navigator.vibrate&&navigator.vibrate([120,80,120])}catch(e){}beep();toast(`📍 You're close – ${id} is about ${d} m away`)}}
+new MutationObserver(()=>{if(!$('hunt').hidden&&huntLive()){AC=AC||(()=>{try{return new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}})();
+  if(PXW===null&&navigator.geolocation)PXW=navigator.geolocation.watchPosition(p=>pxTick(p.coords.latitude,p.coords.longitude),()=>{},{enableHighAccuracy:true,maximumAge:5000})}
+  else if(PXW!==null){navigator.geolocation.clearWatch(PXW);PXW=null}}).observe($('hunt'),{attributes:true,attributeFilter:['hidden']});
+{const _rh2=renderHunt;renderHunt=function(){_rh2();if(window.__lastPos)pxTick(...window.__lastPos)}}
+
+// P1) offline map for the planned route (Netlify): keeps the map tiles around the route stops at street zoom, plus the city overview
+async function saveRouteOffline(btn){if(typeof LM==='undefined'||typeof BL==='undefined'||!BL){toast('Offline maps work in the Netlify app');return}
+  const ids=(typeof HUNT!=='undefined'&&HUNT&&HUNT.city===city.code?HUNT.stops:((typeof route!=='undefined'&&route&&route.stops)?route.stops.map(x=>x[0]):[]));const pts=(ids.length?ids:candidates().map(i=>i[0])).map(id=>INVBY.get(id)).filter(Boolean).map(h=>[h[1][1],h[1][2]]);
+  if(!pts.length){toast('Plan a route first');return}
+  const tpl=BL._url,subs=BL.options.subdomains||'abc';const T=new Set();
+  const tx=(lon,z)=>Math.floor((lon+180)/360*2**z),ty=(lat,z)=>{const r=lat*Math.PI/180;return Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*2**z)};
+  for(const z of [15,16,17]){const rad=z===17?1:2;pts.forEach(([la,lo])=>{const X=tx(lo,z),Y=ty(la,z);for(let dx=-rad;dx<=rad;dx++)for(let dy=-rad;dy<=rad;dy++)T.add(z+'/'+(X+dx)+'/'+(Y+dy))})}
+  const b=city.bbox;for(const z of [12,13]){for(let X=tx(b[0],z);X<=tx(b[2],z);X++)for(let Y=ty(b[3],z);Y<=ty(b[1],z);Y++)T.add(z+'/'+X+'/'+Y)}
+  const L2=[...T].slice(0,1800);let done=0,ok=0;btn.disabled=true;
+  const one=async k=>{const [z,x,y]=k.split('/');const u=tpl.replace('{s}',subs[(+x+ +y)%subs.length]).replace('{z}',z).replace('{x}',x).replace('{y}',y).replace('{r}','');
+    try{await fetch(u,{mode:'no-cors'});ok++}catch(e){}done++;if(done%25===0)btn.textContent=`Saving… ${Math.round(100*done/L2.length)}%`};
+  for(let i=0;i<L2.length;i+=6)await Promise.all(L2.slice(i,i+6).map(one));
+  btn.disabled=false;btn.textContent='✓ Saved for offline';try{localStorage.setItem('hp_off_'+city.code,TODAY())}catch(e){}toast(`Offline map ready: ${ok} map tiles around your route in ${city.name}`)}
+window.saveRouteOffline=saveRouteOffline;
+function offBtn(){if(!EXT)return;const r=$('result');if(!r||!r.querySelector('ol')||$('off-save'))return;let d='';try{d=localStorage.getItem('hp_off_'+city.code)||''}catch(e){}
+  const w=document.createElement('div');w.className='inline offrow';w.innerHTML=`<button class="btn" id="off-save">${d?'↻ Update offline map':'⬇ Save route map for offline'}</button><span class="note">${d?'saved '+d:'for hunting without mobile data'}</span>`;
+  r.appendChild(w);$('off-save').onclick=e=>saveRouteOffline(e.currentTarget)}
+new MutationObserver(offBtn).observe($('result'),{childList:true});
+
+// P5) field report from the card: up / damaged / gone (private, syncs like the position fixes)
+let REP={};try{REP=JSON.parse(localStorage.getItem('hp_reports')||'{}')}catch(e){}
+const REP0=new Map();
+function applyReports(r,remote){if(remote)REP=Object.assign({},r);Object.entries(REP).forEach(([id,v])=>{const h=INVBY.get(id);if(!h||!Array.isArray(v))return;const i=h[1];if(!REP0.has(id))REP0.set(id,i[4]);i[4]=v[0]});
+  for(const [id,s0] of REP0){if(!REP[id]){const h=INVBY.get(id);if(h)h[1][4]=s0;REP0.delete(id)}}try{localStorage.setItem('hp_reports',JSON.stringify(REP))}catch(e){}try{refresh()}catch(e){}}
+window.applyReports=applyReports;window.getReports=()=>REP;
+window.reportsChanged=function(r){if(typeof db!=='undefined'&&db&&canWrite)db.doc('meta/reports').set({reports:r}).catch(()=>{})};
+applyReports(REP);
+let repDb=false;const rpT=setInterval(()=>{if(repDb)return clearInterval(rpT);if(typeof db!=='undefined'&&db){repDb=true;db.doc('meta/reports').onSnapshot(s=>{const v=s.exists?s.data():null;if(v&&v.reports)applyReports(v.reports,true)},()=>{})}},2000);
+function report(id,st){if(st==='reset')delete REP[id];else REP[id]=[st,TODAY()];applyReports(REP);reportsChanged(REP);toast(st==='reset'?id+': back to the official status':id+' reported as '+st);const h=INVBY.get(id);if(h)showCard(h[1])}
+{const _sc2=showCard;showCard=function(i){_sc2(i);try{const c=$('card');if(c.querySelector('.reprow'))return;const r=REP[i[0]];const d=document.createElement('div');d.className='reprow';
+  d.innerHTML=`<span class="note">Seen it today?</span><button class="btn" data-rep="ok">✓ Up</button><button class="btn" data-rep="damaged">⚠ Damaged</button><button class="btn" data-rep="destroyed">✕ Gone</button>${r?`<button class="btn" data-rep="reset" title="Use the official status again">↺</button><span class="note">you: ${r[0]} · ${r[1]}</span>`:''}`;
+  d.querySelectorAll('[data-rep]').forEach(b=>b.onclick=()=>report(i[0],b.dataset.rep));c.appendChild(d)}catch(e){}}}
+
+// P6) stats (Me → Score), from the visit history
+const sb2=document.createElement('div');sb2.id='statsbox';{const r=$('recentbox');if(r)r.after(sb2)}
+function renderStats(){const V=allVisits();if(!V.length){sb2.innerHTML='';return}
+  const yr={};V.forEach(v=>{const y=v.from.slice(0,4);yr[y]=yr[y]||{n:0,p:0};yr[y].n+=v.ids.length;yr[y].p+=ptsOf(v.ids)});const ys=Object.keys(yr).sort();const mx=Math.max(...ys.map(y=>yr[y].n));
+  const best=V.slice().sort((a,b)=>b.ids.length/((Date.parse(b.to)-Date.parse(b.from))/864e5+1)-a.ids.length/((Date.parse(a.to)-Date.parse(a.from))/864e5+1))[0];
+  const bd=Math.round(best.ids.length/((Date.parse(best.to)-Date.parse(best.from))/864e5+1));
+  const ctr=new Set(DATA.cities.filter(c=>flashedOf(c.code).size).map(c=>CTRY[c.code]).filter(Boolean));
+  const done=worldStats().filter(w=>w.mine&&w.alive&&w.left===0).length;
+  sb2.innerHTML=`<div class="rh"><span class="lbl">MY STATS</span></div>
+   <div class="stgrid"><div><b>${V.length}</b><span>visits</span></div><div><b>${ctr.size}</b><span>countries</span></div><div><b>${done}</b><span>cities complete</span></div><div><b>${bd}</b><span>best per day</span></div></div>
+   <div class="styears">${ys.map(y=>`<div class="sty"><span>${y}</span><i style="width:${Math.max(4,100*yr[y].n/mx)}%"></i><b>${yr[y].n} · ${yr[y].p.toLocaleString()} pts</b></div>`).join('')}</div>
+   <p class="note" style="margin:0">Best hunt: ${escapeHtml(cityName(best.code))}, ${fmtRange(best.from,best.to)} – ${best.ids.length} invaders.</p>`}
+{const _rr=renderRecent;renderRecent=function(){_rr();try{renderStats()}catch(e){}}}
+try{renderStats()}catch(e){}
 
 // start on Map
 navMark('map');setTimeout(()=>{try{setSheet(MF.st||'peek')}catch(e){}},0);
