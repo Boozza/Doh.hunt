@@ -32,7 +32,7 @@ window.closeOverlays=closeOverlays;
 function navGo(k,sub){const same=k===CUR;closeOverlays(k);
   if(k==='cities'){navMark('cities');renderCities();if(same)pg.scrollTo({top:0,behavior:'smooth'});return}
   if(k==='map'){$('t-list').click();navMark('map');setSheet('peek');if(same){try{fitCity()}catch(e){}}return}
-  if(k==='hunt'){$('t-plan').click();navMark('hunt');setSheet(same&&MF.st==='half'?'full':'half');return}
+  if(k==='hunt'){$('t-plan').click();navMark('hunt');setSheet('full');return}
   if(k==='news'){$('t-news').click();navMark('news');setSheet('full');if(same)$('p-news').scrollTo({top:0,behavior:'smooth'});return}
   if(k==='me'){const cur=['t-score','t-album','t-mark'].find(id=>$(id).getAttribute('aria-selected')==='true');const t=$(sub||cur||'t-score');t.click();navMark('me');setSheet('full');renderRecent();if(same&&!sub){const b=document.querySelector('.panel .tabbody:not([hidden])');if(b)b.scrollTo({top:0,behavior:'smooth'})}}}
 window.navGo=navGo;
@@ -320,6 +320,12 @@ window.assignVisit=assignVisit;
  addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||!a.matches('input,select,textarea')){try{window.scrollTo(0,0)}catch(e){}refit()}},150));
  if(window.visualViewport){let t=0;const vv=()=>{clearTimeout(t);t=setTimeout(refit,120)};visualViewport.addEventListener('resize',vv)}
  const hd=document.querySelector('header');if(hd&&'ResizeObserver' in window)new ResizeObserver(()=>{try{mfVars()}catch(e){}}).observe(hd)}
+
+// v48.3 · find how much of the bottom is cut off by the host (Claude app frame, iOS home-screen gap) and lift the bottom bar and sheet by that much
+{const pr=document.createElement('div');pr.className='cutprobe';document.body.appendChild(pr);
+ if('IntersectionObserver' in window){const th=[];for(let i=0;i<=100;i++)th.push(i/100);
+  new IntersectionObserver(es=>{const e=es[es.length-1];if(!e.boundingClientRect.height)return;let cut=Math.round(e.boundingClientRect.bottom-e.intersectionRect.bottom);if(cut<0||cut>innerHeight*.45||!e.isIntersecting)cut=0;
+    const prev=parseFloat(getComputedStyle(H).getPropertyValue('--cut'))||0;if(Math.abs(prev-cut)>2){H.style.setProperty('--cut',cut+'px');try{setSheet(MF.st)}catch(x){}}},{threshold:th}).observe(pr)}}
 
 // start on Map
 navMark('map');setTimeout(()=>{try{setSheet(MF.st||'peek')}catch(e){}},0);
