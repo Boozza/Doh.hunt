@@ -1306,7 +1306,8 @@ async function fullBackup(){const msg=$('alb-impres');impShow('Preparing backup�
   const ph={};const ids=Object.keys(PHOTOS);for(let k=0;k<ids.length;k++){const id=ids[k];impShow(`Packing photos… ${k+1} / ${ids.length}`);try{const b=await fetch(blobUrl(PHOTOS[id])).then(r=>r.blob());const d=await toDataUrl(b);if(d)ph[id]={date:PHOTOS[id].date||'',data:d}}catch(e){}}
   let fx={};try{fx=JSON.parse(localStorage.getItem('hp_fixes')||'{}')}catch(e){}
   const n=Object.values(fl).reduce((s,a)=>s+a.length,0);
-  const out={app:'doh-hunt-planner',v:1,date:TODAY(),flashed:fl,fixes:fx,photos:ph};
+  let hi=null,rp={};try{hi=JSON.parse(localStorage.getItem('hp_hist')||'null');rp=JSON.parse(localStorage.getItem('hp_reports')||'{}')}catch(e){}
+  const out={app:'doh-hunt-planner',v:2,date:TODAY(),flashed:fl,fixes:fx,photos:ph,history:hi,reports:rp};
   const ok=await saveImage(new Blob([JSON.stringify(out)],{type:'application/json'}),'doh-hunt-backup-'+TODAY()+'.json',null);
   impShow(ok?`Backup saved: ${n} flashed invaders and ${Object.keys(ph).length} photos. Keep the file somewhere safe (Files, iCloud Drive, Drive) – ♻ Restore loads it on any device.`:'Backup was not saved.');
   if(ok)try{localStorage.setItem('hp_lastbk',TODAY())}catch(e){}}
@@ -1316,6 +1317,8 @@ async function restoreBackup(file){let j=null;try{j=JSON.parse(await file.text()
   let np=0,skip=0;const ph=Object.entries(j.photos||{});for(let k=0;k<ph.length;k++){const [id,v]=ph[k];if(PHOTOS[id]){skip++;continue}impShow(`Restoring photos… ${k+1} / ${ph.length}`);
     try{const b=await fetch(v.data).then(r=>r.blob());await storePhoto(id,b,v.date);np++}catch(e){}}
   if(j.fixes&&typeof applyFixes==='function'&&Object.keys(j.fixes).length){try{applyFixes(j.fixes,true)}catch(e){}}
+  if(j.history&&j.history.cities&&typeof setHist==='function'&&!(typeof getHist==='function'&&getHist())){try{setHist(j.history);histChanged(j.history)}catch(e){}}
+  if(j.reports&&typeof applyReports==='function'&&Object.keys(j.reports).length){try{applyReports(Object.assign({},j.reports,getReports()),true);reportsChanged(getReports())}catch(e){}}
   renderGallery();refresh();impShow(`Restored from the ${j.date||''} backup: ${nf} new flashed invaders, ${np} photos${skip?` (${skip} already here)`:''}. Nothing was removed.`)}
 {const fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.multiple=true;fi.hidden=true;document.body.appendChild(fi);
  fi.onchange=()=>{const f=fi.files;if(f&&f.length)importPhotos(f).catch(e=>impShow('Import stopped: '+(e&&e.message||e)));fi.value=''};

@@ -183,3 +183,6 @@ html.mf .panel .tabbody{overflow-x:hidden!important;touch-action:pan-y}
 .stgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}.stgrid b{display:block;font:700 18px var(--f-display,monospace);color:var(--yellow)}.stgrid span{font-size:11px;color:var(--muted)}
 .styears{display:grid;gap:5px}.sty{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:center;font-size:12px}.sty i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--pink),var(--yellow))}.sty b{font-weight:600;color:var(--muted)}
 .offrow{margin-top:8px;align-items:center}
+.bnav .bkdot{position:absolute;top:6px;left:calc(50% + 10px);width:9px;height:9px;border-radius:50%;background:var(--orange,#ff9f1a);box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.btn.due{animation:hlive 1.6s ease-in-out infinite}
+.bkd{color:var(--orange,#ff9f1a)}
