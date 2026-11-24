@@ -116,3 +116,6 @@ html.mf #resume{display:none!important}
 .unrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.12)}
 .unrow select{max-width:60%;font-size:14px;border-radius:8px;padding:4px}.unrow.done{opacity:.55}
 html,body{touch-action:manipulation}
+/* v48 flag banners */
+.ccard.fbg{image-rendering:pixelated;background:var(--cbg)}
+.ccard.fbg:before{background:linear-gradient(180deg,rgba(10,13,28,.1) 0%,rgba(10,13,28,.4) 45%,rgba(10,13,28,.82) 100%)}

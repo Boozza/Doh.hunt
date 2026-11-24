@@ -143,6 +143,42 @@ async function cityCands(name){if(CIMG[name])return CIMG[name];let err='',ok=fal
   const [a,b]=await Promise.all([wiki,ov]);const seen=new Set();const L=a.concat(b).filter(x=>!seen.has(x.u)&&seen.add(x.u));
   if(!ok){CIST.why=err||'offline';return null}CIMG[name]=L;cimgSave();return L}
 function loadImg(u){return new Promise((res,rej)=>{if(!u)return rej();const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>res(u);im.onerror=rej;im.src=u})}
+// ---------- v48 · flag banners for city cards (pixel style, faded) – drawn in the app, so they work offline and in the Claude version
+const CTRY={LDN:'GB',MAN:'GB',NCL:'GB',PA:'FR',AMI:'FR',AIX:'FR',AVI:'FR',BAB:'FR',CAPF:'FR',CHAR:'FR',DIJ:'FR',FRQ:'FR',GRN:'FR',LIL:'FR',LY:'FR',MARS:'FR',MTB:'FR',MPL:'FR',NIM:'FR',ORLN:'FR',PRP:'FR',PAU:'FR',TLS:'FR',VRS:'FR',REUN:'FR',
+  WN:'AT',NY:'US',LA:'US',SD:'US',MIA:'US',ROM:'IT',RA:'IT',HK:'HK',TK:'JP',BGK:'TH',ELT:'IL',ANVR:'BE',BXL:'BE',AMS:'NL',RTD:'NL',ANZR:'CH',BSL:'CH',BRN:'CH',GNV:'CH',LSN:'CH',BRC:'ES',BBO:'ES',MLGA:'ES',MEN:'ES',
+  BRL:'DE',KLN:'DE',FKF:'DE',MUN:'DE',BT:'BT',CCU:'MX',DJN:'TN',DJBA:'TN',DHK:'BD',IST:'TR',KAT:'NP',FAO:'PT',LJU:'SI',MRAK:'MA',RBA:'MA',MLB:'AU',PRT:'AU',MBSA:'KE',SP:'BR',VRN:'IN'};
+const tri=(a,b,c,v)=>v?`<svg viewBox="0 0 3 2"><rect width="1" height="2" fill="${a}"/><rect x="1" width="1" height="2" fill="${b}"/><rect x="2" width="1" height="2" fill="${c}"/></svg>`:`<svg viewBox="0 0 3 3" preserveAspectRatio="none"><rect width="3" height="1" fill="${a}"/><rect y="1" width="3" height="1" fill="${b}"/><rect y="2" width="3" height="1" fill="${c}"/></svg>`;
+const UJ=`<clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>`;
+const star=(cx,cy,r,f)=>{let d='';for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,q=k%2?r*.4:r;d+=(k?'L':'M')+(cx+q*Math.cos(a)).toFixed(2)+','+(cy+q*Math.sin(a)).toFixed(2)}return `<path d="${d}Z" fill="${f}"/>`};
+const FLAG={GB:`<svg viewBox="0 0 60 30">${UJ}</svg>`,FR:tri('#0055A4','#fff','#EF4135',1),IT:tri('#009246','#fff','#CE2B37',1),BE:tri('#000','#FDDA24','#EF3340',1),MX:`<svg viewBox="0 0 3 2"><rect width="1" height="2" fill="#006847"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#CE1126"/><circle cx="1.5" cy="1" r=".28" fill="#8C6A2F"/></svg>`,
+  AT:tri('#C8102E','#fff','#C8102E'),NL:tri('#AE1C28','#fff','#21468B'),DE:tri('#000','#DD0000','#FFCE00'),
+  TH:`<svg viewBox="0 0 9 6"><rect width="9" height="6" fill="#A51931"/><rect y="1" width="9" height="4" fill="#F4F5F8"/><rect y="2" width="9" height="2" fill="#2D2A4A"/></svg>`,
+  JP:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#BC002D"/></svg>`,
+  BD:`<svg viewBox="0 0 10 6"><rect width="10" height="6" fill="#006A4E"/><circle cx="4.5" cy="3" r="2" fill="#F42A41"/></svg>`,
+  US:`<svg viewBox="0 0 19 10"><rect width="19" height="10" fill="#B22234"/>${[1,3,5,7,9,11].map(k=>`<rect y="${k*10/13}" width="19" height="${10/13}" fill="#fff"/>`).join('')}<rect width="7.6" height="${70/13}" fill="#3C3B6E"/></svg>`,
+  CH:`<svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#DA291C"/><rect x="13" y="6" width="6" height="20" fill="#fff"/><rect x="6" y="13" width="20" height="6" fill="#fff"/></svg>`,
+  ES:`<svg viewBox="0 0 3 2"><rect width="3" height="2" fill="#AA151B"/><rect y=".5" width="3" height="1" fill="#F1BF00"/></svg>`,
+  IL:`<svg viewBox="0 0 22 16"><rect width="22" height="16" fill="#fff"/><rect y="1.5" width="22" height="2.5" fill="#0038B8"/><rect y="12" width="22" height="2.5" fill="#0038B8"/><path d="M11,4.6 L14.3,10.3 H7.7Z M11,11.4 L7.7,5.7 H14.3Z" fill="none" stroke="#0038B8" stroke-width=".8"/></svg>`,
+  HK:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#DE2910"/>${[0,1,2,3,4].map(k=>`<ellipse cx="15" cy="6.6" rx="1.9" ry="3.4" fill="#fff" transform="rotate(${k*72} 15 10)"/>`).join('')}</svg>`,
+  TR:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#E30A17"/><circle cx="11" cy="10" r="5" fill="#fff"/><circle cx="12.3" cy="10" r="4" fill="#E30A17"/>${star(17.5,10,2.2,'#fff')}</svg>`,
+  TN:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#E70013"/><circle cx="15" cy="10" r="5" fill="#fff"/><circle cx="15" cy="10" r="3.7" fill="#E70013"/><circle cx="15.9" cy="10" r="3" fill="#fff"/>${star(16.1,10,2,'#E70013')}</svg>`,
+  MA:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#C1272D"/><path d="M15,5.5 L17.6,13.6 L10.8,8.6 H19.2 L12.4,13.6Z" fill="none" stroke="#006233" stroke-width=".9"/></svg>`,
+  PT:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#FF0000"/><rect width="12" height="20" fill="#006600"/><circle cx="12" cy="10" r="3.6" fill="#FFE900"/><circle cx="12" cy="10" r="2.2" fill="#FF0000"/></svg>`,
+  SI:`<svg viewBox="0 0 3 3" preserveAspectRatio="none"><rect width="3" height="1" fill="#fff"/><rect y="1" width="3" height="1" fill="#0000FF"/><rect y="2" width="3" height="1" fill="#FF0000"/><path d="M.55,.6 h.6 v.75 q-.3,.25 -.6,0Z" fill="#0000FF" stroke="#FF0000" stroke-width=".05"/></svg>`,
+  AU:`<svg viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><svg width="30" height="15" viewBox="0 0 60 30">${UJ}</svg>${star(15,23,3.4,'#fff')}${star(45,8,1.8,'#fff')}${star(52,13,1.8,'#fff')}${star(45,25,1.8,'#fff')}${star(39,14,1.8,'#fff')}</svg>`,
+  KE:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><rect width="30" height="5.4" fill="#000"/><rect y="7" width="30" height="6" fill="#BB0000"/><rect y="14.6" width="30" height="5.4" fill="#006600"/><ellipse cx="15" cy="10" rx="2.6" ry="5" fill="#BB0000" stroke="#000" stroke-width=".6"/></svg>`,
+  BR:`<svg viewBox="0 0 30 21"><rect width="30" height="21" fill="#009C3B"/><path d="M15,2 L28,10.5 L15,19 L2,10.5Z" fill="#FFDF00"/><circle cx="15" cy="10.5" r="4.6" fill="#002776"/></svg>`,
+  IN:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><rect width="30" height="6.67" fill="#FF9933"/><rect y="13.33" width="30" height="6.67" fill="#138808"/><circle cx="15" cy="10" r="2.6" fill="none" stroke="#000080" stroke-width=".6"/></svg>`,
+  NP:`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#14182f"/><path d="M9,1 L21,9 H12 L21,19 H9Z" fill="#DC143C" stroke="#003893" stroke-width="1"/><circle cx="12" cy="13.5" r="1.6" fill="#fff"/></svg>`,
+  BT:`<svg viewBox="0 0 30 20"><path d="M0,0 H30 L0,20Z" fill="#FFD520"/><path d="M30,0 V20 H0Z" fill="#FF4E12"/><ellipse cx="15" cy="10" rx="6" ry="2" fill="#fff" transform="rotate(-33 15 10)"/></svg>`};
+const FLAGPX={};
+function flagPx(cc){if(cc in FLAGPX)return Promise.resolve(FLAGPX[cc]);const svg=FLAG[cc];if(!svg)return Promise.resolve(null);
+  return new Promise(res=>{const im=new Image();im.onload=()=>{try{const cv=document.createElement('canvas');cv.width=36;cv.height=18;const x=cv.getContext('2d');x.drawImage(im,0,0,36,18);FLAGPX[cc]=cv.toDataURL('image/png')}catch(e){FLAGPX[cc]=null}res(FLAGPX[cc])};im.onerror=()=>{FLAGPX[cc]=null;res(null)};
+    im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg.replace(/ preserveAspectRatio="[^"]*"/,'').replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" width="360" height="180" '))})}
+let CBG='photo';try{CBG=localStorage.getItem('hp_cbg')||(EXT?'photo':'flag')}catch(e){CBG=EXT?'photo':'flag'}
+function flagBg(el){const cc=CTRY[el.dataset.c];if(!cc)return;flagPx(cc).then(u=>{if(!u||CBG!=='flag')return;el.classList.add('fbg');
+  el.style.setProperty('--cbg',`repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 4px),linear-gradient(rgba(18,23,54,.45),rgba(18,23,54,.45)),url('${u}') center/cover`)})}
+
 let CIO=null;
 async function wikiBg(el,step){if(!EXT)return;const code=el.dataset.c,c=CITYBY.get(code);if(!c||!c.name||c.name===c.code)return;
   const L=(await cityCands(c.name))||[];const own=ownPhoto(code);const all=L.concat(own?[{u:own,by:'my photo',own:true}]:[]);
@@ -181,20 +217,21 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
       <div class="cp-bar"><i style="width:${Math.max(1,pct*100).toFixed(1)}%"></i></div>
       <div class="r1"><span class="note">${mine.length} cities · ${pts.toLocaleString()} pts</span><span class="note">${CMORE?'less ▴':'more ▾'}</span></div>
       ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span>${!EXT?'<span>City photos: your own (outside photos work in the Netlify app)</span>':''}<span ${EXT?'':'hidden'}>City photos: ${CIST.ok} loaded${CIST.fail?` · ${CIST.fail} failed${CIST.why?' ('+escapeHtml(CIST.why)+')':''}`:''}</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
-    <div class="cp-row"><input id="cp-q" type="search" placeholder="Search for a city" value="${escapeHtml(CQ)}" aria-label="Search for a city"><button class="btn" id="cp-world" title="World map">🌍 Map</button></div>
+    <div class="cp-row"><input id="cp-q" type="search" placeholder="Search for a city" value="${escapeHtml(CQ)}" aria-label="Search for a city"><button class="btn" id="cp-bg" title="Card backgrounds: photos or flags">${CBG==='flag'?'🖼 Photos':'🏳 Flags'}</button><button class="btn" id="cp-world" title="World map">🌍 Map</button></div>
     <div class="cp-chips" id="cp-chips">${chips.map(([k,l])=>`<button data-f="${k}" class="${k===CF?'on':''}">${l}</button>`).join('')}</div>
     ${L.map(card).join('')||'<p class="note">No city here.</p>'}</div>`;
   $('cp-tot').onclick=()=>{CMORE=!CMORE;renderCities()};
   const qi=$('cp-q');qi.oninput=()=>{CQ=qi.value;const p=qi.selectionStart;renderCities();const n=$('cp-q');n.focus();try{n.setSelectionRange(p,p)}catch(e){}};
+  $('cp-bg').onclick=()=>{CBG=CBG==='flag'?'photo':'flag';try{localStorage.setItem('hp_cbg',CBG)}catch(e){};renderCities()};
   $('cp-world').onclick=()=>{navGo('map');setTimeout(()=>{try{openWorld()}catch(e){}},60)};
   $('cp-chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;CF=b.dataset.f;try{localStorage.setItem('hp_cf',CF)}catch(x){};renderCities()};
   pg.querySelectorAll('[data-fav]').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.fav;FAV.has(k)?FAV.delete(k):FAV.add(k);try{localStorage.setItem('hp_fav',JSON.stringify([...FAV]))}catch(x){};renderCities()});
-  pg.querySelectorAll('[data-pic]').forEach(b=>b.onclick=e=>{e.stopPropagation();wikiBg(b.closest('.ccard'),true)});
+  pg.querySelectorAll('[data-pic]').forEach(b=>b.onclick=e=>{e.stopPropagation();const el=b.closest('.ccard');if(CBG==='flag'&&!el.dataset.ph){el.dataset.ph='1';el.classList.remove('fbg');if(!EXT){const o=ownPhoto(el.dataset.c);if(o)el.style.setProperty('--cbg',`url('${o}')`);return}wikiBg(el,false);return}wikiBg(el,true)});
   pg.querySelectorAll('[data-ufix]').forEach(sel=>{sel.onclick=e=>e.stopPropagation();sel.onchange=()=>{assignVisit(sel.dataset.c,sel.dataset.ufix,+sel.value);const row=sel.closest('.unrow');if(row&&+sel.value>=0){row.classList.add('done');sel.disabled=true;toast(sel.dataset.ufix+' → '+sel.options[sel.selectedIndex].text)}}});
   pg.querySelectorAll('.cc-hist').forEach(d=>d.addEventListener('click',e=>e.stopPropagation()));
   {const m=$('cc-space');if(m)m.onclick=e=>{e.stopPropagation();const f=new Set(flashedOf('SPACE'));f.add('SPACE_02');allFlashed.SPACE=f;try{localStorage.setItem('hp_fl_SPACE',JSON.stringify([...f]))}catch(x){};try{renderScore()}catch(x){};toast('SPACE_02 marked flashed');renderCities()}}
   if(CIO)CIO.disconnect();CIO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){CIO.unobserve(en.target);wikiBg(en.target)}}),{root:pg,rootMargin:'300px'}):null;
-  pg.querySelectorAll('.ccard:not(.space)').forEach(el=>{if(CIO)CIO.observe(el);else wikiBg(el)});
+  if(CBG==='flag'){pg.querySelectorAll('.ccard:not(.space)').forEach(flagBg)}else pg.querySelectorAll('.ccard:not(.space)').forEach(el=>{if(CIO)CIO.observe(el);else wikiBg(el)});
   pg.querySelectorAll('.ccard:not(.space)').forEach(el=>{const go=()=>{navGo('map');goCity(el.dataset.c)};el.onclick=go;el.onkeydown=e=>{if(e.key==='Enter')go()}})}
 window.renderCities=renderCities;
 /* ================= v47 · map-only zoom, photo viewer, text size, live Hunt tab, safe hunts, manual visit dates ================= */
