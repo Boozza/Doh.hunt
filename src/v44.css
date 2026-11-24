@@ -153,3 +153,8 @@ html.mf .panel .tabbody .btn,html.mf .card .btn{box-shadow:inset 0 1px 0 rgba(25
 .cc-code{max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #citiespg .cp-inner{grid-template-columns:minmax(0,1fr)}#citiespg{overflow-x:hidden}.cp-row .btn{flex:none;white-space:nowrap;padding-left:10px;padding-right:10px}
 #tripbar.tripoff{opacity:.85}
+/* v49.3 · Me sub-tabs on one line, no page jump with the keyboard, map credits off the top when the sheet is full */
+#mesub button{white-space:nowrap;padding-left:6px;padding-right:6px}
+html.mf,html.mf body{overflow:hidden;overscroll-behavior:none}
+html.mf.mf-full .leaflet-bottom,html.mf.nav-cities .leaflet-bottom{display:none}
+html.mf .panel .tabbody{overscroll-behavior:contain}

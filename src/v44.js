@@ -16,7 +16,7 @@ const pg=document.createElement('div');pg.id='citiespg';pg.setAttribute('role','
 // Me: sub-sections
 const P=document.querySelector('.panel');
 const ms=document.createElement('div');ms.className='seg';ms.id='mesub';
-ms.innerHTML='<button data-t="t-score">Score</button><button data-t="t-album">Album</button><button data-t="t-mark">Mark · import</button>';
+ms.innerHTML='<button data-t="t-score">Score</button><button data-t="t-album">Album</button><button data-t="t-mark">Mark</button>';
 {const q=P&&P.querySelector('.mfquick');if(q)q.after(ms);else if(P)P.prepend(ms)}
 ms.onclick=e=>{const b=e.target.closest('button');if(!b)return;const t=$(b.dataset.t);if(t)t.click();setSheet('full')};
 const TAB2NAV={'t-plan':'hunt','t-list':'map','t-news':'news','t-score':'me','t-album':'me','t-mark':'me'};
@@ -340,6 +340,10 @@ window.assignVisit=assignVisit;
   el.hidden=false;el.classList.add('tripoff');el.innerHTML=`<span class="note">✈ ${escapeHtml(c.name)} trip hidden</span><button class="btn" id="trip-back">↺ Show again</button>`;
   $('trip-back').onclick=()=>{try{localStorage.removeItem('hp_trip_off')}catch(e){};el.classList.remove('tripoff');setTrip(RAW);toast('Trip back: '+c.name)}};
  try{renderTrip()}catch(e){}}
+
+// v49.3 · typing in the sheet (Mark list, search, notes): keep the page itself from scrolling under the keyboard
+document.addEventListener('focusin',e=>{if(!MF.on||!e.target.matches('input,textarea'))return;const fix=()=>{if(window.scrollY||document.documentElement.scrollTop){window.scrollTo(0,0)}};setTimeout(fix,60);setTimeout(fix,350)});
+if(window.visualViewport)visualViewport.addEventListener('scroll',()=>{if(MF.on&&!document.activeElement.matches('input,textarea')&&(window.scrollY||0))window.scrollTo(0,0)});
 
 // start on Map
 navMark('map');setTimeout(()=>{try{setSheet(MF.st||'peek')}catch(e){}},0);
