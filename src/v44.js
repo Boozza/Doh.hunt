@@ -193,6 +193,10 @@ async function wikiBg(el,step){if(!EXT)return;const code=el.dataset.c,c=CITYBY.g
     el.style.setProperty('--cbg',`url('${u}')`);let a=el.querySelector('.cc-cred');if(!a){el.insertAdjacentHTML('beforeend','<a class="cc-cred" target="_blank" rel="noopener"></a>');a=el.querySelector('.cc-cred');a.onclick=e=>e.stopPropagation()}
     a.textContent='📷 '+(v.by||'')+(all.length>1?` · ${k+1}/${all.length}`:'');if(v.l)a.href=v.l;else a.removeAttribute('href');return}
   CIST.fail++;CIST.why='image blocked'}
+// v49 · country names and three-part bars (flashed · to flash · destroyed)
+const CNAME={GB:'United Kingdom',FR:'France',AT:'Austria',US:'United States',IT:'Italy',HK:'Hong Kong',JP:'Japan',TH:'Thailand',IL:'Israel',BE:'Belgium',NL:'Netherlands',CH:'Switzerland',ES:'Spain',DE:'Germany',BT:'Bhutan',MX:'Mexico',TN:'Tunisia',BD:'Bangladesh',TR:'Türkiye',NP:'Nepal',PT:'Portugal',SI:'Slovenia',MA:'Morocco',AU:'Australia',KE:'Kenya',BR:'Brazil',IN:'India',SE:'Sweden',BO:'Bolivia',KR:'South Korea',BA:'Bosnia & Herzegovina'};
+function triOf(c){const f=flashedOf(c.code);let g=0,y=0,r=0;for(const i of c.inv){if(f.has(i[0]))g++;else if(i[4]==='destroyed')r++;else y++}return {g,y,r,t:g+y+r}}
+function triBar(t,cls){const p=v=>t.t?(100*v/t.t).toFixed(2):0;return `<div class="${cls} tri" role="img" aria-label="${t.g} flashed, ${t.y} to flash, ${t.r} destroyed"><i class="g" style="width:${p(t.g)}%"></i><i class="y" style="width:${p(t.y)}%"></i><i class="r" style="width:${p(t.r)}%"></i></div>`}
 function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DATA.cities.concat([SPACE]);
   const tot=DATA.cities.reduce((s,c)=>s+c.inv.length,0);const fl=all.reduce((s,c)=>s+flashedOf(c.code).size,0);const pct=tot?fl/tot:0;
   const mine=W.filter(w=>w.mine),done=mine.filter(w=>w.alive&&w.left===0);const pts=W.reduce((s,w)=>s+cityScore(w),0);
@@ -202,23 +206,24 @@ function renderCities(){const W=worldStats().concat([spaceStat()]);const all=DAT
   L.sort((a,b)=>(FAV.has(b.c.code)-FAV.has(a.c.code))||(b.mine-a.mine)||(b.fl-a.fl)||(b.pl-a.pl));
   const card=w=>{const c=w.c,h=HIST&&HIST.cities[c.code],bg=ownPhoto(c.code),hu=hue(c.code);
     if(w.space)return `<div class="ccard space" data-c="SPACE" role="group" aria-label="Space">
-      <div class="cc-top"><span class="cc-code">SPACE</span><button class="cc-star${FAV.has('SPACE')?' on':''}" data-fav="SPACE" aria-label="Favourite" aria-pressed="${FAV.has('SPACE')}">${FAV.has('SPACE')?'★':'☆'}</button></div>
+      <div class="cc-top"><span class="cc-code">Space</span><button class="cc-star${FAV.has('SPACE')?' on':''}" data-fav="SPACE" aria-label="Favourite" aria-pressed="${FAV.has('SPACE')}">${FAV.has('SPACE')?'★':'☆'}</button></div>
       <div class="cc-name">Space <small>(ISS)</small></div>${w.left?`<button class="cc-mark" id="cc-space">✓ Mark SPACE_02 flashed</button>`:'<span class="cc-pill done">✓ complete</span>'}
       <div class="cc-stats"><span>📷 <b>${w.fl}</b> flashed</span><span>🎯 <b>${w.alive}</b> active</span>${w.mine?`<span>⭐ <b>${cityScore(w).toLocaleString()}</b> pts</span>`:''}</div>
-      <div class="cc-bar"><i style="width:${Math.round(w.pct*100)}%"></i></div></div>`;
+      ${triBar(triOf(c),'cc-bar')}</div>`;
     const style=bg?`--cbg:url('${bg}')`:`--cbg:linear-gradient(135deg,hsl(${hu} 55% 32%),hsl(${(hu+60)%360} 60% 18%))`;
     const pill=!w.alive?'<span class="cc-pill">none active</span>':w.mine&&w.left===0?'<span class="cc-pill done">✓ complete</span>':`<span class="cc-pill">${w.left} left to flash · ${w.pl.toLocaleString()} pts</span>`;
     const vs=h?(h.visits||[]):[];const un=h?(h.unknown||[]):[];
     const hist=vs.length?`<details class="cc-hist"><summary>🕓 ${vs.length} visit${vs.length>1?'s':''} · ${vs.map(v=>MON[+v.from.slice(5,7)-1]+' '+v.from.slice(0,4)).join(' → ')}</summary><ol>${vs.slice().reverse().map(v=>`<li><div class="vh"><b>${fmtRange(v.from,v.to)}</b><span>${v.ids.length} · ${ptsOf(v.ids).toLocaleString()} pts</span></div>${strip(v.ids,5)}</li>`).join('')}${un.length?`<li><div class="vh"><b>Date unknown</b><span>${un.length} · ${ptsOf(un).toLocaleString()} pts</span></div>${strip(un,5)}<details class="unfix"><summary>✎ Set the visit for each one</summary>${un.map(id=>`<div class="unrow"><span>${id}</span><select data-ufix="${id}" data-c="${c.code}" aria-label="Visit for ${id}"><option value="-1">date unknown</option>${vs.map((v,k)=>`<option value="${k}">${fmtRange(v.from,v.to)}</option>`).join('')}</select></div>`).join('')}</details></li>`:''}</ol></details>`:'';
     return `<div class="ccard" data-c="${c.code}" style="${style}" role="button" tabindex="0" aria-label="Open ${escapeHtml(cityName(c.code))} on the map">
-      <div class="cc-top"><button class="cc-code" data-pic="${c.code}" aria-label="${c.code} – tap for another photo" title="Tap for another photo">${c.code}</button><span class="cc-acts"><button class="cc-star${FAV.has(c.code)?' on':''}" data-fav="${c.code}" aria-label="Favourite" aria-pressed="${FAV.has(c.code)}">${FAV.has(c.code)?'★':'☆'}</button></span></div>
+      <div class="cc-top"><button class="cc-code" data-pic="${c.code}" aria-label="${escapeHtml(CNAME[CTRY[c.code]]||c.code)} – tap for another photo" title="Tap for another photo">${escapeHtml(CNAME[CTRY[c.code]]||c.code)}</button><span class="cc-acts"><button class="cc-star${FAV.has(c.code)?' on':''}" data-fav="${c.code}" aria-label="Favourite" aria-pressed="${FAV.has(c.code)}">${FAV.has(c.code)?'★':'☆'}</button></span></div>
       <div class="cc-name">${escapeHtml(cityName(c.code))} ${c.name&&c.name!==c.code?`<small>(${c.code})</small>`:''}</div>${pill}
       <div class="cc-stats"><span>📷 <b>${w.fl}</b> flashed</span><span>🎯 <b>${w.alive}</b> active</span>${w.mine?`<span>⭐ <b>${cityScore(w).toLocaleString()}</b> pts</span>`:''}</div>
-      <div class="cc-bar"><i style="width:${Math.round(w.pct*100)}%"></i></div>${hist}</div>`};
+      ${triBar(triOf(c),'cc-bar')}${hist}</div>`};
+  const TT=all.map(triOf).reduce((a,b)=>({g:a.g+b.g,y:a.y+b.y,r:a.r+b.r,t:a.t+b.t}),{g:0,y:0,r:0,t:0});
   const chips=[['all','All'],['mine',`Visited (${mine.length})`],['done',`Complete (${done.length})`],['fav','★ Favourites'],['new','Not started']];
   pg.innerHTML=`<div class="cp-inner">
     <div class="cp-tot" id="cp-tot"><div class="r1"><b>TOTAL FLASHED</b><span><span class="big">${fl.toLocaleString()}</span> / ${tot.toLocaleString()} (${Math.round(pct*100)}%)</span></div>
-      <div class="cp-bar"><i style="width:${Math.max(1,pct*100).toFixed(1)}%"></i></div>
+      ${triBar(TT,'cp-bar')}<div class="cp-leg"><span><i class="g"></i>${TT.g.toLocaleString()} flashed</span><span><i class="y"></i>${TT.y.toLocaleString()} to flash</span><span><i class="r"></i>${TT.r.toLocaleString()} destroyed</span></div>
       <div class="r1"><span class="note">${mine.length} cities · ${pts.toLocaleString()} pts</span><span class="note">${CMORE?'less ▴':'more ▾'}</span></div>
       ${CMORE?`<div class="cp-more"><span>Still up among my flashes: <b>${alive}</b> · gone since: <b>${fl-alive}</b></span><span>Cities complete: <b>${done.length}</b> · active left in my cities: <b>${mine.reduce((s,w)=>s+w.left,0)}</b> (${mine.reduce((s,w)=>s+w.pl,0).toLocaleString()} pts)</span>${!EXT?'<span>City photos: your own (outside photos work in the Netlify app)</span>':''}<span ${EXT?'':'hidden'}>City photos: ${CIST.ok} loaded${CIST.fail?` · ${CIST.fail} failed${CIST.why?' ('+escapeHtml(CIST.why)+')':''}`:''}</span>${HIST?`<span>Visits on record: <b>${allVisits().length}</b> since ${allVisits().slice(-1)[0]?allVisits().slice(-1)[0].from.slice(0,4):'–'}</span>`:''}</div>`:''}</div>
     <div class="cp-row"><input id="cp-q" type="search" placeholder="Search for a city" value="${escapeHtml(CQ)}" aria-label="Search for a city"><button class="btn" id="cp-bg" title="Card backgrounds: photos or flags">${CBG==='flag'?'🖼 Photos':'🏳 Flags'}</button><button class="btn" id="cp-world" title="World map">🌍 Map</button></div>
