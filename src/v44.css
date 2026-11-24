@@ -152,3 +152,4 @@ html.mf .panel .tabbody .btn,html.mf .card .btn{box-shadow:inset 0 1px 0 rgba(25
 .cp-leg i.g{background:var(--green,#3ddc84)}.cp-leg i.y{background:var(--yellow,#ffd90f)}.cp-leg i.r{background:var(--red,#ff4d5e)}
 .cc-code{max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #citiespg .cp-inner{grid-template-columns:minmax(0,1fr)}#citiespg{overflow-x:hidden}.cp-row .btn{flex:none;white-space:nowrap;padding-left:10px;padding-right:10px}
+#tripbar.tripoff{opacity:.85}

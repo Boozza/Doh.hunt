@@ -332,6 +332,15 @@ window.assignVisit=assignVisit;
   new IntersectionObserver(es=>{const e=es[es.length-1];if(!e.boundingClientRect.height)return;let cut=Math.round(e.boundingClientRect.bottom-e.intersectionRect.bottom);if(cut<0||cut>innerHeight*.45||!e.isIntersecting)cut=0;
     const prev=parseFloat(getComputedStyle(H).getPropertyValue('--cut'))||0;if(Math.abs(prev-cut)>2){H.style.setProperty('--cut',cut+'px');try{setSheet(MF.st)}catch(x){}}},{threshold:th}).observe(pr)}}
 
+// v49.2 · a removed trip can be shown again (the ✕ on the trip bar only hides it on this device)
+{let RAW=null;const _st=setTrip;setTrip=function(t){if(t&&t.city)RAW=t;_st(t)};
+ try{const t=JSON.parse(localStorage.getItem('hp_trip')||'null');if(t&&t.city)RAW=t}catch(e){}
+ const _rt=renderTrip;renderTrip=function(){_rt();const el=$('tripbar');if(!el||!el.hidden)return;let off='';try{off=localStorage.getItem('hp_trip_off')||''}catch(e){}
+  if(!RAW||!RAW.city||!RAW.end||RAW.end<TODAY()||off!==(RAW.city+'|'+RAW.start))return;const c=DATA.cities.find(x=>x.code===RAW.city);if(!c)return;
+  el.hidden=false;el.classList.add('tripoff');el.innerHTML=`<span class="note">✈ ${escapeHtml(c.name)} trip hidden</span><button class="btn" id="trip-back">↺ Show again</button>`;
+  $('trip-back').onclick=()=>{try{localStorage.removeItem('hp_trip_off')}catch(e){};el.classList.remove('tripoff');setTrip(RAW);toast('Trip back: '+c.name)}};
+ try{renderTrip()}catch(e){}}
+
 // start on Map
 navMark('map');setTimeout(()=>{try{setSheet(MF.st||'peek')}catch(e){}},0);
 addEventListener('resize',()=>{try{setSheet(MF.st)}catch(e){}});
