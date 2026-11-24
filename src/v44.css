@@ -158,3 +158,9 @@ html.mf .panel .tabbody .btn,html.mf .card .btn{box-shadow:inset 0 1px 0 rgba(25
 html.mf,html.mf body{overflow:hidden;overscroll-behavior:none}
 html.mf.mf-full .leaflet-bottom,html.mf.nav-cities .leaflet-bottom{display:none}
 html.mf .panel .tabbody{overscroll-behavior:contain}
+/* v49.4 · sheet pages never pan sideways (Mark/import on iPhone) */
+html.mf .panel .tabbody{overflow-x:hidden!important;touch-action:pan-y}
+.panel .tabbody *{max-width:100%;box-sizing:border-box}
+.panel .tabbody input[type=file]{width:100%;font-size:14px}
+.panel .tabbody textarea,.panel .tabbody input[type=text],.panel .tabbody input[type=search]{width:100%}
+.panel .tabbody .inline{flex-wrap:wrap}
