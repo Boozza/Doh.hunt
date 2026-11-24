@@ -493,4 +493,4 @@ const _goCity=goCity;goCity=function(code){const same=city&&city.code===code;clo
 
 /* v43.2 · popups never open under the top bar or the sheet */
 LM.on('popupopen',e=>{try{const cs=getComputedStyle(document.documentElement);const hb=parseFloat(cs.getPropertyValue('--hb'))||60,sh=document.documentElement.classList.contains('mf')?(parseFloat(cs.getPropertyValue('--sheet-h'))||0):0;
-  e.popup.options.autoPanPaddingTopLeft=L.point(12,hb+12);e.popup.options.autoPanPaddingBottomRight=L.point(64,sh+12);e.popup.options.autoPan=true;if(e.popup._adjustPan)e.popup._adjustPan()}catch(x){}});
+  const fe=document.getElementById('filters'),fb=fe&&getComputedStyle(fe).display!=='none'?fe.getBoundingClientRect().bottom:0;e.popup.options.autoPanPaddingTopLeft=L.point(12,Math.max(hb,fb)+12);e.popup.options.autoPanPaddingBottomRight=innerWidth>=900?L.point(470,96):L.point(64,sh+12);e.popup.options.autoPan=true;if(e.popup._adjustPan)e.popup._adjustPan()}catch(x){}});
