@@ -119,3 +119,7 @@ html,body{touch-action:manipulation}
 /* v48 flag banners */
 .ccard.fbg{image-rendering:pixelated;background:var(--cbg)}
 .ccard.fbg:before{background:linear-gradient(180deg,rgba(10,13,28,.1) 0%,rgba(10,13,28,.4) 45%,rgba(10,13,28,.82) 100%)}
+/* v48.2 · iOS home-screen gap: bottom bar and Cities page follow the sheet down */
+html.mf .bnav{bottom:calc(6px + env(safe-area-inset-bottom,0px) - var(--vfix,0px))}
+html.mf.nav-cities #citiespg{bottom:calc(-1 * var(--vfix,0px));padding-bottom:calc(var(--nav-h,76px) + 16px + var(--vfix,0px))}
+@media(min-width:900px){html.mf .bnav{bottom:12px}}

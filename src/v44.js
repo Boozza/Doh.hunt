@@ -313,6 +313,14 @@ function assignVisit(code,id,k){if(!HIST||!HIST.cities[code])return;const H2=JSO
   H2.updated=new Date().toISOString().slice(0,10);HIST=H2;try{localStorage.setItem('hp_hist',JSON.stringify(H2))}catch(e){};histChanged(H2)}
 window.assignVisit=assignVisit;
 
+// v48.2 · keep header/sheet measurements fresh (iOS home-screen app: safe area and keyboard change the layout after load)
+{const refit=()=>{try{window.dispatchEvent(new Event('resize'))}catch(e){}};
+ const later=(ms)=>setTimeout(refit,ms);[300,900,2000].forEach(later);
+ addEventListener('pageshow',()=>later(100));document.addEventListener('visibilitychange',()=>{if(!document.hidden)later(150)});
+ addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||!a.matches('input,select,textarea')){try{window.scrollTo(0,0)}catch(e){}refit()}},150));
+ if(window.visualViewport){let t=0;const vv=()=>{clearTimeout(t);t=setTimeout(refit,120)};visualViewport.addEventListener('resize',vv)}
+ const hd=document.querySelector('header');if(hd&&'ResizeObserver' in window)new ResizeObserver(()=>{try{mfVars()}catch(e){}}).observe(hd)}
+
 // start on Map
 navMark('map');setTimeout(()=>{try{setSheet(MF.st||'peek')}catch(e){}},0);
 addEventListener('resize',()=>{try{setSheet(MF.st)}catch(e){}});
