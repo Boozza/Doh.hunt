@@ -447,8 +447,8 @@ try{renderStats()}catch(e){}
 
 // P8) weekly backup reminder: a dot on Me and a highlighted Backup button when the last backup is over 7 days old
 function bkDue(){let t='';try{t=localStorage.getItem('hp_lastbk')||''}catch(e){}const any=DATA.cities.some(c=>flashedOf(c.code).size);return any&&(!t||(Date.now()-Date.parse(t))>7*864e5)}
-function bkMark(){const due=bkDue();const me=nav.querySelector('[data-n=me]');let dot=me.querySelector('.bkdot');if(due&&!dot){dot=document.createElement('span');dot.className='bkdot';dot.title='Backup due';me.appendChild(dot)}else if(!due&&dot)dot.remove();
-  const b=$('bkup');if(b)b.classList.toggle('due',due);const n=$('bknote');if(n&&due&&!n.querySelector('.bkd'))n.insertAdjacentHTML('afterbegin','<b class="bkd">Weekly backup due – tap Backup and save the file to iCloud Drive › 06 Hobbies - Invaders › Doh!vader › 02 Doh! app. </b>')}
+window.bkMark=()=>bkMark();function bkMark(){const due=bkDue();const me=nav.querySelector('[data-n=me]');let dot=me.querySelector('.bkdot');if(due&&!dot){dot=document.createElement('span');dot.className='bkdot';dot.title='Backup due';me.appendChild(dot)}else if(!due&&dot)dot.remove();
+  const b=$('bkup');if(b)b.classList.toggle('due',due);const n=$('bknote');if(n&&due&&!n.querySelector('.bkd'))n.insertAdjacentHTML('afterbegin','<b class="bkd">Weekly backup due – tap Backup and save the file to iCloud Drive › 06 Hobbies - Invaders › Doh!vader › 05 Backups. </b>')}
 setTimeout(bkMark,1500);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(bkMark,500)});
 {const _bk=window.bkNote||null;if(typeof bkNote==='function'){const o=bkNote;bkNote=function(){o();try{bkMark()}catch(e){}}}}
 

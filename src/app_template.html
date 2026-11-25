@@ -1462,12 +1462,9 @@ const _persistX=persist;persist=function(){const add=[...flashed].filter(id=>!PR
   if(add.length){const v=add.length>10?'0':TODAY();add.forEach(id=>FLT[id]=v);try{localStorage.setItem('hp_fltime',JSON.stringify(FLT))}catch(e){}}
   return _persistX.apply(this,arguments)};
 // ---- backup (both versions)
-{const w=document.createElement('div');w.className='inline';w.innerHTML='<button class="btn y" id="bkup">⬇ Backup my flashes</button><span class="note" id="bknote"></span>';$('appcount').after(w)}
-function bkNote(){let t='';try{t=localStorage.getItem('hp_lastbk')||''}catch(e){};$('bknote').textContent=t?'Last backup: '+t+'. To restore, load the file in Import below.':'Saves a file you can load back with Import below, on any device.'}
-$('bkup').onclick=async()=>{const all=[];DATA.cities.concat([SPACE]).forEach(c=>flashedOf(c.code).forEach(id=>all.push(id)));
-  const txt="D'oh! Hunt Planner backup "+TODAY()+' ('+all.length+' invaders)\n'+all.sort().join(', ')+'\n';
-  const ok=await saveImage(new Blob([txt],{type:'text/plain'}),'my-flashed-invaders-'+TODAY()+'.txt',$('bknote'));
-  if(ok){try{localStorage.setItem('hp_lastbk',TODAY())}catch(e){};toast('Backup saved: '+all.length+' invaders');setTimeout(bkNote,2500)}};
+{const w=document.createElement('div');w.className='inline';w.innerHTML='<button class="btn y" id="bkup">⬇ Backup everything</button><span class="note" id="bknote"></span>';$('appcount').after(w)}
+function bkNote(){let t='';try{t=localStorage.getItem('hp_lastbk')||''}catch(e){};$('bknote').textContent=t?'Last backup: '+t+'. One file with flashes, photos, history and reports – restore it with ♻ Restore in the Album tab.':'One file with flashes, photos, history and reports. Save it to iCloud Drive › Doh!vader › 05 Backups.'}
+$('bkup').onclick=async()=>{const b=$('bkup');b.disabled=true;b.textContent='Preparing backup…';try{await fullBackup()}catch(e){}b.disabled=false;b.textContent='⬇ Backup everything';let t='';try{t=localStorage.getItem('hp_lastbk')||''}catch(e){}if(t===TODAY())toast('Backup saved – flashes, photos, history and reports');bkNote();try{bkMark()}catch(e){}};
 bkNote();
 // ---- info links
 const svUrl=(la,lo)=>`https://www.google.com/maps/@?api=1&map_action=map&center=${la},${lo}&zoom=20&basemap=satellite`;
