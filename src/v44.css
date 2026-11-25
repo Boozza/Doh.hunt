@@ -196,3 +196,8 @@ html[data-theme=light] #recentbox,html[data-theme=light] #statsbox{background:rg
 #statsbox .note,#recentbox .note{color:var(--fg);opacity:.85}
 #recentbox .rv .t{color:var(--fg)}
 #r-all{justify-self:start}
+/* v50.4 · smooth scrolling: rows swipe sideways, page scrolls up/down from anywhere */
+html.mf .panel .tabbody{touch-action:auto!important;-webkit-overflow-scrolling:touch}
+.tstrip.sw{touch-action:pan-x pan-y!important;scroll-snap-type:none!important;overscroll-behavior-x:contain}
+.tstrip.sw figure{scroll-snap-align:none}
+#citiespg{touch-action:auto}
